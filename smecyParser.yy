@@ -1,4 +1,4 @@
-/* SMECY pragmas parser */
+/* SMECY pragma parser */
 
 %{
 #include <iostream>
@@ -25,7 +25,7 @@ int _yyparse();
 %%
 smecy_directive
 					: SMECY arg_clause arg_clause_list	//we do not allow empty directives
-					| SMECY map_clause {std::cout << "test3" << std::endl ;} arg_clause_list
+					| SMECY map_clause arg_clause_list
 					;
 
 arg_clause
@@ -76,7 +76,7 @@ size
 					;
 
 size_list
-					:
+					: //empty
 					| %prec '[' INTEGER ']' size_list
 					;
 
@@ -85,7 +85,7 @@ range
 					;
 					
 range_list
-					:	//empty
+					: //empty
 					| %prec '[' INTEGER ':' INTEGER ']' range_list
 					;
 %%
