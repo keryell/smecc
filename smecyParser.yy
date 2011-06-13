@@ -38,11 +38,15 @@ arg_clause_list
 					;
 					
 map_clause
-					: MAP '(' ID ')'
-					| MAP '(' ID ',' outer_expression ')'
+					: MAP '(' ID closing_map_clause
 					;
 					
-outer_expression	//we want to avoid confusion between the parenthesis of the expression and of the clause
+closing_map_clause
+					: ')'
+					| ',' INTEGER ')'
+					;
+					
+/*outer_expression	//we want to avoid confusion between the parenthesis of the expression and of the clause
 					: NOPAR
 					| NOPAR '(' inner_expression ')'NOPAR	//FIXME shift/reduce conflict
 					;
@@ -51,7 +55,7 @@ inner_expression
 					: NOPAR
 					| inner_expression ',' inner_expression
 					| NOPAR '(' inner_expression ')'NOPAR
-					;
+					;*/
 					
 arg_parameter_list
 					: arg_parameter
@@ -68,18 +72,21 @@ arg_parameter
 					;
 					
 size
-					: '[' INTEGER ']'		//FIXME allow expressions ?
-					| '[' INTEGER ']' size
+					: '[' INTEGER ']' size_list	//FIXME allow expressions?
+					;
+
+size_list
+					:
+					| %prec '[' INTEGER ']' size_list
 					;
 
 range
-					: '/' '[' INTEGER ':' INTEGER ']'		//FIXME allow expressions ?
-					| '/' '[' INTEGER ':' INTEGER ']' range_list
+					: '/' '[' INTEGER ':' INTEGER ']' range_list
 					;
 					
 range_list
-					: '[' INTEGER ':' INTEGER ']'
-					| '[' INTEGER ':' INTEGER ']' range_list
+					:	//empty
+					| %prec '[' INTEGER ':' INTEGER ']' range_list
 					;
 %%
 

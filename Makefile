@@ -4,11 +4,15 @@ all: $(allFiles)
 	
 parseTest:
 	@echo [Parser]
-	@bison -d smecyParser.yy
+	@bison -dt smecyParser.yy
 	@echo [Lexer]
 	@flex smecyLexer.ll
 	@echo [Compiling]
-	@g++ lex.yy.c smecyParser.tab.cc -o parseTest
+	@g++ lex.yy.c smecyParser.tab.cc -Wno-write-strings -o parseTest
 	
-clean:
+test: parseTest input
+	@echo [Testing]
+	./parseTest input
+	
+clean: parseTest
 	rm parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c

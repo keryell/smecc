@@ -26,7 +26,7 @@ in				{
 out				return OUT;
 inout			return INOUT;
 unused			return UNUSED;
-[:,()]		return *yytext;		//FIXME check for the []
+[:,\[\]()]		return *yytext;
 [1-9][0-9]*		{
 					yylval.intType = atoi(yytext);
 					return INTEGER;
