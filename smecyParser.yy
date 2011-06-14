@@ -59,7 +59,7 @@ inner_expression
 					
 arg_parameter_list
 					: arg_parameter
-					| arg_parameter arg_parameter_list
+					| arg_parameter ',' arg_parameter_list
 					;
 					
 arg_parameter		
@@ -77,7 +77,7 @@ size
 
 size_list
 					: //empty
-					| %prec '[' INTEGER ']' size_list
+					| '[' INTEGER ']' size_list
 					;
 
 range
@@ -86,7 +86,7 @@ range
 					
 range_list
 					: //empty
-					| %prec '[' INTEGER ':' INTEGER ']' range_list
+					| '[' INTEGER ':' INTEGER ']' range_list
 					;
 %%
 
@@ -97,5 +97,5 @@ void yyerror(char *s)
 
 int _yyparse()
 {
-	yyparse();
+	return yyparse();
 }

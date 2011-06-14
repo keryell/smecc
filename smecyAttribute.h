@@ -19,7 +19,7 @@ enum smecyClauseType
 	smecy_arg_range
 };
 
-enum smecyArgtype
+enum smecyArgType
 {
 	smecy_arg_in,
 	smecy_arg_out,
@@ -33,21 +33,20 @@ class smecyClause
 protected:
 	smecyClauseType type;
 	//TODO could be made shorter with multiple child classes
-	std:string accelerator;
+	std::string accelerator;
 	int unitNumber;
 	smecyArgType argType;
 	int argNumber;
 	std::vector<int> argSize;
-	std::vector<std::pair<int,int>> argRange;
+	std::vector<std::pair<int,int> > argRange;
 public:
 	//constructors
 	smecyClause(std::string accelerator, int unitNumber=-1);
 	smecyClause(int argNumber, smecyArgType argType);
 	smecyClause(int argNumber, std::vector<int> argSize);
-	smecyClause(int argNumber, std::vector<std::pair<int,int>> argRange);
-	
-	void print();
-	
+	smecyClause(int argNumber, std::vector<std::pair<int,int> > argRange);
+
+	void print();	
 };
 
 //all smecy clauses attached to one node
@@ -57,7 +56,7 @@ protected:
 	std::vector<smecyClause> clauseList;
 public:
 	void addSmecyClause(smecyClause clause);
-	
+	//TODO need for a method that returns the original pragma string ?
 	void print();
 };
 
