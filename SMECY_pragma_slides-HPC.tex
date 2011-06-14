@@ -1,0 +1,521 @@
+% -*-coding: latin-9;-*-
+
+%% To deal with the colors and number of slides per page according to the
+%% \VersionPapier switch :
+\ifx\VersionExpose\UnTrucInexistant%
+% Version élève
+\documentclass[handout,compress,10pt,hyperref={hyperindex},xcolor={svgnames,x11names}]{beamer}
+\usepackage{pgfpages}
+\pgfpagesuselayout{4 on 1}[a4paper,landscape,border shrink=5mm]
+\else
+% Version enseignant
+\documentclass[compress,10pt,hyperref={hyperindex},xcolor={svgnames,x11names}]{beamer}
+\fi
+%\documentclass[11pt,a4]{powersem}
+\usepackage[latin9]{inputenc}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,wasysym,marvosym,soul}
+\usepackage{multicol}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+
+\input{macros_jpl94}
+
+% To draw diagonal line on some text:
+\usepackage[thicklines]{cancel}
+\renewcommand{\CancelColor}{\red}
+
+\usepackage[hyper,procnames]{listings}
+\usepackage{alltt}%verbatim,
+%\usepackage[linkbordercolor={1 1 1},bookmarks=true,colorlinks=false,urlbordercolor={1 1 1},runbordercolor={1 1 1},citebordercolor={1 1 1},bookmarksnumbered=true,hypertexnames=false,hyperindex]{hyperref}
+%usepackage{tabularx}
+
+%\usepackage{beamer_rk}
+\usepackage[LeftSideBar,ShadedBackground]{beamer_rk}
+%\usepackage[WhiteBackground]{beamer_rk}
+
+
+\usepackage{perso2e,bbold2e,getVersion,exemple}
+%\usepackage{beamer_rk,perso2e,bbold2e,LienPDF,example}
+\usepackage{makeidx}
+%\usepackage{multicol,tabularx}
+\usepackage{pst-node}
+
+\usepackage[greek,francais,english]{babel}
+\frenchbsetup{og=«, fg=», ThinColonSpace=true,
+  % ShowOptions,
+  % Évite de casser les références bibliographiques du style harvard avec
+  % des ":" dedans :
+  %AutoSpacePunctuation=false
+}
+% S'arrange pour avoir une virgule qui ne rajoute pas de blanc dans les
+% nombres à virgule :
+%\iffalse
+\DecimalMathComma
+% Même pas besoin pour les ligatures à 2 accents en fait :
+%\languageattribute{greek}{polutoniko}
+
+% Et pour avoir \nombre qui marche :
+\usepackage[autolanguage]{numprint}
+
+\lstset{extendedchars=true, language=C++, basicstyle=\scriptsize\ttfamily, numbers=left,
+  numberstyle=\tiny, stepnumber=2, numberfirstline=true,
+  tabsize=8, tab=\rightarrowfill, keywordstyle=\color{orange}\bf,
+  stringstyle=\rmfamily, commentstyle=\rmfamily\itshape}
+% Un peu violent :
+%  index=[1][keywords],indexprocnames=true%\lstloadlanguages{Basic}
+
+%\usepackage{beamerthemesplit}
+%{\usebeamercolor{palette primary}}
+%\setbeamertemplate{sidebar canvas}[vertical shading][top=palette primary.bg,middle=white,bottom=palette primary.bg]
+
+\makeindex
+
+\getRCSDollarsVersion$Revision: 185 $
+
+\usepackage[dvips]{preview}
+\PreviewEnvironment{trans}
+\PreviewEnvironment{frame}
+
+\newcommand{\FigCentreTourne}[1]{\centerline{\includegraphics[width=\vsize,angle=-90]{#1}}}
+%\newcommand{\boiteblanc}[1]{\psframebox*[fillcolor=papayawhip]{#1}}
+\newcommand{\boiteblanc}[1]{\psframebox*[fillcolor=NavajoWhite1]{#1}}
+
+%\DealWithTwoUp
+
+%\newcommand{\reddrawline}{{\red \noindent\leavevmode\hrulefill}}
+
+\newcommand{\Idee}{{\red\Handwash}\xspace}
+%\Stopsign \Laserbeam \Estatically \Attention \Idee
+%\FilledRainCloud\Coffeecup
+
+\newcommand{\Cnn}{C$_{99}$\xspace}
+
+%% Plan plus petit :
+%\renewcommand{\OutlineFontSize}{\scriptsize}
+% Plan en une colonne :
+\renewcommand{\OutlineColumnNumbers}{1}
+\renewcommand\outlinename{Outline}
+
+
+\usetheme{gtc}
+\usecolortheme{gtc}
+
+
+\newcommand{\GrosRouge}[1]{{\red #1}}
+
+%\logo{\href{http://hpc-project.com}{\pgfuseimage{logo-HPC-Project}}\href{http://www.par4all.org}{\pgfuseimage{logo-Par4All}}}
+\pgfdeclareimage[width=0.8cm]{logo-HPC-Project}{Logo_HPC-Project-512x247-crop}
+%\pgfdeclareimage[width=0.75cm]{logo-Wild-Systems}{WildSystems-site-logo}
+\pgfdeclareimage[width=0.8cm]{logo-PIPS}{Logos/PIPS/logo-pips.small}
+\pgfdeclareimage[width=0.8cm]{logo-Par4All}{Par4All-logo}
+%\logo{\hbox to 1.5cm{\vbox{\href{http://pips4u.org}{\pgfuseimage{logo-PIPS}}\vss}}}
+\logo{\hbox to 0.8cm{\vbox{\href{http://pips4u.org}{\pgfuseimage{logo-PIPS}}\\\href{http://www.par4all.org}{\pgfuseimage{logo-Par4All}}\\\href{http://hpc-project.com}{\pgfuseimage{logo-HPC-Project}}\vss}}}
+%\logo{\hbox to 0.75cm{\vbox{\href{http://wild-systems.com}{\pgfuseimage{logo-Wild-Systems}}\\\href{http://www.par4all.org}{\pgfuseimage{logo-Par4All}}\vss}}}
+%\logo{\hbox to 0.75cm{\vbox{\pgfuseimage{logo-HPC-Project}\\\pgfuseimage{logo-telecom-bretagne}\\\pgfuseimage{logo-HPCAS}}\hss}}
+
+\newcommand{\HPCIN}{%\protect\usebeamercolor{normal text}
+  \textcolor{red}{\st{\textsc{hpc}}}plain computing\xspace}
+
+\title{SMECY Internal Representation\\
+  ---\\
+  C + \texttt{\#pragma}\\
+  ---\\
+  SMECY-C or SME-C?
+}
+
+\date{2011/05/25\\
+  ---\\
+  SMECY General Assembly\\
+  Delft}
+
+\author[Ronan \textsc{Keryell} \texttt{et al.}]{Michel
+  \textsc{Barréteau}\inst{2} \and Rémi \textsc{Barrère}\inst{2} \and Ronan
+  \textsc{Keryell}\inst{1}}
+
+\newcommand{\HPCP}[0]{\href{http://hpc-project.com}{HPC Project}}
+
+\newcommand{\TB}[0]{\href{http://hpcas.enstb.org}{Institut TÉLÉCOM/TÉLÉCOM
+    Bretagne/HPCAS}}
+
+\newcommand{\CRI}[0]{\href{http://www.cri.mines-paristech.fr}{Mines ParisTech/CRI}}
+
+\newcommand{\TRT}[0]{\href{http://www.trt.thalesgroup.com}{THALES Research
+    \& Technology}}
+
+\institute[SMECY GA --- 2011/05/25 @ Delft]{\inst{1}\HPCP\\\inst{2}\TRT}
+
+\begin{document}
+
+%\DealWithColors
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+%\slidepagestyle{CRI}
+
+%\LicenseTrans
+
+%\AtBeginSection[]
+%{
+%}
+%\AtBeginSubsection[]
+%{}
+
+
+
+% Here because of catcode wizardy I guess :-(
+% Should go into tikz_hpc
+% Could use \pgftext instead of using "text depth=0pt"
+\newcommand{\PlaceTextNode}[2]{\tikz{\node[inner sep=0pt,text depth=0pt] (#1) {#2};}}
+
+
+
+
+%\input{Lib/Algorithms/Parallel_Prefix/parallel_prefix}
+
+%\end{document}
+
+\begin{frame}[fragile]{SMECY C programming environment}
+  \begin{itemize}
+  \item Focus classical programming with legacy applications
+  \item Close to classical sequential C with C unified memory model
+  \item Add some \verb|#pragma| to specify SMECY details
+  \item Use cases
+    \begin{itemize}
+    \item Direct high-level programming
+    \item System high-level synthesis
+      \begin{enumerate}
+      \item Plain C99 or Matlab or SPEAR-DE or Fortran or DSL or Ptolemy
+        II or...
+      \item Tool: analyze and parallelize the code by adding automatically
+        parallel and mapping pragma
+      \item SMECY C
+      \end{enumerate}
+    \item Hardware high-level synthesis
+      \begin{enumerate}
+      \item C99 program with SMECY pragma
+      \item SMECY compiler with target description + target API
+      \item Executable on SMECY target with host and accelerator parts
+      \end{enumerate}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+
+\begin{trans}{Pragma tour}
+  \begin{itemize}
+  \item High Performance Fortran HPF (data parallelism, memory
+    distribution, data remapping...)
+  \item OpenMP 3.1 (data and task parallelism...)
+  \item BlueBee (parallelism \& hardware mapping)
+  \item hArtes
+  \item Many others
+    \begin{itemize}
+    \item Lot in hardware synthesis world
+    \item \Attention Bibliography to finish... Help! Already done by a
+      SMECY partner?
+    \end{itemize}
+  \end{itemize}
+\end{trans}
+
+
+\begin{frame}{Sequential equivalence}
+  \begin{BoiteB}{Same semantics}
+    \begin{center}
+      Sequential $\equiv$ Parallel $\equiv$ SMECY
+    \end{center}
+  \end{BoiteB}
+  \begin{itemize}
+  \item Do not perturb the programmer... \Attention
+    \begin{itemize}
+    \item Sequential execution gives same results as any SMECY
+      target implementation
+    \item Functional simulator for free! \smiley{} (think as SystemC...)
+    \item Easy debug of applications (do not even need of SMECY tools or
+      hardware)
+    \item Easy debug of SMECY tools too... \smiley
+
+      \pause
+
+    \item Can test the concepts before building tools!!!\\
+      \vavers Do not sequentialize the project! \smiley
+    \end{itemize}
+  \item OpenMP execution
+    \begin{itemize}
+    \item Parallelized version of functional simulator
+    \item Debug parallelized version of code
+    \item Only need OpenMP compiler + SMP machine
+    \item Can run Hellgrind or other execution verifiers \smiley
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{SMECY programming model}
+  \begin{itemize}
+  \item Sequential C programming model
+  \item Unified classical C shared memory model
+  \item OpenMP possible on SMP host and accelerators if available in SMECY
+    target
+  \item Some functions can be executed on some hardware accelerators or
+    other processing elements
+  \item No explicit communication between different target memory spaces
+  \item Help compiler with pragma or API to deal with
+    \begin{itemize}
+    \item Parallel execution
+    \item Mapping to specific hardware or processing elements
+    \item Consumed and produced data
+    \item Data remapping to cope with hardware constraints
+    \item Asynchronism \& synchronization on hardware resources
+    \end{itemize}
+    Use specific naming space to avoid conflicts with other existing
+    pragma
+\begin{lstlisting}
+#pragma smecy ...
+\end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+
+\begin{trans}{Parallel execution}
+  \begin{itemize}
+  \item Use OpenMP 3.1 \verb|#pragma| syntax \& API
+  \item $\exists$ OpenMP API reference implementation for sequential
+    execution \smiley
+    \begin{itemize}
+    \item For example \lstinline|omp_get_num_procs()| return always 1
+    \end{itemize}
+  \end{itemize}
+\begin{lstlisting}
+#pragma omp parallel for
+  for (int i = 0; i < size; i++)
+    out [i] = in [i] + 1;
+
+#pragma omp parallel sections
+  {
+    {
+      Add(200*2, (int *) tab, (int *) tab);
+    }
+#pragma omp section
+    {
+      Add(200*2, &tab[2][0], &tab[2][0]);
+    }
+#pragma omp section
+    {
+      Add(200*2, &tab[4][0], &tab[4][0]);
+    }
+  }
+
+#pragma omp parallel
+{
+#pragma omp task
+  this_may_be_in_another_task();
+}
+\end{lstlisting}
+\end{trans}
+
+
+\begin{frame}[fragile]{Hardware mapping}
+  \begin{itemize}
+  \item Specify where a function is executed
+  \item Use target-specific identifiers
+  \end{itemize}
+\begin{lstlisting}
+#pragma smecy map(GPP, 0) ...
+  bool result = Test(200*6, (int *) tab);
+
+#pragma smecy map(PE, 4) ...
+      Add(200*2, &tab[4][0], &tab[4][0]);
+\end{lstlisting}
+\end{frame}
+
+
+\begin{trans}{Data flow information}
+  \begin{itemize}
+  \item A SMECY compiler needs to add communications around accelerator
+    calls
+  \item Difficult in the general case for a compiler to track information
+    flow
+  \item \vavers Use annotation to describe memory use-def
+  \end{itemize}
+\begin{lstlisting}
+void Gen(int *out, int size) {
+  for (int i = 0; i < size; i++)
+    out [i] = 0;
+}
+    [...]
+#pragma smecy map(GPP, 0) arg(1, [6][200], out)
+  Gen((int *) tab, 200*6);
+    [...]
+void Add(int size, int in[size], int out[size]) {
+  for (int i = 0; i < size; i++)
+    out [i] = in [i] + 1;
+}
+    [...]
+#pragma smecy map(PE, 4) arg(2, [2][200], in) arg(3, [2][200], out)
+      Add(200*2, &tab[4][0], &tab[4][0]);
+\end{lstlisting}
+
+  \break
+
+  \begin{itemize}
+  \item Sparse sub-array access
+  \end{itemize}
+  \includegraphics[width=\hsize]{examples/2D_example-output}
+\begin{lstlisting}
+#pragma smecy map(PE, 0) arg(3, inout, [HEIGHT][WIDTH]			\
+			     /[HEIGHT/3:HEIGHT/3 + HEIGHT/2 - 1]	\
+			     [WIDTH/8:WIDTH/8 + HEIGHT/2 - 1])
+    square_symmetry(WIDTH, HEIGHT, image, HEIGHT/2, WIDTH/8, HEIGHT/3);
+\end{lstlisting}
+\end{trans}
+
+
+\begin{trans}{Data remapping}
+  \begin{itemize}
+  \item Some (hardware) functions need to access memory in a specific pattern
+    \begin{itemize}
+    \item Vector operation on a part of a 2D or 3D array...
+    \end{itemize}
+  \item Need to adapt memory layout between use and function requirements
+  \item Because of sequential equivalence, even the sequential code has
+    this issue
+    \begin{itemize}
+    \item \vavers Use an API instead of a \verb|#pragma|
+    \item \vavers Provide SMECY API for non-SMECY target (sequential,
+      OpenMP)
+    \end{itemize}
+  \item Example
+    \begin{itemize}
+    \item \lstinline|invert_vector()| operates on continuous memory
+    \item Can be applied on continuous memory (horizontal line in an image)
+    \item ... or on discontinuous memory \frownie{} (vertical line in an
+      image)
+    \end{itemize}
+  \end{itemize}
+  \includegraphics[width=\hsize]{examples/remapping_example-output}
+\begin{lstlisting}
+  // Draw 70 horizontal lines and map operation on 8 PEs:
+#pragma omp parallel for num_threads(8)
+  for(int proc = 0; proc < 70; proc++)
+    // Each iteration is on a different PE in parallel:
+#pragma smecy map(PE, proc & 7)			\
+              arg(2, in, [1][LINE_SIZE])	\
+              arg(3, out, [1][LINE_SIZE])
+    // Invert an horizontal line:
+    invert_vector(LINE_SIZE,
+		  &image[HEIGHT - 20 - proc][WIDTH/2 + 2*proc],
+		  &image[HEIGHT - 20 - proc][WIDTH/2 + 2*proc]);
+\end{lstlisting}
+
+  \break
+
+\begin{lstlisting}
+  /* Here we guess we have 5 hardware accelerators and we launch
+     operations on them: */
+#pragma omp parallel for num_threads(5)
+  for(int proc = 0; proc < 5; proc++) {
+    /* This is need to express the fact that our accelerator only accept
+       continuous data but we want apply them on non contiguous data in
+       the array */
+    int input_line[LINE_SIZE];
+    int output_line[LINE_SIZE];
+    /* We need to remap data in the good shape. The compiler should use
+       the remapping information to generate DMA transfer for example and
+       remove input_line array */
+    SMECY_remap_int2D_to_int1D(HEIGHT, WIDTH, HEIGHT/3, 30 + 20*proc,
+			       LINE_SIZE, 1, image,
+			       LINE_SIZE, input_line);
+    // Each iteration is on a different PE in parallel:
+#pragma smecy map(PE, proc) arg(2, in, [LINE_SIZE]) arg(3, out, [LINE_SIZE])
+    invert_vector(LINE_SIZE, input_line, output_line);
+    SMECY_remap_int1D_to_int2D(LINE_SIZE, output_line,
+			       HEIGHT, WIDTH, HEIGHT/3, 30 + 20*proc,
+			       LINE_SIZE, 1, image);
+  }
+\end{lstlisting}
+\end{trans}
+
+
+\begin{frame}[fragile]{Synchronization}
+  \begin{itemize}
+  \item By default, synchronous function calls to accelerators
+  \item Asynchronous execution needs OpenMP threads around accelerator
+    calls
+    \begin{itemize}
+    \item May be overkill if a lot of fine grain accelerator calls to do
+      pipelining...
+    \end{itemize}
+  \item \vavers Introduce asynchronous function calls
+\begin{lstlisting}
+#pragma smecy map(...) async
+\end{lstlisting}
+  \item Rely on synchronization \verb|#pragma|
+\begin{lstlisting}
+#pragma smecy wait(PE,2)
+\end{lstlisting}
+  \item Syntax/concept still to finalize with an example of  pipelined
+    application...
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{Compilation}
+  \begin{itemize}
+  \item Lot of information in \verb|#pragma| and API
+  \item Simple use-def analysis
+  \item Simple geometrical array analysis to generate communications
+  \item No need for polyhedral model
+  \item Recycle some concepts from:\\
+    Corinne ANCOURT, Fabien COELHO, François IRIGOIN and Ronan KERYELL. «
+    A Linear Algebra Framework for Static HPF Code Distribution. » in
+    \emph{CPC'93 : Fourth Workshop on Compilers for Parallel Computers.}
+    \textbf{Delft, Netherlands, December 1993.} \smiley
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{Conclusion}
+  \begin{itemize}
+  \item Classical C programming and other languages
+  \item \verb|#pragma|tic approach
+  \item Simple \verb|#pragma| \& API instead of specific DSL to learn
+  \item No need to define explicit communications
+  \item Can be used to program SMECY applications
+  \item Usable as \emph{a part of the} Internal Representation between
+    SMECY tools
+  \item Should be easy to compile
+  \item Sequential equivalence semantics for easy programming and
+    debugging of applications, tools, with or \emph{without} SMECY
+    compilers and targets
+    \begin{itemize}
+    \item \vavers Few small already examples available and run in
+      sequential and with OpenMP
+    \item Need to port use-case applications or to generate SMECY C with
+      automatic tools
+    \end{itemize}
+  \item Syntax detail of \verb|#pragma| \& API still to tweak and
+    contribute!
+  \item Do we need higher level \verb|#pragma| (\emph{pipeline this
+      loop}...)? Different levels? Different tools?
+  \end{itemize}
+\end{frame}
+
+
+\section*{Table of content}
+
+\begin{multicols}{2}
+  \tiny
+  \tableofcontents[frametitles]
+  \textbf{You are here!}\hfill\expandafter\the\csname c@page\endcsname
+\end{multicols}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% ispell-local-dictionary: "american"
+%%% End:
