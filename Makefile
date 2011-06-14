@@ -7,14 +7,13 @@ CXXFLAGS			= -g -Wall -Wno-write-strings
 ROSE_LIBS			= $(ROSE_LIB_DIR)/librose.la
 
 allFiles = parseTest
-parserFiles = main.cpp lex.yy.o smecyParser.tab.o smecyAttribute.o
 
+#TODO add dependencies with the .hs
 all: $(allFiles)
 
-#TODO divide in different steps to avoid whole recompilation each time
-parseTest: smecyAttribute.o lex.yy.o smecyParser.tab.o	
+parseTest: main.cpp smecyAttribute.o lex.yy.o smecyParser.tab.o	
 	@echo [Linking]
-	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $(parserFiles) $(ROSE_LIBS) >/dev/null
+	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
 	
 %.o : %.cpp
 	@echo [Compiling $<]
@@ -22,7 +21,7 @@ parseTest: smecyAttribute.o lex.yy.o smecyParser.tab.o
 	
 lex.yy.o : lex.yy.c smecyParser.tab.cc
 	@echo [Compiling $<]
-	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./lex.yy.c
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./$<
 	
 smecyParser.tab.o : smecyParser.tab.cc
 	@echo [Compiling $<]
@@ -40,7 +39,7 @@ test: parseTest input
 	@echo [Testing]
 	@./parseTest input
 
-#TODO write less weird clean rule
+#TODO rewrite to allow cleaning partial build
 clean:
 	rm *.o
 	rm parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c

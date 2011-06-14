@@ -22,6 +22,8 @@ static smecyAttribute *attribute = NULL;
 %token <intType> INTEGER;
 %token <stringType> ID;
 
+%type <intType> closing_map_clause
+
 %start smecy_directive;
 
 %%
@@ -41,15 +43,14 @@ arg_clause_list
 					
 map_clause
 					: MAP '(' ID closing_map_clause { 
-						std::string accelerator=$3;
-						smecyClause clause("bob");
-						//attribute->addSmecyClause(clause);
+						attribute->addSmecyClause(smecyClause($3,$4));
+						std::cout<<"Recognized map("<<$3<<','<<$4<<") !"<<std::endl;
 						}
 					;
 					
 closing_map_clause
-					: ')'
-					| ',' INTEGER ')'
+					: ')' { $$ = -1; }
+					| ',' INTEGER ')' { $$ = $2; }
 					;
 					
 /*outer_expression	//we want to avoid confusion between the parenthesis of the expression and of the clause

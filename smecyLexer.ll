@@ -34,7 +34,6 @@ int yywrap(void)
 
 int parseSmecyDirective(std::string directive)
 {
-	//yyin = fopen(directive.data(),"r");
 	char *stream = new char[directive.size()];
 	directive.copy(stream, directive.size());
 	yyin = fmemopen(stream, directive.size(), "r");
