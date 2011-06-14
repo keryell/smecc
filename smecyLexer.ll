@@ -1,9 +1,7 @@
 /* SMECY pragma lexer */
 
 %{
-#include <stdlib.h>
-#include <string>
-#include <iostream>
+#include "public.h"
 #include "smecyParser.tab.hh"
 #include "smecyAttribute.h"
 void yyerror(char *);
@@ -33,13 +31,10 @@ int yywrap(void)
 	return 1;
 }
 
-int main(int argc, char *argv[])
+int parseSmecyDirective(std::string directive)
 {
-	yyin = fopen(argv[1],"r");
+	yyin = fopen(directive.data(),"r");
 	_yyparse();
 	fclose(yyin);
-	
-	yyin = fopen(argv[1],"r");
-	_yyparse();
-	fclose(yyin);
+	return 0;
 }

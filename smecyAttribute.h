@@ -1,11 +1,7 @@
 #ifndef SMECY_ATTRIBUTE_H
 #define SMECY_ATTRIBUTE_H
 
-#include "rose.h"
-#include <iostream>
-#include <vector>
-#include <string>
-#include <utility>
+#include "public.h"
 
 //=================================================================================
 // Defines attributes destined to be attached to SMECY pragma nodes of the ROSE AST

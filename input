@@ -1,1 +1,1 @@
-smecy map(pe) arg(3,in,[3][4],/[1:2][7:3])
+smecy map(pe,5) arg(3,in,[3][14],/[1:2][7:3])

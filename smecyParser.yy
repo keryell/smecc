@@ -1,13 +1,11 @@
 /* SMECY pragma parser */
 
 %{
-#include <iostream>
+#include "public.h"
 
 int yylex(void);
 void yyerror(char *); 
-
 int _yyparse();
-
 %}
 
 %union
