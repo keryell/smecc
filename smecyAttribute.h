@@ -31,8 +31,8 @@ protected:
 	//TODO could be made shorter with multiple child classes
 	std::string accelerator;
 	int unitNumber;
-	smecyArgType argType;
 	int argNumber;
+	smecyArgType argType;
 	std::vector<int> argSize;
 	std::vector<std::pair<int,int> > argRange;
 public:
@@ -42,7 +42,7 @@ public:
 	smecyClause(int argNumber, std::vector<int> argSize);
 	smecyClause(int argNumber, std::vector<std::pair<int,int> > argRange);
 
-	void print();	
+	void print();
 };
 
 //all smecy clauses attached to one node

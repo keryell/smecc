@@ -4,6 +4,7 @@
 #include "public.h"
 #include "smecyParser.tab.hh"
 #include "smecyAttribute.h"
+
 void yyerror(char *);
 int _yyparse();
 %}
@@ -33,7 +34,10 @@ int yywrap(void)
 
 int parseSmecyDirective(std::string directive)
 {
-	yyin = fopen(directive.data(),"r");
+	//yyin = fopen(directive.data(),"r");
+	char *stream = new char[directive.size()];
+	directive.copy(stream, directive.size());
+	yyin = fmemopen(stream, directive.size(), "r");
 	_yyparse();
 	fclose(yyin);
 	return 0;

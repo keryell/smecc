@@ -2,10 +2,14 @@
 
 %{
 #include "public.h"
+#include "smecyAttribute.h"
 
 int yylex(void);
 void yyerror(char *); 
 int _yyparse();
+
+//smecy attribute being built
+static smecyAttribute *attribute = NULL;
 %}
 
 %union
@@ -22,8 +26,8 @@ int _yyparse();
 
 %%
 smecy_directive
-					: SMECY arg_clause arg_clause_list	//we do not allow empty directives
-					| SMECY map_clause arg_clause_list
+					: SMECY { attribute=new smecyAttribute(); } arg_clause arg_clause_list	//we do not allow empty directives
+					| SMECY { attribute=new smecyAttribute(); } map_clause arg_clause_list
 					;
 
 arg_clause
@@ -36,7 +40,11 @@ arg_clause_list
 					;
 					
 map_clause
-					: MAP '(' ID closing_map_clause
+					: MAP '(' ID closing_map_clause { 
+						std::string accelerator=$3;
+						smecyClause clause("bob");
+						//attribute->addSmecyClause(clause);
+						}
 					;
 					
 closing_map_clause
@@ -79,7 +87,7 @@ size_list
 					;
 
 range
-					: '/' '[' INTEGER ':' INTEGER ']' range_list
+					: '/' '[' INTEGER ':' INTEGER ']' range_list	//TODO add possibility for empty or "single" ranges
 					;
 					
 range_list

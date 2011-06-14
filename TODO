@@ -1,5 +1,2 @@
 * implémenter les décorations SMECY en s'inspirant de celles d'OMP
 * intégrer lesdites décorations au parser
-* faire une fonction du parseur appelable depuis dehors
-	- écrire un main.cpp duquel on appelera un wrapper contenant _yyparse et renvoyant le résultat
-	- enlever le main de smecyLexer

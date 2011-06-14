@@ -5,8 +5,8 @@
 
 int main(int argc, char *argv[])
 {
-	parseSmecyDirective("input");
-	parseSmecyDirective("input");
-	parseSmecyDirective("input");
+	parseSmecyDirective("smecy map(PE)");
+	parseSmecyDirective("smecy arg(2,out) arg(3,in)");
+	parseSmecyDirective("smecy map(PE,7) arg(2,out)");
 	return 0;
 }
