@@ -54,6 +54,11 @@ public:
 	void addSmecyClause(smecyClause clause);
 	//TODO need for a method that returns the original pragma string ?
 	void print();
+	
+	//static attributes needed for parsing
+	static smecyAttribute *attributeBeingBuilt ;
+	static std::vector<int> argSize;
+	static std::vector<std::pair<int,int> > argRange;
 };
 
 #endif //SMECY_ATTRIBUTE_H

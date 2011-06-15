@@ -15,6 +15,8 @@ parseTest: main.cpp smecyAttribute.o lex.yy.o smecyParser.tab.o
 	@echo [Linking]
 	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
 	
+smecyAttribute.cpp : smecyAttribute.h
+	
 %.o : %.cpp
 	@echo [Compiling $<]
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./$<

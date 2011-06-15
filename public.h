@@ -9,7 +9,10 @@
 #include <string>
 #include <utility>
 
-//global wrapper for smecy directive parsing TODO change return to smecyAttributeList
-int parseSmecyDirective(std::string);	//FIXME parser can't recover after a syntax error
+class smecyAttribute;
+class smecyClause;
+
+//global wrapper for smecy directive parsing TODO change return to smecyAttribute
+smecyAttribute *parseSmecyDirective(std::string);	//FIXME parser can't recover after a syntax error
 
 #endif //PUBLIC_H
