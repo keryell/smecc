@@ -7,7 +7,7 @@ namespace smecy
 {
 	void attachSmecyAttributes(SgProject *sageFilePtr)
 	{
-		//making a list of all pragma nodes in AST
+		//making a list of all pragma nodes in AST and going through it
 		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
 		std::vector<SgNode*>::iterator iter;
 		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
@@ -22,10 +22,10 @@ namespace smecy
 			if (pragmaHead == "smecy")
 			{
 				//TODO handle merging with existing smecy attribute
+				//TODO handle syntax errors and print nice error message
 				pragmaDeclaration->addNewAttribute("smecy", parseSmecyDirective(pragmaString));
 				//std::cout << "Adding smecy attribute !" << std::endl;
 			}
-			
 		}
 		return ;
 	}

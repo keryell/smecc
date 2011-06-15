@@ -1,1 +1,4 @@
-* intégrer lesdites décorations au parser (en cours)
+* refactorer smecyAttribute
+* décider du sort de parseSmecyDirective (déplacer dans un namespace ?)
+* compléter la grammaire pour isoler les expressions
+* rajouter au main les appels aux fonctions OMP pour faire la décoration puis la génération de noeuds de l'AST en parallèle

@@ -35,6 +35,7 @@ smecyAttribute *parseSmecyDirective(std::string directive)
 {
 	char *stream = new char[directive.size()];
 	directive.copy(stream, directive.size());
+	YY_FLUSH_BUFFER;
 	yyin = fmemopen(stream, directive.size(), "r");
 	_yyparse();
 	fclose(yyin);

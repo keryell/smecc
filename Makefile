@@ -4,6 +4,12 @@ ROSE_LIB_DIR 		= /home/lanore/Downloads/compileTree/lib
 CXX					= g++
 CPPFLAGS			= 
 CXXFLAGS			= -g -Wall -Wno-write-strings
+RMFLAGS				=
+LEX					= flex
+YACC				= bison
+LEXFLAGS			=
+YACCFLAGS			= -d
+RMFLAGS				= -f
 ROSE_LIBS			= $(ROSE_LIB_DIR)/librose.la
 
 allFiles = parseTest
@@ -32,11 +38,11 @@ smecyParser.tab.o : smecyParser.tab.cc
 	
 smecyParser.tab.cc : smecyParser.yy
 	@echo [Parser $<]
-	@bison -d smecyParser.yy
+	@$(YACC) $(YACCFLAGS) $<
 	
 lex.yy.c : smecyLexer.ll
 	@echo [Lexer $<]
-	@flex smecyLexer.ll
+	@$(LEX) $(LEXFLAGS) $<
 	
 test: parseTest input.cpp
 	@echo [Testing $<]
@@ -44,7 +50,7 @@ test: parseTest input.cpp
 
 #TODO rewrite to allow cleaning partial build
 clean:
-	rm -f *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp
+	rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp
 	
 backup: clean
 	cp * ~/stage/codeBackup/

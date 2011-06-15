@@ -50,17 +50,6 @@ closing_map_clause
 					| ',' INTEGER ')' { $$ = $2; }
 					;
 					
-/*outer_expression	//we want to avoid confusion between the parenthesis of the expression and of the clause
-					: NOPAR
-					| NOPAR '(' inner_expression ')'NOPAR	//FIXME shift/reduce conflict
-					;
-					
-inner_expression
-					: NOPAR
-					| inner_expression ',' inner_expression
-					| NOPAR '(' inner_expression ')'NOPAR
-					;*/
-					
 arg_parameter_list
 					: arg_parameter
 					| arg_parameter ',' arg_parameter_list

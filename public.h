@@ -13,7 +13,7 @@
 class smecyAttribute;
 class smecyClause;
 
-//global wrapper for smecy directive parsing TODO change return to smecyAttribute
+//global wrapper for smecy directive parsing
 smecyAttribute *parseSmecyDirective(std::string);	//FIXME parser can't recover after a syntax error
 
 #endif //PUBLIC_H
