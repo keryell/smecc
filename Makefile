@@ -10,11 +10,15 @@ allFiles = parseTest
 
 all: $(allFiles)
 
-parseTest: main.cpp smecyAttribute.o smecyAstConstruction.o lex.yy.o smecyParser.tab.o	
-	@echo [Compiling $< and linking]
+parseTest: main.o smecyAttribute.o smecyAstConstruction.o lex.yy.o smecyParser.tab.o	
+	@echo [Linking]
 	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
 		
 %.o : %.cpp %.h
+	@echo [Compiling $<]
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./$<
+	
+%.o : %.cpp
 	@echo [Compiling $<]
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./$<
 	
@@ -34,11 +38,13 @@ lex.yy.c : smecyLexer.ll
 	@echo [Lexer $<]
 	@flex smecyLexer.ll
 	
-test: parseTest input
+test: parseTest input.cpp
 	@echo [Testing $<]
-	@./parseTest input
+	@./parseTest -c input.cpp
 
 #TODO rewrite to allow cleaning partial build
 clean:
-	rm *.o
-	rm parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c
+	rm -f *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp
+	
+backup: clean
+	cp * ~/stage/codeBackup/

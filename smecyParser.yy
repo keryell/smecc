@@ -31,7 +31,7 @@ smecy_directive
 
 //arg_clause puts the arg number on top of the stack to be passed down
 arg_clause
-					: ARG '(' INTEGER ',' arg_parameter_list { smecyAttribute::argNumber = $3; } ')'
+					: ARG '(' INTEGER ',' { smecyAttribute::argNumber = $3; } arg_parameter_list ')'
 					;
 					
 arg_clause_list

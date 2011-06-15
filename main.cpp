@@ -1,15 +1,15 @@
 //small main for testing purposes
 
-#include "smecyParser.tab.hh"
 #include "public.h"
 #include "smecyAttribute.h"
+#include "smecyAstConstruction.h"
 
 int main(int argc, char *argv[])
 {
 	SgProject* project=frontend(argc,argv);
 	
-	//parseSmecyDirective("smecy map(PE)")->print();
-	//parseSmecyDirective("smecy arg(2,out) arg(3,in,[2][3][4], out)")->print();
-	//parseSmecyDirective("smecy map(PE,7) arg(19,[113][117],/[2:4][5:9])")->print();
-	return 0;
+	smecy::attachSmecyAttributes(project);
+	
+	AstTests::runAllTests(project);
+	return backend(project);
 }

@@ -18,7 +18,7 @@ out						{ return OUT; }
 inout					{ return INOUT; }
 unused					{ return UNUSED; }
 [:,\[\]()/]				{ return *yytext; }
-[1-9][0-9]*				{ yylval.intType = atoi(yytext);
+[0-9]+				{ yylval.intType = atoi(yytext);
 						  return INTEGER; }
 [a-zA-Z_][-a-zA-Z0-9_]*	{ yylval.stringType = strdup(yytext);
 						  return ID; }
