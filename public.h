@@ -14,6 +14,6 @@ class smecyAttribute;
 class smecyClause;
 
 //global wrapper for smecy directive parsing
-smecyAttribute *parseSmecyDirective(std::string);	//FIXME parser can't recover after a syntax error
+smecyAttribute *parseSmecyDirective(std::string);
 
 #endif //PUBLIC_H

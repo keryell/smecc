@@ -9,6 +9,8 @@ void yyerror(char *);
 int _yyparse();
 %}
 
+%option nounput
+
 %%
 smecy					{ return SMECY; }
 map						{ return MAP; }

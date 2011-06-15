@@ -1,16 +1,16 @@
 ROSE_INCLUDE_DIR	= /home/lanore/Downloads/compileTree/include
 BOOST_CPPFLAGS		= -pthread -I/home/lanore/Downloads/boostInstallTree/include
 ROSE_LIB_DIR 		= /home/lanore/Downloads/compileTree/lib
+ROSE_LIBS			= $(ROSE_LIB_DIR)/librose.la
 CXX					= g++
+LEX					= flex
+YACC				= bison
 CPPFLAGS			= 
 CXXFLAGS			= -g -Wall -Wno-write-strings
 RMFLAGS				=
-LEX					= flex
-YACC				= bison
 LEXFLAGS			=
 YACCFLAGS			= -d
 RMFLAGS				= -f
-ROSE_LIBS			= $(ROSE_LIB_DIR)/librose.la
 
 allFiles = parseTest
 
@@ -48,7 +48,6 @@ test: parseTest input.cpp
 	@echo [Testing $<]
 	@./parseTest -c input.cpp
 
-#TODO rewrite to allow cleaning partial build
 clean:
 	rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp
 	

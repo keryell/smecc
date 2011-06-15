@@ -6,7 +6,6 @@
 
 namespace smecy
 {
-	//TODO decide when it should happen and set parameter accordingly
 	void attachSmecyAttributes(SgProject *sageFilePtr);
 }
 
