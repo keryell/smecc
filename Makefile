@@ -8,11 +8,10 @@ ROSE_LIBS			= $(ROSE_LIB_DIR)/librose.la
 
 allFiles = parseTest
 
-#TODO add dependencies with the .hs
 all: $(allFiles)
 
-parseTest: main.cpp smecyAttribute.o lex.yy.o smecyParser.tab.o	
-	@echo [Linking]
+parseTest: main.cpp smecyAttribute.o smecyAstConstruction.o lex.yy.o smecyParser.tab.o	
+	@echo [Compiling $< and linking]
 	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
 		
 %.o : %.cpp %.h
@@ -36,7 +35,7 @@ lex.yy.c : smecyLexer.ll
 	@flex smecyLexer.ll
 	
 test: parseTest input
-	@echo [Testing]
+	@echo [Testing $<]
 	@./parseTest input
 
 #TODO rewrite to allow cleaning partial build
