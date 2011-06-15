@@ -19,7 +19,7 @@ int _yyparse();
 %token <intType> INTEGER;
 %token <stringType> ID;
 
-%type <intType> closing_map_clause arg_clause
+%type <intType> closing_map_clause
 
 %start smecy_directive;
 
@@ -31,7 +31,7 @@ smecy_directive
 
 //arg_clause puts the arg number on top of the stack to be passed down
 arg_clause
-					: ARG '(' INTEGER ',' arg_parameter_list { $<intType>$ = $3; } ')'
+					: ARG '(' INTEGER ',' arg_parameter_list { smecyAttribute::argNumber = $3; } ')'
 					;
 					
 arg_clause_list
@@ -62,44 +62,39 @@ inner_expression
 					;*/
 					
 arg_parameter_list
-					: arg_parameter { $<intType>$ = $<intType>0; }
-					| arg_parameter { $<intType>$ = $<intType>0; } ',' arg_parameter_list
+					: arg_parameter
+					| arg_parameter ',' arg_parameter_list
 					;
 					
 arg_parameter		
-					: IN { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause($<intType>0,smecy_arg_in)); }
-					| OUT { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause($<intType>0,smecy_arg_out)); }
-					| INOUT { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause($<intType>0,smecy_arg_inout)); }
-					| UNUSED { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause($<intType>0,smecy_arg_unused)); }
-					| { $<intType>$ = $<intType>0; } size
-					| { $<intType>$ = $<intType>0; } range
+					: IN { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause(smecyAttribute::argNumber,smecy_arg_in)); }
+					| OUT { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause(smecyAttribute::argNumber,smecy_arg_out)); }
+					| INOUT { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause(smecyAttribute::argNumber,smecy_arg_inout)); }
+					| UNUSED { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause(smecyAttribute::argNumber,smecy_arg_unused)); }
+					| size
+					| range
 					;
 					
 size
-					: '[' INTEGER ']' { $<intType>$ = $<intType>0;
-						smecyAttribute::argSize.clear();
+					: '[' INTEGER ']' { smecyAttribute::argSize.clear();
 						smecyAttribute::argSize.push_back($2);
 						} size_list
 					; //FIXME allow expressions?
 
 size_list
-					: /* empty */ { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause($<intType>0,smecyAttribute::argSize)); }
-					| '[' INTEGER ']' { $<intType>$ = $<intType>0;
-						smecyAttribute::argSize.push_back($2);
-						} size_list
+					: /* empty */ { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause(smecyAttribute::argNumber,smecyAttribute::argSize)); }
+					| '[' INTEGER ']' { smecyAttribute::argSize.push_back($2); } size_list
 					;
 
 range
-					: '/' '[' INTEGER ':' INTEGER ']' { $<intType>$ = $<intType>0;
-						smecyAttribute::argRange.clear();
+					: '/' '[' INTEGER ':' INTEGER ']' { smecyAttribute::argRange.clear();
 						smecyAttribute::argRange.push_back(std::pair<int,int>($3,$5));
 						} range_list	//TODO add possibility for empty or "single" ranges
 					;
 					
 range_list
-					: /* empty */ { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause($<intType>0,smecyAttribute::argRange)); }
-					| '[' INTEGER ':' INTEGER ']' { $<intType>$ = $<intType>0;
-						smecyAttribute::argRange.push_back(std::pair<int,int>($2,$4));
+					: /* empty */ { smecyAttribute::attributeBeingBuilt->addSmecyClause(smecyClause(smecyAttribute::argNumber,smecyAttribute::argRange)); }
+					| '[' INTEGER ':' INTEGER ']' { smecyAttribute::argRange.push_back(std::pair<int,int>($2,$4));
 						} range_list
 					;
 %%

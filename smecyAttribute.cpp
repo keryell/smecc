@@ -10,6 +10,7 @@
 smecyAttribute* smecyAttribute::attributeBeingBuilt ;
 std::vector<int> smecyAttribute::argSize;
 std::vector<std::pair<int,int> > smecyAttribute::argRange;
+int smecyAttribute::argNumber;
 
 void smecyAttribute::addSmecyClause(smecyClause clause)
 {

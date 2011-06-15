@@ -59,6 +59,7 @@ public:
 	static smecyAttribute *attributeBeingBuilt ;
 	static std::vector<int> argSize;
 	static std::vector<std::pair<int,int> > argRange;
+	static int argNumber;
 };
 
 #endif //SMECY_ATTRIBUTE_H
