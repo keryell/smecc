@@ -3,6 +3,10 @@
 
 #include "smecyAstConstruction.h"
 
+//===================================================================
+// Implements functions used during the translation of SMECY programs
+//===================================================================
+
 namespace smecy
 {
 	void attachAttributes(SgProject *sageFilePtr)

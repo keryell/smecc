@@ -10,12 +10,12 @@
 #include <string>
 #include <utility>
 
-//global wrapper for smecy directive parsing
 namespace smecy
 {
 	class Attribute;
 	class Clause;
-
+	
+	//global wrapper for smecy directive parsing
 	Attribute* parseDirective(std::string);
 }
 

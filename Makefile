@@ -17,7 +17,7 @@ allFiles = parseTest
 
 all: $(allFiles)
 
-parseTest: main.o smecyAttribute.o smecyAstConstruction.o lex.yy.o smecyParser.tab.o	
+parseTest: main.o smecyAttribute.o smecyAstConstruction.o lex.yy.o smecyParser.tab.o sgSmecyNodes.o
 	@echo [Linking]
 	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
 		
@@ -50,7 +50,8 @@ test: parseTest input.cpp
 	@./parseTest $(TESTFLAGS) -c input.cpp
 
 clean:
-	rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp input.cpp.*
+	@rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp input.cpp.*
 	
 backup: clean
-	cp * ~/stage/codeBackup/
+	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
+	@cp * ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
