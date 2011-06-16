@@ -8,7 +8,11 @@ int main(int argc, char *argv[])
 {
 	SgProject* project=frontend(argc,argv);
 	
-	smecy::attachSmecyAttributes(project);
+	smecy::attachAttributes(project);
+	//OmpSupport::processOpenMP(project);
+	
+	generatePDF(*project);
+	generateDOT(*project);
 	
 	AstTests::runAllTests(project);
 	return backend(project);

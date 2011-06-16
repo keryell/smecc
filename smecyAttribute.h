@@ -7,59 +7,62 @@
 // Defines attributes destined to be attached to SMECY pragma nodes of the ROSE AST
 //=================================================================================
 
-enum smecyClauseType
+namespace smecy
 {
-	smecy_map,
-	smecy_arg_type,
-	smecy_arg_size,
-	smecy_arg_range
-};
+	enum ClauseType
+	{
+		_map,
+		_arg_type,
+		_arg_size,
+		_arg_range
+	};
 
-enum smecyArgType
-{
-	smecy_arg_in,
-	smecy_arg_out,
-	smecy_arg_inout,
-	smecy_arg_unused
-};
+	enum ArgType
+	{
+		_arg_in,
+		_arg_out,
+		_arg_inout,
+		_arg_unused
+	};
 
-//individual smecy clause
-class smecyClause
-{
-protected:
-	smecyClauseType type;
-	//TODO could be made shorter with multiple child classes
-	std::string accelerator;
-	int unitNumber;
-	int argNumber;
-	smecyArgType argType;
-	std::vector<int> argSize;
-	std::vector<std::pair<int,int> > argRange;
-public:
-	//constructors
-	smecyClause(std::string accelerator, int unitNumber=-1);
-	smecyClause(int argNumber, smecyArgType argType);
-	smecyClause(int argNumber, std::vector<int> argSize);
-	smecyClause(int argNumber, std::vector<std::pair<int,int> > argRange);
+	//individual smecy clause
+	class Clause
+	{
+	protected:
+		ClauseType type;
+		//TODO could be made shorter with multiple child classes
+		std::string accelerator;
+		int unitNumber;
+		int argNumber;
+		ArgType argType;
+		std::vector<int> argSize;
+		std::vector<std::pair<int,int> > argRange;
+	public:
+		//constructors
+		Clause(std::string accelerator, int unitNumber=-1);
+		Clause(int argNumber, ArgType argType);
+		Clause(int argNumber, std::vector<int> argSize);
+		Clause(int argNumber, std::vector<std::pair<int,int> > argRange);
 
-	void print();
-};
+		void print();
+	};
 
-//all smecy clauses attached to one node
-class smecyAttribute: public AstAttribute
-{
-protected:
-	std::vector<smecyClause> clauseList;
-public:
-	void addSmecyClause(smecyClause clause);
-	//TODO need for a method that returns the original pragma string ?
-	void print();
+	//all smecy clauses attached to one node
+	class Attribute: public AstAttribute
+	{
+	protected:
+		std::vector<Clause> clauseList;
+	public:
+		void addClause(Clause clause);
+		//TODO need for a method that returns the original pragma string ?
+		void print();
 	
-	//static attributes needed for parsing
-	static smecyAttribute *attributeBeingBuilt ;
-	static std::vector<int> argSize;
-	static std::vector<std::pair<int,int> > argRange;
-	static int argNumber;
-};
+		//static attributes needed for parsing
+		static Attribute *attributeBeingBuilt ;
+		static std::vector<int> argSize;
+		static std::vector<std::pair<int,int> > argRange;
+		static int argNumber;
+	};
+}//namespace smecy
 
 #endif //SMECY_ATTRIBUTE_H

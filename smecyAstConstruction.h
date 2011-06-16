@@ -6,7 +6,7 @@
 
 namespace smecy
 {
-	void attachSmecyAttributes(SgProject *sageFilePtr);
+	void attachAttributes(SgProject *sageFilePtr);
 }
 
 #endif //SMECY_AST_CONSTRUCTION_H

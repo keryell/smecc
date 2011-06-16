@@ -33,7 +33,7 @@ int yywrap(void)
 	return 1;
 }
 
-smecyAttribute *parseSmecyDirective(std::string directive)
+smecy::Attribute *smecy::parseDirective(std::string directive)
 {
 	char *stream = new char[directive.size()];
 	directive.copy(stream, directive.size());
@@ -41,5 +41,5 @@ smecyAttribute *parseSmecyDirective(std::string directive)
 	yyin = fmemopen(stream, directive.size(), "r");
 	_yyparse();
 	fclose(yyin);
-	return smecyAttribute::attributeBeingBuilt;
+	return smecy::Attribute::attributeBeingBuilt;
 }

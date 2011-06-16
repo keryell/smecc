@@ -11,6 +11,7 @@ RMFLAGS				=
 LEXFLAGS			=
 YACCFLAGS			= -d
 RMFLAGS				= -f
+TESTFLAGS			= -rose:openmp:parse_only #ast_only, lowering, parse_only
 
 allFiles = parseTest
 
@@ -46,10 +47,10 @@ lex.yy.c : smecyLexer.ll
 	
 test: parseTest input.cpp
 	@echo [Testing $<]
-	@./parseTest -c input.cpp
+	@./parseTest $(TESTFLAGS) -c input.cpp
 
 clean:
-	rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp
+	rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp input.cpp.*
 	
 backup: clean
 	cp * ~/stage/codeBackup/
