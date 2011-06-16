@@ -17,9 +17,11 @@ int _yyparse();
 
 %token SMECY MAP ARG '[' ']' '/' '(' ')' ':' ',' IN OUT INOUT UNUSED NOPAR
 %token <intType> INTEGER;
-%token <stringType> ID;
+%token <stringType> ID EXPR_THING;
 
-%type <intType> closing_map_clause
+%type <intType> closing_map_clause int
+
+%nonassoc INTEGER
 
 %start smecy_directive;
 
@@ -31,7 +33,7 @@ smecy_directive
 
 //arg_clause puts the arg number on top of the stack to be passed down
 arg_clause
-					: ARG '(' INTEGER ',' { smecy::Attribute::argNumber = $3; } arg_parameter_list ')'
+					: ARG '(' int ',' { smecy::Attribute::argNumber = $3; } arg_parameter_list ')'
 					;
 					
 arg_clause_list
@@ -47,7 +49,7 @@ map_clause
 					
 closing_map_clause
 					: ')' { $$ = -1; }
-					| ',' INTEGER ')' { $$ = $2; }
+					| ',' int ')' { $$ = $2; }	//FIXME type de retour de int
 					;
 					
 arg_parameter_list
@@ -65,26 +67,53 @@ arg_parameter
 					;
 					
 size
-					: '[' INTEGER ']' { smecy::Attribute::argSize.clear();
+					: '[' int ']' { smecy::Attribute::argSize.clear();
 						smecy::Attribute::argSize.push_back($2);
 						} size_list
 					; //FIXME allow expressions?
 
 size_list
 					: /*empty*/ { smecy::Attribute::attributeBeingBuilt->addClause(smecy::Clause(smecy::Attribute::argNumber,smecy::Attribute::argSize));}
-					| '[' INTEGER ']' { smecy::Attribute::argSize.push_back($2); } size_list
+					| '[' int ']' { smecy::Attribute::argSize.push_back($2); } size_list
 					;
 
 range
-					: '/' '[' INTEGER ':' INTEGER ']' { smecy::Attribute::argRange.clear();
+					: '/' '[' int ':' int ']' { smecy::Attribute::argRange.clear();
 						smecy::Attribute::argRange.push_back(std::pair<int,int>($3,$5));
 						} range_list	//TODO add possibility for empty or "single" ranges
 					;
 					
 range_list
 					: /*empty*/ { smecy::Attribute::attributeBeingBuilt->addClause(smecy::Clause(smecy::Attribute::argNumber,smecy::Attribute::argRange));}
-					| '[' INTEGER ':' INTEGER ']' { smecy::Attribute::argRange.push_back(std::pair<int,int>($2,$4));
+					| '[' int ':' int ']' { smecy::Attribute::argRange.push_back(std::pair<int,int>($2,$4));
 						} range_list
+					;
+
+int
+					: { smecy::Attribute::isExprMode=1; smecy::Attribute::expr.str(""); } int_expr { smecy::Attribute::isExprMode=0; }
+					;
+					
+int_expr
+					: INTEGER
+					| EXPR_THING { smecy::Attribute::expr << $1; } expr { std::cout << "EXPR : " << smecy::Attribute::expr.str() << std::endl; }
+					;
+
+expr
+					: /*empty*/
+					| INTEGER { smecy::Attribute::expr << $1; } expr
+					| EXPR_THING { smecy::Attribute::expr << $1; } expr
+					| '(' { smecy::Attribute::expr << '('; } vexpr ')' { smecy::Attribute::expr << ')'; } expr
+					| '[' { smecy::Attribute::expr << '['; } cexpr ']' { smecy::Attribute::expr << ']'; } expr
+					;
+					
+vexpr
+					: expr
+					| expr ',' { smecy::Attribute::expr << ','; } vexpr
+					;
+
+cexpr
+					: expr
+					| expr ':' { smecy::Attribute::expr << ':'; } vexpr
 					;
 %%
 

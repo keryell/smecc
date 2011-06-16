@@ -62,6 +62,8 @@ namespace smecy
 		static std::vector<int> argSize;
 		static std::vector<std::pair<int,int> > argRange;
 		static int argNumber;
+		static int isExprMode;
+		static std::stringstream expr;
 	};
 }//namespace smecy
 
