@@ -11,6 +11,13 @@
 namespace smecy
 {
 	void attachAttributes(SgProject *sageFilePtr);
+	void extractExpressions(SgProject *sageFilePtr);
+	
+	class expressionExtractor : public SgSimpleProcessing
+	{
+	public:
+		void visit(SgNode* astNode);
+	};
 }
 
 #endif //SMECY_AST_CONSTRUCTION_H
