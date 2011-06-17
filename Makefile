@@ -1,6 +1,6 @@
-ROSE_INCLUDE_DIR	= /home/lanore/Downloads/compileTree/include
-BOOST_CPPFLAGS		= -pthread -I/home/lanore/Downloads/boostInstallTree/include
-ROSE_LIB_DIR 		= /home/lanore/Downloads/compileTree/lib
+ROSE_INCLUDE_DIR	= /hpc/projects/smecy/libs/roseInstall/include
+BOOST_CPPFLAGS		= -pthread -I/hpc/projects/smecy/libs/boostInstall/include
+ROSE_LIB_DIR 		= /hpc/projects/smecy/libs/roseInstall/lib
 ROSE_LIBS			= $(ROSE_LIB_DIR)/librose.la
 CXX					= g++
 LEX					= flex

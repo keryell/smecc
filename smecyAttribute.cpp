@@ -9,12 +9,13 @@
 
 namespace smecy
 {
-	Attribute* Attribute::attributeBeingBuilt ;
+	Attribute* Attribute::currentAttribute ;
 	std::vector<int> Attribute::argSize;
 	std::vector<std::pair<int,int> > Attribute::argRange;
 	int Attribute::argNumber;
 	int Attribute::isExprMode = 0;
 	std::stringstream Attribute::expr;
+	std::pair<int,int> Attribute::currentPair;
 
 	void Attribute::addClause(Clause clause)
 	{

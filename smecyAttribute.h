@@ -58,9 +58,10 @@ namespace smecy
 		void print();
 	
 		//static attributes needed for parsing
-		static Attribute *attributeBeingBuilt ;
+		static Attribute *currentAttribute ;
 		static std::vector<int> argSize;
 		static std::vector<std::pair<int,int> > argRange;
+		static std::pair<int,int> currentPair;
 		static int argNumber;
 		static int isExprMode;
 		static std::stringstream expr;

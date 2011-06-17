@@ -57,5 +57,5 @@ smecy::Attribute *smecy::parseDirective(std::string directive)
 	yyin = fmemopen(stream, directive.size(), "r");
 	_yyparse();
 	fclose(yyin);
-	return smecy::Attribute::attributeBeingBuilt;
+	return smecy::Attribute::currentAttribute;
 }

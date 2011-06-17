@@ -18,13 +18,13 @@ namespace smecy
 		{
 			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
 			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-			//std::cout << "Found pragma string : " << pragmaString << std::endl ;
-			//smecy::parseDirective(pragmaString)->print();
 			std::string pragmaHead;
 			std::istringstream stream(pragmaString);
 			stream >> pragmaHead;
 			if (pragmaHead == "smecy")
 			{
+				std::cout << "Found pragma string : " << pragmaString << std::endl ;
+				smecy::parseDirective(pragmaString)->print();
 				//TODO handle merging with existing smecy attribute
 				//TODO handle syntax errors and print nice error message
 				pragmaDeclaration->addNewAttribute("smecy", smecy::parseDirective(pragmaString));
