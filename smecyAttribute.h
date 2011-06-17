@@ -27,15 +27,15 @@ namespace smecy
 	
 	//can be either an int or an expression
 	//for internal use
-	class intExpr
+	class IntExpr
 	{
 	protected:
 		bool isIntBool;
 		int intValue;
 		std::string exprValue;
 	public:
-		intExpr(int intValue);
-		intExpr(std::string exprValue="");
+		IntExpr(int intValue);
+		IntExpr(std::string exprValue="");
 	
 		bool isExpr();
 		bool isInt();
@@ -50,17 +50,17 @@ namespace smecy
 		ClauseType type;
 		//TODO could be made shorter with multiple child classes
 		std::string accelerator;
-		intExpr unitNumber;
-		intExpr argNumber;
+		IntExpr unitNumber;
+		IntExpr argNumber;
 		ArgType argType;
-		std::vector<intExpr> argSize;
-		std::vector<std::pair<intExpr,intExpr> > argRange;
+		std::vector<IntExpr> argSize;
+		std::vector<std::pair<IntExpr,IntExpr> > argRange;
 	public:
 		//constructors
-		Clause(std::string accelerator, intExpr unitNumber=intExpr(-1));
-		Clause(intExpr argNumber, ArgType argType);
-		Clause(intExpr argNumber, std::vector<intExpr> argSize);
-		Clause(intExpr argNumber, std::vector<std::pair<intExpr,intExpr> > argRange);
+		Clause(std::string accelerator, IntExpr unitNumber=IntExpr(-1));
+		Clause(IntExpr argNumber, ArgType argType);
+		Clause(IntExpr argNumber, std::vector<IntExpr> argSize);
+		Clause(IntExpr argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
 
 		void print();
 	};
@@ -77,16 +77,16 @@ namespace smecy
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;
-		static std::vector<intExpr> argSize;
-		static std::vector<std::pair<intExpr,intExpr> > argRange;
-		static std::pair<intExpr,intExpr> currentPair;
-		static intExpr argNumber;
+		static std::vector<IntExpr> argSize;
+		static std::vector<std::pair<IntExpr,IntExpr> > argRange;
+		static std::pair<IntExpr,IntExpr> currentPair;
+		static IntExpr argNumber;
 		static int isExprMode;
 		static std::stringstream expr;
-		static intExpr currentIntExpr;
+		static IntExpr currentIntExpr;
 	};
 }//namespace smecy
 
-std::ostream& operator<<(std::ostream& os, smecy::intExpr& ie);
+std::ostream& operator<<(std::ostream& os, smecy::IntExpr& ie);
 
 #endif //SMECY_ATTRIBUTE_H

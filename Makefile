@@ -21,27 +21,27 @@ parseTest: main.o smecyAttribute.o smecyAstConstruction.o lex.yy.o smecyParser.t
 	@echo [Linking]
 	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
 		
-%.o : %.cpp %.h
+%.o : %.cpp %.h public.h
 	@echo [Compiling $<]
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./$<
 	
-%.o : %.cpp
+%.o : %.cpp public.h
 	@echo [Compiling $<]
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./$<
 	
-lex.yy.o : lex.yy.c smecyParser.tab.cc
+lex.yy.o : lex.yy.c smecyParser.tab.cc public.h
 	@echo [Compiling $<]
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./$<
 	
-smecyParser.tab.o : smecyParser.tab.cc
+smecyParser.tab.o : smecyParser.tab.cc public.h
 	@echo [Compiling $<]
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o $@ ./$<
 	
-smecyParser.tab.cc : smecyParser.yy
+smecyParser.tab.cc : smecyParser.yy public.h
 	@echo [Parser $<]
 	@$(YACC) $(YACCFLAGS) $<
 	
-lex.yy.c : smecyLexer.ll
+lex.yy.c : smecyLexer.ll public.h
 	@echo [Lexer $<]
 	@$(LEX) $(LEXFLAGS) $<
 	

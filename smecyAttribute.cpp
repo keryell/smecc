@@ -9,27 +9,27 @@
 
 namespace smecy
 {
-	intExpr::intExpr(int intValue) : intValue(intValue), exprValue("")
+	IntExpr::IntExpr(int intValue) : intValue(intValue), exprValue("")
 	{
 		this->isIntBool = true;
 	}
 	
-	intExpr::intExpr(std::string exprValue) : intValue(0), exprValue(exprValue)
+	IntExpr::IntExpr(std::string exprValue) : intValue(0), exprValue(exprValue)
 	{
 		this->isIntBool = false;
 	}
 
-	bool intExpr::isExpr()
+	bool IntExpr::isExpr()
 	{
 		return !this->isIntBool;
 	}
 	
-	bool intExpr::isInt()
+	bool IntExpr::isInt()
 	{
 		return this->isIntBool;
 	}
 	
-	int intExpr::getInt()
+	int IntExpr::getInt()
 	{
 		if (this->isIntBool)
 			return this->intValue;
@@ -37,7 +37,7 @@ namespace smecy
 			return 0;
 	}
 	
-	std::string intExpr::getExpr()
+	std::string IntExpr::getExpr()
 	{
 		if (this->isIntBool)
 			return "";
@@ -46,32 +46,32 @@ namespace smecy
 	}
 
 	Attribute* Attribute::currentAttribute ;
-	std::vector<intExpr> Attribute::argSize;
-	std::vector<std::pair<intExpr,intExpr> > Attribute::argRange;
-	intExpr Attribute::argNumber;
+	std::vector<IntExpr> Attribute::argSize;
+	std::vector<std::pair<IntExpr,IntExpr> > Attribute::argRange;
+	IntExpr Attribute::argNumber;
 	int Attribute::isExprMode = 0;
 	std::stringstream Attribute::expr;
-	std::pair<intExpr,intExpr> Attribute::currentPair;
-	intExpr Attribute::currentIntExpr;
+	std::pair<IntExpr,IntExpr> Attribute::currentPair;
+	IntExpr Attribute::currentIntExpr;
 
 	void Attribute::addClause(Clause clause)
 	{
 		this->clauseList.push_back(clause);
 	}
 
-	Clause::Clause(std::string accelerator, intExpr unitNumber) : type(_map), accelerator(accelerator), unitNumber(unitNumber)
+	Clause::Clause(std::string accelerator, IntExpr unitNumber) : type(_map), accelerator(accelerator), unitNumber(unitNumber)
 	{
 	}
 
-	Clause::Clause(intExpr argNumber, ArgType argType) : type(_arg_type), argNumber(argNumber), argType(argType)
+	Clause::Clause(IntExpr argNumber, ArgType argType) : type(_arg_type), argNumber(argNumber), argType(argType)
 	{
 	}
 
-	Clause::Clause(intExpr argNumber, std::vector<intExpr> argSize) : type(_arg_size), argNumber(argNumber), argSize(argSize)
+	Clause::Clause(IntExpr argNumber, std::vector<IntExpr> argSize) : type(_arg_size), argNumber(argNumber), argSize(argSize)
 	{
 	}
 
-	Clause::Clause(intExpr argNumber, std::vector<std::pair<intExpr,intExpr> > argRange) : type(_arg_range), argNumber(argNumber), argRange(argRange)
+	Clause::Clause(IntExpr argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange) : type(_arg_range), argNumber(argNumber), argRange(argRange)
 	{
 	}
 
@@ -105,7 +105,7 @@ namespace smecy
 	}
 } // namespace smecy
 
-std::ostream& operator<<(std::ostream& os, smecy::intExpr& ie)
+std::ostream& operator<<(std::ostream& os, smecy::IntExpr& ie)
 {
 	if (ie.isInt())
 		os << ie.getInt();
