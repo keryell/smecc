@@ -9,7 +9,7 @@ int main()
 	{
 		int bli=3;
 		bob(bli);
-		#pragma smecy arg(0,/[][bob(fete):8], out)
+		#pragma smecy arg(7,[100][robert],/[][bob(fete):8], out)
 			bob(bli);
 	}
 	return 0;

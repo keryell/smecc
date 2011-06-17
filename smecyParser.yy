@@ -16,14 +16,12 @@ int _yyparse();
 }
 
 %token SMECY MAP ARG '[' ']' '/' '(' ')' ':' ',' IN OUT INOUT UNUSED NOPAR
-%token <intType> INTEGER;
-%token <stringType> ID EXPR_THING;
+%token <intType> INTEGER
+%token <stringType> ID EXPR_THING
 
-%type <intType> closing_map_clause int
+%type <intType> closing_map_clause int int_expr
 
-%nonassoc INTEGER
-
-%start smecy_directive;
+%start smecy_directive
 
 %%
 smecy_directive
@@ -96,28 +94,15 @@ range_open
 					| '[' { smecy::Attribute::isExprMode=1; } range_begin
 					;
 
-/*range
-					: '/' '[' int ':' int ']' { smecy::Attribute::argRange.clear();
-						smecy::Attribute::argRange.push_back(std::pair<int,int>($3,$5));
-						} range_list	//TODO add possibility for empty or "single" ranges
-					//| '/' '[' ']' range_list
-					;
-					
-range_list
-					: /*empty/// { smecy::Attribute::currentAttribute->addClause(smecy::Clause(smecy::Attribute::argNumber,smecy::Attribute::argRange));}
-					| '[' int ':' int ']' { smecy::Attribute::argRange.push_back(std::pair<int,int>($2,$4));
-						} range_list
-					;*/
-
 int
 					: { smecy::Attribute::isExprMode=1; smecy::Attribute::expr.str(""); } 
 					  int_expr 
-					  { smecy::Attribute::isExprMode=0; $$ = 42; }
+					  { smecy::Attribute::isExprMode=0; $$ = $2; }
 					;
 					
 int_expr
-					: INTEGER
-					| EXPR_THING { smecy::Attribute::expr << $1; } expr //{ std::cout << "EXPR : " << smecy::Attribute::expr.str() << std::endl; }
+					: INTEGER { $$ = $1; }
+					| EXPR_THING { smecy::Attribute::expr << $1; } expr { $$ = -1; }
 					;
 
 expr

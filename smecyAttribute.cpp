@@ -53,9 +53,15 @@ namespace smecy
 			case _arg_type:
 				std::cout << "arg(" << this->argNumber << "," << this->argType << ")" << std::endl ; break ;
 			case _arg_size:
-				std::cout << "arg(" << this->argNumber << ",size[" << this->argSize.size() << "])" << std::endl ; break ;
+				std::cout << "arg(" << this->argNumber << ",";
+				for (unsigned int i=0; i<this->argSize.size(); i++)
+					std::cout << "[" << this->argSize[i] << "]";
+				std::cout << ")" << std::endl ; break ;
 			case _arg_range:
-				std::cout << "arg(" << this->argNumber << ",range[" << this->argRange.size() << "])" << std::endl ; break ;
+				std::cout << "arg(" << this->argNumber << ",/";
+				for (unsigned int i=0; i<this->argRange.size(); i++)
+					std::cout << "[" << this->argRange[i].first << ":" << this->argRange[i].second << "]";
+				std::cout << ")" << std::endl ; break ;
 			default:
 				std::cerr << "Error : invalid clause" << std::endl ;
 		}

@@ -1,3 +1,4 @@
-* compléter la grammaire pour isoler les expressions
 * écrire les prototypes pour les noeuds d'AST smecy
 * implémenter lesdits noeuds
+* améliorer les prints de débogage
+* faire correctement remonter les expressions, revoir les attributs pour les y stocker
