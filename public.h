@@ -14,6 +14,7 @@ namespace smecy
 {
 	class Attribute;
 	class Clause;
+	class intExpr;
 	
 	//global wrapper for smecy directive parsing
 	Attribute* parseDirective(std::string);

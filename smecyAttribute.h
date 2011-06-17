@@ -24,6 +24,24 @@ namespace smecy
 		_arg_inout,
 		_arg_unused
 	};
+	
+	//can be either an int or an expression
+	//for internal use
+	class intExpr
+	{
+	protected:
+		bool isIntBool;
+		int intValue;
+		std::string exprValue;
+	public:
+		intExpr(int intValue);
+		intExpr(std::string exprValue="");
+	
+		bool isExpr();
+		bool isInt();
+		int getInt();
+		std::string getExpr();
+	};
 
 	//individual smecy clause
 	class Clause
@@ -32,17 +50,17 @@ namespace smecy
 		ClauseType type;
 		//TODO could be made shorter with multiple child classes
 		std::string accelerator;
-		int unitNumber;
-		int argNumber;
+		intExpr unitNumber;
+		intExpr argNumber;
 		ArgType argType;
-		std::vector<int> argSize;
-		std::vector<std::pair<int,int> > argRange;
+		std::vector<intExpr> argSize;
+		std::vector<std::pair<intExpr,intExpr> > argRange;
 	public:
 		//constructors
-		Clause(std::string accelerator, int unitNumber=-1);
-		Clause(int argNumber, ArgType argType);
-		Clause(int argNumber, std::vector<int> argSize);
-		Clause(int argNumber, std::vector<std::pair<int,int> > argRange);
+		Clause(std::string accelerator, intExpr unitNumber=intExpr(-1));
+		Clause(intExpr argNumber, ArgType argType);
+		Clause(intExpr argNumber, std::vector<intExpr> argSize);
+		Clause(intExpr argNumber, std::vector<std::pair<intExpr,intExpr> > argRange);
 
 		void print();
 	};
@@ -59,13 +77,16 @@ namespace smecy
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;
-		static std::vector<int> argSize;
-		static std::vector<std::pair<int,int> > argRange;
-		static std::pair<int,int> currentPair;
-		static int argNumber;
+		static std::vector<intExpr> argSize;
+		static std::vector<std::pair<intExpr,intExpr> > argRange;
+		static std::pair<intExpr,intExpr> currentPair;
+		static intExpr argNumber;
 		static int isExprMode;
 		static std::stringstream expr;
+		static intExpr currentIntExpr;
 	};
 }//namespace smecy
+
+std::ostream& operator<<(std::ostream& os, smecy::intExpr& ie);
 
 #endif //SMECY_ATTRIBUTE_H

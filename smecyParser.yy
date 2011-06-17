@@ -19,8 +19,6 @@ int _yyparse();
 %token <intType> INTEGER
 %token <stringType> ID EXPR_THING
 
-%type <intType> closing_map_clause int int_expr
-
 %start smecy_directive
 
 %%
@@ -31,7 +29,7 @@ smecy_directive
 
 //arg_clause puts the arg number on top of the stack to be passed down
 arg_clause
-					: ARG '(' int ',' { smecy::Attribute::argNumber = $3; } arg_parameter_list ')'
+					: ARG '(' int ',' { smecy::Attribute::argNumber = smecy::Attribute::currentIntExpr; } arg_parameter_list ')'
 					;
 					
 arg_clause_list
@@ -41,13 +39,13 @@ arg_clause_list
 					
 map_clause
 					: MAP '(' ID closing_map_clause { 
-						smecy::Attribute::currentAttribute->addClause(smecy::Clause($3,$4));
+						smecy::Attribute::currentAttribute->addClause(smecy::Clause($3,smecy::Attribute::currentIntExpr));
 						}
 					;
 					
 closing_map_clause
-					: ')' { $$ = -1; }
-					| ',' int ')' { $$ = $2; }	//FIXME type de retour de int
+					: ')'
+					| ',' int ')'
 					;
 					
 arg_parameter_list
@@ -66,13 +64,13 @@ arg_parameter
 					
 size
 					: '[' int ']' { smecy::Attribute::argSize.clear();
-						smecy::Attribute::argSize.push_back($2);
+						smecy::Attribute::argSize.push_back(smecy::Attribute::currentIntExpr);
 						} size_list
 					;
 
 size_list
 					: /*empty*/ { smecy::Attribute::currentAttribute->addClause(smecy::Clause(smecy::Attribute::argNumber,smecy::Attribute::argSize));}
-					| '[' int ']' { smecy::Attribute::argSize.push_back($2); } size_list
+					| '[' int ']' { smecy::Attribute::argSize.push_back(smecy::Attribute::currentIntExpr); } size_list
 					;
 
 range
@@ -80,13 +78,20 @@ range
 					;
 
 range_begin
-					: int { smecy::Attribute::currentPair.first = $1; } range_mid
-					| ']' { smecy::Attribute::argRange.push_back(std::pair<int,int>(-1,-1)); smecy::Attribute::isExprMode=0; } range_open
+					: int { smecy::Attribute::currentPair.first = smecy::Attribute::currentIntExpr; } range_mid
+					| ']' { 
+					  smecy::Attribute::argRange.push_back(std::pair<smecy::intExpr,smecy::intExpr>(smecy::intExpr(-1),smecy::intExpr(-1)));
+					  smecy::Attribute::isExprMode=0; } 
+					  range_open
 					;
 					
 range_mid
-					: ':' int { smecy::Attribute::currentPair.second = $2; smecy::Attribute::argRange.push_back(smecy::Attribute::currentPair); } ']' range_open
-					| ']' { smecy::Attribute::currentPair.second = -1; smecy::Attribute::argRange.push_back(smecy::Attribute::currentPair); } range_open
+					: ':' int { smecy::Attribute::currentPair.second = smecy::Attribute::currentIntExpr;
+					  smecy::Attribute::argRange.push_back(smecy::Attribute::currentPair); } 
+					  ']' range_open
+					| ']' { smecy::Attribute::currentPair.second = smecy::intExpr(-1); 
+					  smecy::Attribute::argRange.push_back(smecy::Attribute::currentPair); } 
+					  range_open
 					;
 					
 range_open
@@ -97,12 +102,12 @@ range_open
 int
 					: { smecy::Attribute::isExprMode=1; smecy::Attribute::expr.str(""); } 
 					  int_expr 
-					  { smecy::Attribute::isExprMode=0; $$ = $2; }
+					  { smecy::Attribute::isExprMode=0; }
 					;
 					
 int_expr
-					: INTEGER { $$ = $1; }
-					| EXPR_THING { smecy::Attribute::expr << $1; } expr { $$ = -1; }
+					: INTEGER { smecy::Attribute::currentIntExpr = smecy::intExpr($1); }
+					| EXPR_THING { smecy::Attribute::expr << $1; } expr { smecy::Attribute::currentIntExpr = smecy::intExpr(smecy::Attribute::expr.str()); }
 					;
 
 expr
