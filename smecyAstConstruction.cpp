@@ -61,6 +61,23 @@ namespace smecy
 		}
 	}
 	
+	void buildSmecyNodes(SgNode* astNode)
+	{
+		SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(astNode);
+		if (pragmaDeclaration != NULL)
+		{
+			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+			std::string pragmaHead;
+			std::istringstream stream(pragmaString);
+			stream >> pragmaHead;
+			if (pragmaHead == "smecy")
+			{
+				//build smecy directive node
+				//SgSmecyDirective* directive = new SgSmecyDirective();
+			}
+		}
+	}
+	
 	void extractExpressions(SgProject *sageFilePtr)
 	{
 		expressionExtractor extractor;

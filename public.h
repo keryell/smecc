@@ -2,6 +2,7 @@
 #define PUBLIC_H
 
 #include "rose.h"
+#include "sage3basic.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>

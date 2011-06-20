@@ -1,7 +1,3 @@
-SgSmecyDirective
-SgSmecyClause
-SgSmecyArg
-SgSmecyMap
 SgAccessModifier
 SgActualArgumentExpression
 SgAddOp

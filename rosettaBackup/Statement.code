@@ -13814,10 +13814,11 @@ SgJavaImportStatement::get_mangled_name(void) const
 
 SOURCE_JAVA_IMPORT_STATEMENT_END
 
+/*
 SOURCE_SMECY_DIRECTIVE_START
 void
 SgSmecyDirective::post_construction_initialization()
    {}
 SOURCE_SMECY_DIRECTIVE_END
-
+*/
 

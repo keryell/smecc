@@ -231,7 +231,7 @@ Grammar::setUpStatements ()
 
 #endif
 
-#if 1//USE_SMECY_IR_NODES
+#if 0//USE_SMECY_IR_NODES
 
      NEW_TERMINAL_MACRO (SmecyDirective, "SmecyDirective", "SMECY_DIRECTIVE");
 
@@ -424,7 +424,7 @@ Grammar::setUpStatements ()
           /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
              UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              OmpBarrierStatement  | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
-             SequenceStatement    | SmecyDirective,
+             SequenceStatement    /*| SmecyDirective*/,
                             "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -3116,7 +3116,7 @@ Grammar::setUpStatements ()
   // DQ (4/12/2011): Added support for Java "import" statement.
      JavaImportStatement.setFunctionSource     ( "SOURCE_JAVA_IMPORT_STATEMENT", "../Grammar/Statement.code" );
 
-#if 1//USE_SMECY_IR_NODES
+#if 0//USE_SMECY_IR_NODES
 
      SmecyDirective.setFunctionSource("SOURCE_SMECY_DIRECTIVE", "../Grammar/Statement.code" );
      SmecyDirective.setDataPrototype("SgSmecyClause*", "clauses", "= NULL",

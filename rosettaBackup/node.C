@@ -87,7 +87,7 @@ Grammar::setUpNodes ()
          "OmpClause", "OmpClauseTag", false);
 #endif
 
-#if 1//USE_SMECY_IR_NODES
+#if 0//USE_SMECY_IR_NODES
 
      NEW_TERMINAL_MACRO(SmecyArg, "SmecyArg", "SMECY_ARG");
      NEW_TERMINAL_MACRO(SmecyMap, "SmecyMap", "SMECY_MAP");
@@ -110,7 +110,7 @@ Grammar::setUpNodes ()
   // the SgLocatedNode base class).  Eventually a number of the IR nodes currently derived from SgSupport
   // should be moved to be here (e.g. SgTemplateArgument, SgTemplateParameter, and 
   // a number of the new Fortran specific IRnodes, etc.).
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | RenamePair | OmpClause | SmecyClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | RenamePair | OmpClause /*| SmecyClause*/ , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
