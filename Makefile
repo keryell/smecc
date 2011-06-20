@@ -12,6 +12,8 @@ LEXFLAGS			=
 YACCFLAGS			= -d
 RMFLAGS				= -f
 TESTFLAGS			= -rose:openmp:parse_only #ast_only, lowering, parse_only
+ROSETTAPATH			= /hpc/projects/smecy/libs/rose-0.9.5a-14690/src/ROSETTA
+ROSETTAFILES		= $(ROSETTAPATH)/astNodeList $(ROSETTAPATH)/src/statement.C $(ROSETTAPATH)/src/node.C $(ROSETTAPATH)/Grammar/Statement.code
 
 allFiles = parseTest
 
@@ -53,5 +55,6 @@ clean:
 	@rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp input.cpp.*
 	
 backup: clean
+	@cp $(ROSETTAFILES) rosettaBackup/
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
-	@cp * ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
+	@cp -r * ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/

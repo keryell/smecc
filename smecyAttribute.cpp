@@ -53,10 +53,27 @@ namespace smecy
 	std::stringstream Attribute::expr;
 	std::pair<IntExpr,IntExpr> Attribute::currentPair;
 	IntExpr Attribute::currentIntExpr;
+	
+	IntExpr Attribute::newIntExpr(std::string expr)
+	{
+		//TODO should add transformation into a variable name here
+		Attribute::currentAttribute->expressionList.push_back(expr);
+		return IntExpr(expr);
+	}
+	
+	IntExpr Attribute::newIntExpr(int integer)
+	{
+		return IntExpr(integer);
+	}
 
 	void Attribute::addClause(Clause clause)
 	{
 		this->clauseList.push_back(clause);
+	}
+	
+	std::vector<std::string> Attribute::getExpressionList()
+	{
+		return this->expressionList;
 	}
 
 	Clause::Clause(std::string accelerator, IntExpr unitNumber) : type(_map), accelerator(accelerator), unitNumber(unitNumber)

@@ -70,10 +70,12 @@ namespace smecy
 	{
 	protected:
 		std::vector<Clause> clauseList;
+		std::vector<std::string> expressionList;
 	public:
 		void addClause(Clause clause);
 		//TODO need for a method that returns the original pragma string ?
 		void print();
+		std::vector<std::string> getExpressionList();
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;
@@ -84,6 +86,10 @@ namespace smecy
 		static int isExprMode;
 		static std::stringstream expr;
 		static IntExpr currentIntExpr;
+		
+		//static functions to ease the collecting of expressions
+		static IntExpr newIntExpr(std::string expr);
+		static IntExpr newIntExpr(int integer);
 	};
 }//namespace smecy
 

@@ -83,7 +83,7 @@ range
 range_begin
 					: int { Attribute::currentPair.first = Attribute::currentIntExpr; } range_mid
 					| ']' { 
-					  Attribute::argRange.push_back(std::pair<IntExpr,IntExpr>(IntExpr(-1),IntExpr(-1)));
+					  Attribute::argRange.push_back(std::pair<IntExpr,IntExpr>(Attribute::newIntExpr(-1),Attribute::newIntExpr(-1)));
 					  Attribute::isExprMode=0; } 
 					  range_open
 					;
@@ -92,7 +92,7 @@ range_mid
 					: ':' int { Attribute::currentPair.second = Attribute::currentIntExpr;
 					  Attribute::argRange.push_back(Attribute::currentPair); } 
 					  ']' range_open
-					| ']' { Attribute::currentPair.second = IntExpr(-1); 
+					| ']' { Attribute::currentPair.second = Attribute::newIntExpr(-1); 
 					  Attribute::argRange.push_back(Attribute::currentPair); } 
 					  range_open
 					;
@@ -111,8 +111,8 @@ int
 					;
 					
 int_expr
-					: INTEGER { Attribute::currentIntExpr = IntExpr($1); }
-					| EXPR_THING { Attribute::expr << $1; } expr { Attribute::currentIntExpr = IntExpr(Attribute::expr.str()); }
+					: INTEGER { Attribute::currentIntExpr = Attribute::newIntExpr($1); }
+					| EXPR_THING { Attribute::expr << $1; } expr { Attribute::currentIntExpr = Attribute::newIntExpr(Attribute::expr.str()); }
 					;
 
 expr

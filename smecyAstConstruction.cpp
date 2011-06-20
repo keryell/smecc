@@ -45,26 +45,18 @@ namespace smecy
 			stream >> pragmaHead;
 			if (pragmaHead == "smecy")
 			{
-				std::string test = "int lapin=42;";
-				SageInterface::addTextForUnparser(pragmaDeclaration,test,AstUnparseAttribute::e_before);
-			
-				/*// It is up to the user to link the implementations of these functions link time
-				std::string codeAtTopOfBlock    = "void myTimerFunctionStart(); myTimerFunctionStart();";
-				std::string codeAtBottomOfBlock = "void myTimerFunctionEnd(); myTimerFunctionEnd();";
-
-				// Insert new code into the scope represented by the statement (applies to SgScopeStatements)
-				MiddleLevelRewrite::ScopeIdentifierEnum scope = MidLevelCollectionTypedefs::StatementScope;
-
-				// Insert the new code at the top and bottom of the scope represented by block
-				SgStatement* target = isSgBasicBlock(pragmaDeclaration->get_parent());
-				if (target!=NULL)
+				//we get the list of all expressions contained in the smecy directive
+				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
+				std::vector<std::string> exprList = attribute->getExpressionList();
+				
+				//we build a declaration for each of them
+				for (unsigned int i=0; i<exprList.size(); i++)
 				{
-					//FIXME not stable
-					//MiddleLevelRewrite::insert(target,codeAtTopOfBlock,scope,MidLevelCollectionTypedefs::TopOfCurrentScope);
-					//MiddleLevelRewrite::insert(target,codeAtBottomOfBlock,scope,MidLevelCollectionTypedefs::BottomOfCurrentScope);
+					std::cout << "YOUPIIIII" <<std::endl;
+					std::ostringstream declaration("");
+					declaration << std::endl << "int smecy" << i << " = " << exprList[i] << ";" ;
+					SageInterface::addTextForUnparser(pragmaDeclaration,declaration.str(),AstUnparseAttribute::e_before);
 				}
-				else
-				std::cout << "PAS DE PAREEENT" << std::endl;*/
 			}
 		}
 	}
