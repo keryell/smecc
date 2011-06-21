@@ -112,6 +112,8 @@ int
 					
 int_expr
 					: INTEGER { Attribute::currentIntExpr = Attribute::newIntExpr($1); }
+					| INTEGER { Attribute::expr << $1; } EXPR_THING { Attribute::expr << $3; } 
+					  expr { Attribute::currentIntExpr = Attribute::newIntExpr(Attribute::expr.str()); }
 					| EXPR_THING { Attribute::expr << $1; } expr { Attribute::currentIntExpr = Attribute::newIntExpr(Attribute::expr.str()); }
 					;
 

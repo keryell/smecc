@@ -7,7 +7,7 @@ int main()
 {
 
 	int bli=3;
-	#pragma smecy map(PE,bli)
+	#pragma smecy map(PE,1) arg(2,inout,[3][4*bli])
 	{
 		bob(bli);
 	}

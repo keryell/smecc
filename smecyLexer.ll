@@ -30,7 +30,11 @@ unused					{ return exprMode(UNUSED); }
 .						{ if (!smecy::Attribute::isExprMode)
 							yyerror((char *)"Unknown character");
 						  else
-							return EXPR_THING;  }
+						  {
+						  	yylval.stringType = strdup(yytext);
+							return EXPR_THING;
+						  }
+						}
 %%
 
 int yywrap(void)
