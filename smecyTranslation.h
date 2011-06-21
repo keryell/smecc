@@ -1,5 +1,5 @@
-#ifndef SMECY_AST_CONSTRUCTION_H
-#define SMECY_AST_CONSTRUCTION_H
+#ifndef SMECY_TRANSLATION_H
+#define SMECY_TRANSLATION_H
 
 #include "public.h"
 #include "smecyAttribute.h"
@@ -33,4 +33,4 @@ namespace smecy
 	};
 }
 
-#endif //SMECY_AST_CONSTRUCTION_H
+#endif //SMECY_TRANSLATION_H

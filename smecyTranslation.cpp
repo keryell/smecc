@@ -1,7 +1,7 @@
-#ifndef SMECY_AST_CONSTRUCTION_CPP
-#define SMECY_AST_CONSTRUCTION_CPP
+#ifndef SMECY_TRANSLATION_CPP
+#define SMECY_TRANSLATION_CPP
 
-#include "smecyAstConstruction.h"
+#include "smecyTranslation.h"
 
 //===================================================================
 // Implements functions used during the translation of SMECY programs
@@ -102,4 +102,4 @@ namespace smecy
 	}
 } //namespace smecy
 
-#endif //SMECY_AST_CONSTRUCTION_CPP
+#endif //SMECY_TRANSLATION_CPP

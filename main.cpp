@@ -2,7 +2,7 @@
 
 #include "public.h"
 #include "smecyAttribute.h"
-#include "smecyAstConstruction.h"
+#include "smecyTranslation.h"
 
 int main(int argc, char *argv[])
 {
