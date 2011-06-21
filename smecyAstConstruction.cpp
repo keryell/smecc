@@ -52,7 +52,6 @@ namespace smecy
 				//we build a declaration for each of them
 				for (unsigned int i=0; i<exprList.size(); i++)
 				{
-					std::cout << "YOUPIIIII" <<std::endl;
 					std::ostringstream declaration("");
 					declaration << std::endl << "int smecy" << i << " = " << exprList[i] << ";" ;
 					SageInterface::addTextForUnparser(pragmaDeclaration,declaration.str(),AstUnparseAttribute::e_before);
@@ -61,27 +60,45 @@ namespace smecy
 		}
 	}
 	
-	void buildSmecyNodes(SgNode* astNode)
+	void extractExpressions(SgProject *sageFilePtr)
 	{
-		SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(astNode);
-		if (pragmaDeclaration != NULL)
+		expressionExtractor extractor;
+		extractor.traverseInputFiles(sageFilePtr, preorder);
+	}
+	
+	void parseExpressions(SgProject *sageFilePtr)
+	{
+		//making a list of all pragma nodes in AST and going through it
+		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
+		std::vector<SgNode*>::iterator iter;
+		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
 		{
+			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
 			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
 			std::string pragmaHead;
 			std::istringstream stream(pragmaString);
 			stream >> pragmaHead;
 			if (pragmaHead == "smecy")
 			{
-				//build smecy directive node
-				//SgSmecyDirective* directive = new SgSmecyDirective();
+				//we get the list of all expressions contained in the smecy directive
+				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
+				std::vector<std::string> exprList = attribute->getExpressionList();
+				
+				// Insert new code into the scope represented by the statement (applies to SgScopeStatements)
+				MiddleLevelRewrite::ScopeIdentifierEnum scope = MidLevelCollectionTypedefs::SurroundingScope;
+				SgStatement* target = pragmaDeclaration;//SageInterface::getScope(pragmaDeclaration);
+				
+				//we build a declaration for each of them
+				for (unsigned int i=0; i<exprList.size(); i++)
+				{
+					std::ostringstream declaration("");
+					declaration << std::endl << "int smecy" << i << " = " << exprList[i] << ";" ;
+					MiddleLevelRewrite::insert(target,declaration.str(),scope,
+						MidLevelCollectionTypedefs::BeforeCurrentPosition);
+				}
 			}
 		}
-	}
-	
-	void extractExpressions(SgProject *sageFilePtr)
-	{
-		expressionExtractor extractor;
-		extractor.traverseInputFiles(sageFilePtr, preorder);
+		return ;
 	}
 } //namespace smecy
 

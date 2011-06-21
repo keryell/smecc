@@ -9,7 +9,8 @@ int main(int argc, char *argv[])
 	SgProject* project=frontend(argc,argv);
 	
 	smecy::attachAttributes(project);
-	smecy::extractExpressions(project);
+	//smecy::extractExpressions(project);
+	smecy::parseExpressions(project);
 	
 	generatePDF(*project);
 	generateDOT(*project);

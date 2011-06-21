@@ -3119,8 +3119,8 @@ Grammar::setUpStatements ()
 #if 0//USE_SMECY_IR_NODES
 
      SmecyDirective.setFunctionSource("SOURCE_SMECY_DIRECTIVE", "../Grammar/Statement.code" );
-     SmecyDirective.setDataPrototype("SgSmecyClause*", "clauses", "= NULL",
-                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    // SmecyDirective.setDataPrototype("SgSmecyClause*", "clauses", "= NULL",
+    //                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
                               
 #endif
 

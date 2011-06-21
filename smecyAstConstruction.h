@@ -14,12 +14,16 @@ namespace smecy
 	void attachAttributes(SgProject *sageFilePtr);
 	
 	//extracts all C expressions from smecy pragmas and
-	//defines them before the pragma
+	//defines them before the pragma using arbitrary text
 	//FIXME non-unique variable name
 	void extractExpressions(SgProject *sageFilePtr);
 	
+	//transforms all C expressions into their SageIII reprsentation
+	//using the high level string interface of the ASR rewrite mechanism
+	void parseExpressions(SgProject *sageFilePtr);
+	
 	//replaces smecy pragma nodes with decoration with SgSmecyDirective nodes
-	void buildSmecyNodes(SgProject *sageFilePtr);
+	//void buildSmecyNodes(SgProject *sageFilePtr);
 	
 	//required for extractExpression
 	class expressionExtractor : public SgSimpleProcessing

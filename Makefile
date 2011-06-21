@@ -49,12 +49,12 @@ lex.yy.c : smecyLexer.ll public.h
 	@echo [Lexer $<]
 	@$(LEX) $(LEXFLAGS) $<
 	
-test: parseTest input.cpp
+test: parseTest input.C
 	@echo [Testing $<]
-	@./parseTest $(TESTFLAGS) -c input.cpp
+	@./parseTest $(TESTFLAGS) -c input.C
 
 dot: test
-	@/home/lanore/Downloads/zgrviewer/run.sh ./input.cpp.dot
+	@/home/lanore/Downloads/zgrviewer/run.sh ./input.C.dot
 
 rose-clean:
 	@make -C $(ROSE_DIR) clean
@@ -76,7 +76,7 @@ rose6:
 	@make -C $(ROSE_DIR) install
 
 clean:
-	@rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_input.cpp input.cpp.*
+	@rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.*
 	
 backup: clean
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/

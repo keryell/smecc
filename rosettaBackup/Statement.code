@@ -13821,4 +13821,3 @@ SgSmecyDirective::post_construction_initialization()
    {}
 SOURCE_SMECY_DIRECTIVE_END
 */
-
