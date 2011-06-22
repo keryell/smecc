@@ -24,13 +24,6 @@ namespace smecy
 	
 	//replaces smecy pragma nodes with decoration with SgSmecyDirective nodes
 	//void buildSmecyNodes(SgProject *sageFilePtr);
-	
-	//required for extractExpression
-	class expressionExtractor : public SgSimpleProcessing
-	{
-	public:
-		void visit(SgNode* astNode);
-	};
 }
 
 #endif //SMECY_TRANSLATION_H

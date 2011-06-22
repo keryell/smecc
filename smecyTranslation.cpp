@@ -34,11 +34,14 @@ namespace smecy
 		return ;
 	}
 	
-	void expressionExtractor::visit(SgNode* astNode)
+	void extractExpressions(SgProject *sageFilePtr)
 	{
-		SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(astNode);
-		if (pragmaDeclaration != NULL)
+		//making a list of all pragma nodes in AST and going through it
+		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
+		std::vector<SgNode*>::iterator iter;
+		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
 		{
+			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
 			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
 			std::string pragmaHead;
 			std::istringstream stream(pragmaString);
@@ -58,12 +61,6 @@ namespace smecy
 				}
 			}
 		}
-	}
-	
-	void extractExpressions(SgProject *sageFilePtr)
-	{
-		expressionExtractor extractor;
-		extractor.traverseInputFiles(sageFilePtr, preorder);
 	}
 	
 	void parseExpressions(SgProject *sageFilePtr)
@@ -95,6 +92,21 @@ namespace smecy
 					declaration << std::endl << "int smecy" << i << " = " << exprList[i] << ";" ;
 					MiddleLevelRewrite::insert(target,declaration.str(),scope,
 						MidLevelCollectionTypedefs::BeforeCurrentPosition);
+						
+					//now, we can collect the expression in the variable declaration...
+					SgVariableDeclaration* decl = isSgVariableDeclaration(SageInterface::getPreviousStatement(pragmaDeclaration));
+					if (!decl)
+						std::cerr << "Found invalid variable declaration while parsing expressions." << std::endl;
+					SgInitializedName* initName = SageInterface::getFirstInitializedName(decl);
+					SgAssignInitializer* initializer = isSgAssignInitializer(initName->get_initializer());
+					if (!initializer)
+						std::cerr << "Found invalid initializer while parsing expressions." << std::endl;
+					SgExpression* expr = initializer->get_operand();
+					//TODO now that we have the expr, put it somewhere
+					
+					//...and remove the declaration
+					SageInterface::removeStatement(decl);
+					//TODO remove the rest of the declaration from memory
 				}
 			}
 		}
