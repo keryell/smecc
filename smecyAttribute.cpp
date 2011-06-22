@@ -82,16 +82,13 @@ namespace smecy
 			if (this->argList[i].argNumber==argNumber)
 			{
 				this->argList[i].argType=argType;
-			}
-			//if not, create a new one
-			else
-			{
-				Arg arg;
-				arg.argNumber=argNumber;
-				arg.argType=argType;
-				this->argList.push_back(arg);
+				return;
 			}
 		}
+		Arg arg;
+		arg.argNumber=argNumber;
+		arg.argType=argType;
+		this->argList.push_back(arg);
 	}
 	
 	void Attribute::addArg(int argNumber, std::vector<IntExpr> argSize)
@@ -102,16 +99,13 @@ namespace smecy
 			if (this->argList[i].argNumber==argNumber)
 			{
 				this->argList[i].argSize=argSize;
-			}
-			//if not, create a new one
-			else
-			{
-				Arg arg;
-				arg.argNumber=argNumber;
-				arg.argSize=argSize;
-				this->argList.push_back(arg);
+				return;
 			}
 		}
+		Arg arg;
+		arg.argNumber=argNumber;
+		arg.argSize=argSize;
+		this->argList.push_back(arg);
 	}
 	
 	void Attribute::addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange)
@@ -122,16 +116,13 @@ namespace smecy
 			if (this->argList[i].argNumber==argNumber)
 			{
 				this->argList[i].argRange=argRange;
-			}
-			//if not, create a new one
-			else
-			{
-				Arg arg;
-				arg.argNumber=argNumber;
-				arg.argRange=argRange;
-				this->argList.push_back(arg);
+				return;
 			}
 		}
+		Arg arg;
+		arg.argNumber=argNumber;
+		arg.argRange=argRange;
+		this->argList.push_back(arg);
 	}
 	
 	
@@ -145,7 +136,10 @@ namespace smecy
 		std::cout << "Attribute with " << this->argList.size() << " argument clauses." << std::endl;
 		std::cout << "\tMapped to " << this->mapName << " n°" << this->mapNumber << "." << std::endl;
 		for (unsigned int i=0; i<this->argList.size(); i++)
+		{
+			std::cout << "\t" ;
 			this->argList[i].print();
+		}
 	}
 
 //==========================================================================//
@@ -156,7 +150,7 @@ namespace smecy
 
 	void Arg::print()
 	{
-		
+		std::cout << "not implemented yet" << std::endl;
 	}
 } // namespace smecy
 

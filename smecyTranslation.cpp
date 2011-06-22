@@ -61,6 +61,7 @@ namespace smecy
 				}
 			}
 		}
+		return ;
 	}
 	
 	void parseExpressions(SgProject *sageFilePtr)
@@ -111,6 +112,69 @@ namespace smecy
 			}
 		}
 		return ;
+	}
+	
+	void addSmecyInclude(SgProject *sageFilePtr)
+	{
+		//FIXME compatible with multi-file projects ?
+		SgScopeStatement* scope = SageInterface::getFirstGlobalScope(sageFilePtr);
+		SageInterface::insertHeader("smecy.h", PreprocessingInfo::after, false, scope);
+	}
+	
+	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber , SgStatement* functionToMap )
+	{
+		//temp variables for downcasting
+		SgExpression* tempExp;
+		SgNode* tempNode;
+	
+		//checking the SgStatement in parameter and extracting func name TODO add !=NULL checking
+		SgExprStatement* funcToMap = isSgExprStatement(functionToMap);
+		tempExp = funcToMap->get_expression();
+		SgFunctionCallExp* funcToMapFuncExp = isSgFunctionCallExp(tempExp);
+		tempExp = funcToMapFuncExp->get_function();
+		tempNode = SageInterface::deepCopyNode(tempExp);
+		SgExpression* funcToMapRef = isSgExpression(tempNode);
+		
+		//TODO add pe and instance args
+	
+		//building parameters to build the func call (bottom-up building)
+		SgExprListExp * exprList = SageBuilder::buildExprListExp(mapName, mapNumber, funcToMapRef);
+		SgName name("SMECY_set");
+		SgType* type = SageBuilder::buildVoidType();
+		SgScopeStatement* scope = SageInterface::getScope(target);
+		
+		//building the function call
+		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
+		SageInterface::insertStatement(target, funcCall);
+	}
+	
+	void translateSmecy(SgProject *sageFilePtr)
+	{
+		//adding #include "smecy.h"
+		addSmecyInclude(sageFilePtr);
+		
+		//making a list of all pragma nodes in AST and going through it
+		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
+		std::vector<SgNode*>::iterator iter;
+		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
+		{
+			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
+			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+			std::string pragmaHead;
+			std::istringstream stream(pragmaString);
+			stream >> pragmaHead;
+			if (pragmaHead == "smecy")
+			{
+				//the attribute is where we get information
+				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
+			
+				// TEST
+				SgExpression* testMapName = SageBuilder::buildStringVal("test");
+				SgExpression* testMapNumber = SageBuilder::buildIntVal(3);
+				// /TEST
+				addSmecySet(pragmaDeclaration, testMapName, testMapNumber ,SageInterface::getNextStatement(pragmaDeclaration));
+			}
+		}
 	}
 } //namespace smecy
 

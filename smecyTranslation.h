@@ -18,12 +18,19 @@ namespace smecy
 	//FIXME non-unique variable name
 	void extractExpressions(SgProject *sageFilePtr);
 	
-	//transforms all C expressions into their SageIII reprsentation
+	//transforms all C expressions into their SageIII representation
 	//using the high level string interface of the ASR rewrite mechanism
 	void parseExpressions(SgProject *sageFilePtr);
 	
 	//replaces smecy pragma nodes with decoration with SgSmecyDirective nodes
 	//void buildSmecyNodes(SgProject *sageFilePtr);
+	
+	//functions that add SMECY API functions
+	void addSmecyInclude(SgProject *sageFilePtr);
+	void addSmecySet(std::string mapName, SgExpression* mapNumber /*, function pointer */);
+	
+	//the top-level translating function
+	void translateSmecy(SgProject *sageFilePtr);
 }
 
 #endif //SMECY_TRANSLATION_H

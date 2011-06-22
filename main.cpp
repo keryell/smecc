@@ -10,7 +10,8 @@ int main(int argc, char *argv[])
 	
 	smecy::attachAttributes(project);
 	//smecy::extractExpressions(project);
-	smecy::parseExpressions(project);
+	//smecy::parseExpressions(project);
+	smecy::translateSmecy(project);
 	
 	generatePDF(*project);
 	generateDOT(*project);
