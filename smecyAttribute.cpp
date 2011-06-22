@@ -61,18 +61,7 @@ namespace smecy
 	std::stringstream Attribute::expr;
 	std::pair<IntExpr,IntExpr> Attribute::currentPair;
 	IntExpr Attribute::currentIntExpr;
-	
-	IntExpr Attribute::newIntExpr(std::string expr)
-	{
-		//TODO should add transformation into a variable name here
-		Attribute::currentAttribute->expressionList.push_back(expr);
-		return IntExpr(expr);
-	}
-	
-	IntExpr Attribute::newIntExpr(int integer)
-	{
-		return IntExpr(integer);
-	}
+	std::vector<std::string> Attribute::currentExpressionList;
 
 	void Attribute::addArg(int argNumber, ArgType argType)
 	{
@@ -125,10 +114,46 @@ namespace smecy
 		this->argList.push_back(arg);
 	}
 	
+	void Attribute::setExpressionList(std::vector<std::string> exprList)
+	{
+		this->expressionList=exprList;
+	}
 	
 	std::vector<std::string> Attribute::getExpressionList()
 	{
 		return this->expressionList;
+	}
+	
+	void Attribute::addParsedExpression(SgExpression* expr)
+	{
+		this->sgExpressionList.push_back(expr);
+	}
+	
+	SgExpression* Attribute::getMapName()
+	{
+		return SageBuilder::buildStringVal(this->mapName);
+	}
+	
+	SgExpression* Attribute::getMapNumber()
+	{
+		//check if parsing has been done
+		if (this->sgExpressionList.size() != this->expressionList.size())
+		{
+			std::cerr << "Error : Parsing has not been done before accessing mapNumber" << std::endl;
+			throw 0;
+		}
+		
+		if (this->mapNumber.isInt())
+			return SageBuilder::buildIntVal(this->mapNumber.getInt());
+		else
+		{
+			//FIXME improve vector security
+			int exprIndex = -1;
+			for (unsigned int i=0; i<this->expressionList.size(); i++)
+				if (this->expressionList[i] == this->mapNumber.getExpr())
+					exprIndex = i;
+			return this->sgExpressionList[exprIndex];
+		}
 	}
 	
 	void Attribute::print()

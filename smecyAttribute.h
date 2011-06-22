@@ -63,8 +63,16 @@ namespace smecy
 		void addArg(int argNumber, std::vector<IntExpr> argSize);
 		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
 		void print();
-		std::vector<std::string> getExpressionList();
 		Attribute(std::string mapName, IntExpr mapNumber);
+		void setExpressionList(std::vector<std::string> exprList);
+		
+		//expression-related methods
+		void addParsedExpression(SgExpression* expr);
+		std::vector<std::string> getExpressionList();
+		
+		//high-level get methods to get Sg objects directly
+		SgExpression* getMapName();	//TODO
+		SgExpression* getMapNumber();	//TODO
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;
@@ -75,10 +83,7 @@ namespace smecy
 		static int isExprMode;
 		static std::stringstream expr;
 		static IntExpr currentIntExpr;
-		
-		//static functions to ease the collecting of expressions
-		static IntExpr newIntExpr(std::string expr);
-		static IntExpr newIntExpr(int integer);
+		static std::vector<std::string> currentExpressionList;
 	};
 }//namespace smecy
 

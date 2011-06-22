@@ -103,7 +103,9 @@ namespace smecy
 					if (!initializer)
 						std::cerr << "Found invalid initializer while parsing expressions." << std::endl;
 					SgExpression* expr = initializer->get_operand();
-					//TODO now that we have the expr, put it somewhere
+					
+					//...store it in the attribute...
+					attribute->addParsedExpression(expr);
 					
 					//...and remove the declaration
 					SageInterface::removeStatement(decl);
@@ -134,8 +136,6 @@ namespace smecy
 		tempExp = funcToMapFuncExp->get_function();
 		tempNode = SageInterface::deepCopyNode(tempExp);
 		SgExpression* funcToMapRef = isSgExpression(tempNode);
-		
-		//TODO add pe and instance args
 	
 		//building parameters to build the func call (bottom-up building)
 		SgExprListExp * exprList = SageBuilder::buildExprListExp(mapName, mapNumber, funcToMapRef);
@@ -167,12 +167,12 @@ namespace smecy
 			{
 				//the attribute is where we get information
 				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
-			
-				// TEST
-				SgExpression* testMapName = SageBuilder::buildStringVal("test");
-				SgExpression* testMapNumber = SageBuilder::buildIntVal(3);
-				// /TEST
-				addSmecySet(pragmaDeclaration, testMapName, testMapNumber ,SageInterface::getNextStatement(pragmaDeclaration));
+				
+				//parameters
+				SgExpression* mapName = attribute->getMapName();
+				SgExpression* mapNumber = attribute->getMapNumber();
+
+				addSmecySet(pragmaDeclaration, mapName, mapNumber ,SageInterface::getNextStatement(pragmaDeclaration));
 			}
 		}
 	}

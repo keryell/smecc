@@ -10,8 +10,11 @@ int main()
 #pragma omp parallel
 	{
 		int bli=3;
-#pragma smecy map(PE,1) arg(2,inout,[3][4*bli]) arg(1,out)
-		bob(bli);
+		for (int i=0; i<10; i++)
+		{
+		#pragma smecy map(PE,i)
+			bob(bli);
+		}
 		return 0;
 	}
 }

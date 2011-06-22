@@ -25,7 +25,8 @@ int _yyparse();
 
 %%
 smecy_directive
-					: SMECY map_clause arg_clause_list
+					: SMECY { Attribute::currentExpressionList.clear(); }
+					  map_clause arg_clause_list { Attribute::currentAttribute->setExpressionList(Attribute::currentExpressionList) }
 					;
 
 arg_clause
@@ -82,7 +83,7 @@ range
 range_begin
 					: int { Attribute::currentPair.first = Attribute::currentIntExpr; } range_mid
 					| ']' { 
-					  Attribute::argRange.push_back(std::pair<IntExpr,IntExpr>(Attribute::newIntExpr(-1),Attribute::newIntExpr(-1)));
+					  Attribute::argRange.push_back(std::pair<IntExpr,IntExpr>(IntExpr(-1),IntExpr(-1)));
 					  Attribute::isExprMode=0; } 
 					  range_open
 					;
@@ -91,7 +92,7 @@ range_mid
 					: ':' int { Attribute::currentPair.second = Attribute::currentIntExpr;
 					  Attribute::argRange.push_back(Attribute::currentPair); } 
 					  ']' range_open
-					| ']' { Attribute::currentPair.second = Attribute::newIntExpr(-1); 
+					| ']' { Attribute::currentPair.second = IntExpr(-1); 
 					  Attribute::argRange.push_back(Attribute::currentPair); } 
 					  range_open
 					;
@@ -110,10 +111,12 @@ int
 					;
 					
 int_expr
-					: INTEGER { Attribute::currentIntExpr = Attribute::newIntExpr($1); }
+					: INTEGER { Attribute::currentIntExpr = IntExpr($1); }
 					| INTEGER { Attribute::expr << $1; } EXPR_THING { Attribute::expr << $3; } 
-					  expr { Attribute::currentIntExpr = Attribute::newIntExpr(Attribute::expr.str()); }
-					| EXPR_THING { Attribute::expr << $1; } expr { Attribute::currentIntExpr = Attribute::newIntExpr(Attribute::expr.str()); }
+					  expr { Attribute::currentIntExpr = IntExpr(Attribute::expr.str()); 
+					  Attribute::currentExpressionList.push_back(Attribute::expr.str()); }
+					| EXPR_THING { Attribute::expr << $1; } expr { Attribute::currentIntExpr = IntExpr(Attribute::expr.str());
+					  Attribute::currentExpressionList.push_back(Attribute::expr.str()); }
 					;
 
 expr
