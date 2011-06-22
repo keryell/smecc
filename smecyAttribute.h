@@ -9,20 +9,13 @@
 
 namespace smecy
 {
-	enum ClauseType
-	{
-		_map,
-		_arg_type,
-		_arg_size,
-		_arg_range
-	};
-
 	enum ArgType
 	{
 		_arg_in,
 		_arg_out,
 		_arg_inout,
-		_arg_unused
+		_arg_unused,
+		_arg_unknown
 	};
 	
 	//can be either an int or an expression
@@ -44,24 +37,15 @@ namespace smecy
 	};
 
 	//individual smecy clause
-	class Clause
+	class Arg
 	{
-	protected:
-		ClauseType type;
-		//TODO could be made shorter with multiple child classes
-		std::string accelerator;
-		IntExpr unitNumber;
-		IntExpr argNumber;
+	public:	//for internal use only
+		int argNumber;
 		ArgType argType;
 		std::vector<IntExpr> argSize;
 		std::vector<std::pair<IntExpr,IntExpr> > argRange;
-	public:
-		//constructors
-		Clause(std::string accelerator, IntExpr unitNumber=IntExpr(-1));
-		Clause(IntExpr argNumber, ArgType argType);
-		Clause(IntExpr argNumber, std::vector<IntExpr> argSize);
-		Clause(IntExpr argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
 
+		Arg();
 		void print();
 	};
 
@@ -69,20 +53,25 @@ namespace smecy
 	class Attribute: public AstAttribute
 	{
 	protected:
-		std::vector<Clause> clauseList;
+		std::string mapName;
+		IntExpr mapNumber;
+		std::vector<Arg> argList;
 		std::vector<std::string> expressionList;
+		std::vector<SgExpression*> sgExpressionList;
 	public:
-		void addClause(Clause clause);
-		//TODO need for a method that returns the original pragma string ?
+		void addArg(int argNumber, ArgType argType);
+		void addArg(int argNumber, std::vector<IntExpr> argSize);
+		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
 		void print();
 		std::vector<std::string> getExpressionList();
+		Attribute(std::string mapName, IntExpr mapNumber);
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;
 		static std::vector<IntExpr> argSize;
 		static std::vector<std::pair<IntExpr,IntExpr> > argRange;
 		static std::pair<IntExpr,IntExpr> currentPair;
-		static IntExpr argNumber;
+		static int argNumber;
 		static int isExprMode;
 		static std::stringstream expr;
 		static IntExpr currentIntExpr;

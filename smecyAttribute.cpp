@@ -9,6 +9,8 @@
 
 namespace smecy
 {
+//==========================================================================//
+// IntExpt
 	IntExpr::IntExpr(int intValue) : intValue(intValue), exprValue("")
 	{
 		this->isIntBool = true;
@@ -45,10 +47,16 @@ namespace smecy
 			return this->exprValue;
 	}
 
+//==========================================================================//
+// Attribute
+	Attribute::Attribute(std::string mapName, IntExpr mapNumber) : mapName(mapName), mapNumber(mapNumber)
+	{
+	}
+
 	Attribute* Attribute::currentAttribute ;
 	std::vector<IntExpr> Attribute::argSize;
 	std::vector<std::pair<IntExpr,IntExpr> > Attribute::argRange;
-	IntExpr Attribute::argNumber;
+	int Attribute::argNumber;
 	int Attribute::isExprMode = 0;
 	std::stringstream Attribute::expr;
 	std::pair<IntExpr,IntExpr> Attribute::currentPair;
@@ -66,59 +74,89 @@ namespace smecy
 		return IntExpr(integer);
 	}
 
-	void Attribute::addClause(Clause clause)
+	void Attribute::addArg(int argNumber, ArgType argType)
 	{
-		this->clauseList.push_back(clause);
+		for (unsigned int i=0; i<this->argList.size(); i++)
+		{
+			//check for existing Arg clause with same number
+			if (this->argList[i].argNumber==argNumber)
+			{
+				this->argList[i].argType=argType;
+			}
+			//if not, create a new one
+			else
+			{
+				Arg arg;
+				arg.argNumber=argNumber;
+				arg.argType=argType;
+				this->argList.push_back(arg);
+			}
+		}
 	}
+	
+	void Attribute::addArg(int argNumber, std::vector<IntExpr> argSize)
+	{
+		for (unsigned int i=0; i<this->argList.size(); i++)
+		{
+			//check for existing Arg clause with same number
+			if (this->argList[i].argNumber==argNumber)
+			{
+				this->argList[i].argSize=argSize;
+			}
+			//if not, create a new one
+			else
+			{
+				Arg arg;
+				arg.argNumber=argNumber;
+				arg.argSize=argSize;
+				this->argList.push_back(arg);
+			}
+		}
+	}
+	
+	void Attribute::addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange)
+	{
+		for (unsigned int i=0; i<this->argList.size(); i++)
+		{
+			//check for existing Arg clause with same number
+			if (this->argList[i].argNumber==argNumber)
+			{
+				this->argList[i].argRange=argRange;
+			}
+			//if not, create a new one
+			else
+			{
+				Arg arg;
+				arg.argNumber=argNumber;
+				arg.argRange=argRange;
+				this->argList.push_back(arg);
+			}
+		}
+	}
+	
 	
 	std::vector<std::string> Attribute::getExpressionList()
 	{
 		return this->expressionList;
 	}
-
-	Clause::Clause(std::string accelerator, IntExpr unitNumber) : type(_map), accelerator(accelerator), unitNumber(unitNumber)
-	{
-	}
-
-	Clause::Clause(IntExpr argNumber, ArgType argType) : type(_arg_type), argNumber(argNumber), argType(argType)
-	{
-	}
-
-	Clause::Clause(IntExpr argNumber, std::vector<IntExpr> argSize) : type(_arg_size), argNumber(argNumber), argSize(argSize)
-	{
-	}
-
-	Clause::Clause(IntExpr argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange) : type(_arg_range), argNumber(argNumber), argRange(argRange)
-	{
-	}
-
+	
 	void Attribute::print()
 	{
-		for (unsigned int i=0; i<this->clauseList.size(); i++)
-			this->clauseList[i].print();
+		std::cout << "Attribute with " << this->argList.size() << " argument clauses." << std::endl;
+		std::cout << "\tMapped to " << this->mapName << " n°" << this->mapNumber << "." << std::endl;
+		for (unsigned int i=0; i<this->argList.size(); i++)
+			this->argList[i].print();
 	}
 
-	void Clause::print()
+//==========================================================================//
+// Arg
+	Arg::Arg() : argNumber(-1), argType(_arg_unknown)
 	{
-		switch(this->type)
-		{
-			case _map:
-				std::cout << "map(" << this->accelerator << "," << this->unitNumber << ")" << std::endl ; break ;
-			case _arg_type:
-				std::cout << "arg(" << this->argNumber << "," << this->argType << ")" << std::endl ; break ;
-			case _arg_size:
-				std::cout << "arg(" << this->argNumber << ",";
-				for (unsigned int i=0; i<this->argSize.size(); i++)
-					std::cout << "[" << this->argSize[i] << "]";
-				std::cout << ")" << std::endl ; break ;
-			case _arg_range:
-				std::cout << "arg(" << this->argNumber << ",/";
-				for (unsigned int i=0; i<this->argRange.size(); i++)
-					std::cout << "[" << this->argRange[i].first << ":" << this->argRange[i].second << "]";
-				std::cout << ")" << std::endl ; break ;
-			default:
-				std::cerr << "Error : invalid clause" << std::endl ;
-		}
+	}
+
+	void Arg::print()
+	{
+		
 	}
 } // namespace smecy
 

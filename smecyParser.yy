@@ -25,12 +25,11 @@ int _yyparse();
 
 %%
 smecy_directive
-					: SMECY { Attribute::currentAttribute=new Attribute(); } arg_clause arg_clause_list	//we do not allow empty directives
-					| SMECY { Attribute::currentAttribute=new Attribute(); } map_clause arg_clause_list
+					: SMECY map_clause arg_clause_list
 					;
 
 arg_clause
-					: ARG '(' int ',' { Attribute::argNumber = Attribute::currentIntExpr; } arg_parameter_list ')'
+					: ARG '(' INTEGER ',' { Attribute::argNumber = $3; } arg_parameter_list ')'
 					;
 					
 arg_clause_list
@@ -40,7 +39,7 @@ arg_clause_list
 					
 map_clause
 					: MAP '(' ID closing_map_clause { 
-						Attribute::currentAttribute->addClause(Clause($3,Attribute::currentIntExpr));
+						Attribute::currentAttribute = new Attribute($3,Attribute::currentIntExpr);
 						}
 					;
 					
@@ -55,10 +54,10 @@ arg_parameter_list
 					;
 					
 arg_parameter		
-					: IN { Attribute::currentAttribute->addClause(Clause(Attribute::argNumber,_arg_in)); }
-					| OUT { Attribute::currentAttribute->addClause(Clause(Attribute::argNumber,_arg_out)); }
-					| INOUT { Attribute::currentAttribute->addClause(Clause(Attribute::argNumber,_arg_inout)); }
-					| UNUSED { Attribute::currentAttribute->addClause(Clause(Attribute::argNumber,_arg_unused)); }
+					: IN { Attribute::currentAttribute->addArg(Attribute::argNumber,_arg_in); }
+					| OUT { Attribute::currentAttribute->addArg(Attribute::argNumber,_arg_out); }
+					| INOUT { Attribute::currentAttribute->addArg(Attribute::argNumber,_arg_inout); }
+					| UNUSED { Attribute::currentAttribute->addArg(Attribute::argNumber,_arg_unused); }
 					| size
 					| range
 					;
@@ -70,7 +69,7 @@ size
 					;
 
 size_list
-					: /*empty*/ { Attribute::currentAttribute->addClause(Clause(Attribute::argNumber,Attribute::argSize));}
+					: /*empty*/ { Attribute::currentAttribute->addArg(Attribute::argNumber,Attribute::argSize);}
 					| '[' int ']' { Attribute::argSize.push_back(Attribute::currentIntExpr); } size_list
 					;
 
@@ -98,7 +97,7 @@ range_mid
 					;
 					
 range_open
-					: /*empty*/ { Attribute::currentAttribute->addClause(Clause(Attribute::argNumber,Attribute::argRange));}
+					: /*empty*/ { Attribute::currentAttribute->addArg(Attribute::argNumber,Attribute::argRange);}
 					| '[' { Attribute::isExprMode=1; } range_begin
 					;
 
