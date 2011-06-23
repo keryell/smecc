@@ -179,6 +179,36 @@ namespace smecy
 		}
 	}
 	
+	void addSmecyGetArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
+			int argNumber, SgExpression* typeDescriptor, SgExpression* value)
+	{
+		//building parameters to build the func call (bottom-up building)
+		SgExpression* argNumberExpr = SageBuilder::buildIntVal(argNumber);
+		SgExprListExp * exprList = SageBuilder::buildExprListExp(mapName, mapNumber, functionToMap, argNumberExpr, typeDescriptor, value);
+		SgName name("SMECY_get_arg");
+		SgType* type = SageBuilder::buildVoidType();
+		SgScopeStatement* scope = SageInterface::getScope(target);
+		
+		//building the function call
+		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
+		SageInterface::insertStatement(target, funcCall);
+	}
+	
+	void processGetArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute)
+	{
+		std::vector<Arg> argList = attribute->getArgList();
+		for (unsigned int i=0; i<argList.size(); i++)
+		{
+			if ((argList[i].argType==_arg_out or argList[i].argType==_arg_inout) and (argList[i].argSize.size()==0))
+			{
+				int argNumber = argList[i].argNumber-1;	//counting from 0 instead of 1
+				SgExpression* typeDescriptor = getArgTypeDescriptor(SageInterface::getNextStatement(target), argNumber);
+				SgExpression* value = getArgRef(SageInterface::getNextStatement(target), argNumber);
+				addSmecyGetArg(target, mapName, mapNumber, functionToMap, argNumber, typeDescriptor, value);
+			}
+		}
+	}
+	
 	SgExpression* getFunctionRef(SgStatement* functionCall)
 	{
 		//temp variables for downcasting
@@ -228,6 +258,27 @@ namespace smecy
 		}
 	}
 	
+	SgExpression* getArgVectorTypeDescriptor(SgStatement* functionCall, int argNumber)
+	{
+		SgExpression* argRef = getArgRef(functionCall, argNumber);
+		SgType* argType = argRef->get_type();
+		if (!SageInterface::isPointerType(argType))
+		{
+			std::cerr << "Argument was not a pointer." << std::endl;
+			throw 0;
+		}
+		SgType* elementType = SageInterface::getElementType(argType);	//FIXME what will it to with int** for example ?
+		SgScopeStatement* scope = SageInterface::getScope(functionCall);
+		
+		if (isSgTypeInt(elementType))
+			return SageBuilder::buildOpaqueVarRefExp("SMECY_INT", scope);
+		else
+		{
+			std::cerr << "Unsupported type." << std::endl;
+			throw 0;
+		}
+	}
+	
 	SgExpression* copy(SgExpression* param)
 	{
 		SgNode* temp = SageInterface::deepCopyNode(param);
@@ -261,6 +312,7 @@ namespace smecy
 				addSmecySet(pragmaDeclaration, mapName, mapNumber, funcToMap);
 				processSendArgs(pragmaDeclaration, mapName, mapNumber, funcToMap, attribute);
 				addSmecyLaunch(pragmaDeclaration, copy(mapName), copy(mapNumber), copy(funcToMap));
+				processGetArgs(pragmaDeclaration, mapName, mapNumber, funcToMap, attribute);
 			}
 		}
 	}

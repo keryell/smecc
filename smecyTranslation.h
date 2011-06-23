@@ -31,12 +31,16 @@ namespace smecy
 	void addSmecySendArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
 	void processSendArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute);
+	void addSmecyGetArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
+			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
+	void processGetArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute);
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
 	
 	//functionas that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
 	SgExpression* getArgRef(SgStatement* functionCall, int argNumber);
 	SgExpression* getArgTypeDescriptor(SgStatement* functionCall, int argNumber);
+	SgExpression* getArgVectorTypeDescriptor(SgStatement* functionCall, int argNumber);
 	SgExpression* copy(SgExpression* param);
 	
 	//the top-level translating function
