@@ -119,6 +119,11 @@ namespace smecy
 		this->expressionList=exprList;
 	}
 	
+	std::vector<Arg>& Attribute::getArgList()
+	{
+		return this->argList;
+	}
+	
 	std::vector<std::string> Attribute::getExpressionList()
 	{
 		return this->expressionList;
@@ -154,6 +159,16 @@ namespace smecy
 					exprIndex = i;
 			return this->sgExpressionList[exprIndex];
 		}
+	}
+	
+	int Attribute::argDimension(int arg)
+	{
+		for (unsigned int i=0; i<this->argList.size(); i++)
+		{
+			if (this->argList[i].argNumber==arg)
+				return this->argList.size();
+		}
+		return -1;
 	}
 	
 	void Attribute::print()

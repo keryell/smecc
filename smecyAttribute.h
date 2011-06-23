@@ -66,13 +66,18 @@ namespace smecy
 		Attribute(std::string mapName, IntExpr mapNumber);
 		void setExpressionList(std::vector<std::string> exprList);
 		
+		std::vector<Arg>& getArgList();
+		
 		//expression-related methods
 		void addParsedExpression(SgExpression* expr);
 		std::vector<std::string> getExpressionList();
 		
 		//high-level get methods to get Sg objects directly
-		SgExpression* getMapName();	//TODO
-		SgExpression* getMapNumber();	//TODO
+		SgExpression* getMapName();
+		SgExpression* getMapNumber();
+		
+		//information about the args
+		int argDimension(int arg);	//returns -1 if unknown
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;

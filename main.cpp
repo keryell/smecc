@@ -16,6 +16,6 @@ int main(int argc, char *argv[])
 	generatePDF(*project);
 	generateDOT(*project);
 	
-	AstTests::runAllTests(project);
+	//AstTests::runAllTests(project);
 	return backend(project);
 }
