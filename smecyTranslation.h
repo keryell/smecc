@@ -32,6 +32,10 @@ namespace smecy
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
 	void addSmecyGetArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
+	void addSmecySendArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
+			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size);
+	void addSmecyGetArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
+			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size);
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
 	
 	//high-level functions to handle arguments
