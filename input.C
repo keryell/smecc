@@ -1,6 +1,4 @@
-#include <string>
-
-void bob(int* tablo)
+void init(int* tablo, int size)
 {
 	for (int i=0; i<10; i++)
 		tablo[i]=0;
@@ -8,14 +6,12 @@ void bob(int* tablo)
 
 int main()
 {
-#pragma omp parallel
+	int tab[10][100];
+#pragma omp parallel for
+	for (int i=0; i<10; i++)
 	{
-		int tab[10][100];
-		for (int i=0; i<10; i++)
-		{
-		#pragma smecy map(PE,i) arg(1,out,[10][100],/[i][])
-			bob(&tab[i][0]);
-		}
-		return 0;
+#pragma smecy map(PE,i) arg(1,out,[10][100],/[i][]) arg(2,in)
+		init(&tab[i][0], 100);
 	}
+	return 0;
 }
