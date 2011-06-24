@@ -46,6 +46,11 @@ namespace smecy
 		else
 			return this->exprValue;
 	}
+	
+	bool IntExpr::isMinus1()
+	{
+		return (this->isIntBool and this->intValue==-1);
+	}
 
 //==========================================================================//
 // Attribute
@@ -161,14 +166,48 @@ namespace smecy
 		}
 	}
 	
-	int Attribute::argDimension(int arg)
+	int Attribute::argIndex(int arg)
 	{
 		for (unsigned int i=0; i<this->argList.size(); i++)
 		{
 			if (this->argList[i].argNumber==arg)
-				return this->argList.size();
+				return i;
 		}
-		return -1;
+		std::cerr << "No information in pragma for argument n°" << arg << std::endl ;
+		throw 0;
+	}
+	
+	ArgType Attribute::argType(int argIndex)
+	{
+		if (this->argList[argIndex].argType!=_arg_unknown)
+			return this->argList[argIndex].argType;
+		std::cerr << "Missing argument type in pragma" << std::endl ;
+		throw 0;
+	}
+	
+	int Attribute::argDimension(int argIndex)
+	{
+		if (this->argList[argIndex].argRange.size()==0)
+			return this->argList[argIndex].argSize.size();
+		else if (this->argList[argIndex].argRange.size() == this->argList[argIndex].argSize.size())
+		{
+			int dimension = 0;
+			for (unsigned int i=0; i<this->argList[argIndex].argSize.size(); i++)
+			{
+				//if range is [n] then it dosen't count toward dimension
+				if (!(!this->argList[argIndex].argRange[i].first.isMinus1() and this->argList[argIndex].argRange[i].second.isMinus1()))
+					dimension++;
+			}
+			return dimension;
+		}
+		std::cerr << "Size and range dimensions do not match in pragma" << std::endl ;
+		throw 0;
+	}
+	
+	//should not be called if arg is not a vector
+	SgExpression* Attribute::argVectorSize(int argIndex)
+	{
+		
 	}
 	
 	void Attribute::print()

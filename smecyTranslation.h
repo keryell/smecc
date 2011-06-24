@@ -30,14 +30,18 @@ namespace smecy
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
 	void addSmecySendArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
-	void processSendArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute);
+	//void processSendArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute);
 	void addSmecyGetArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
-	void processGetArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute);
+	//void processGetArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute);
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
+	
+	//high-level functions to handle arguments
+	void processArgs(SgStatement* target, Attribute* attribute);
 	
 	//functionas that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
+	SgExprListExp* getArgList(SgStatement* functionCall);
 	SgExpression* getArgRef(SgStatement* functionCall, int argNumber);
 	SgExpression* getArgTypeDescriptor(SgStatement* functionCall, int argNumber);
 	SgExpression* getArgVectorTypeDescriptor(SgStatement* functionCall, int argNumber);

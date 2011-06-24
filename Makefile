@@ -10,7 +10,7 @@ CXXFLAGS			= -g -Wall -Wno-write-strings
 LEXFLAGS			=
 YACCFLAGS			= -d
 RMFLAGS				= -f
-TESTFLAGS			= -rose:openmp:ast_only #ast_only, lowering, parse_only
+TESTFLAGS			= -rose:openmp:ast_only --edg:no_warnings #ast_only, lowering, parse_only
 
 allFiles = parseTest
 

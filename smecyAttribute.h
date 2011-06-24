@@ -34,6 +34,8 @@ namespace smecy
 		bool isInt();
 		int getInt();
 		std::string getExpr();
+		
+		bool isMinus1();
 	};
 
 	//individual smecy clause
@@ -59,6 +61,7 @@ namespace smecy
 		std::vector<std::string> expressionList;
 		std::vector<SgExpression*> sgExpressionList;
 	public:
+		//methods needed the create the attribute
 		void addArg(int argNumber, ArgType argType);
 		void addArg(int argNumber, std::vector<IntExpr> argSize);
 		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
@@ -66,6 +69,7 @@ namespace smecy
 		Attribute(std::string mapName, IntExpr mapNumber);
 		void setExpressionList(std::vector<std::string> exprList);
 		
+		//FIXME remove this if possible
 		std::vector<Arg>& getArgList();
 		
 		//expression-related methods
@@ -77,7 +81,10 @@ namespace smecy
 		SgExpression* getMapNumber();
 		
 		//information about the args
-		int argDimension(int arg);	//returns -1 if unknown
+		int argIndex(int arg); //returns index of arg in argList fails otherwise
+		ArgType argType(int argIndex);
+		int argDimension(int argIndex);	//return effective dimension, taking range into account
+		SgExpression* argVectorSize(int argIndex); //TODO
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;
