@@ -60,8 +60,8 @@ namespace smecy
 		std::vector<Arg> argList;
 		std::vector<std::string> expressionList;
 		std::vector<SgExpression*> sgExpressionList;
-	public:
-		//methods needed the create the attribute
+	public: //TODO move methods to protected
+		//methods needed to create the attribute
 		void addArg(int argNumber, ArgType argType);
 		void addArg(int argNumber, std::vector<IntExpr> argSize);
 		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
@@ -79,11 +79,13 @@ namespace smecy
 		//high-level get methods to get Sg objects directly
 		SgExpression* getMapName();
 		SgExpression* getMapNumber();
+		SgExpression* intExprToSgExpression(IntExpr ie);
 		
 		//information about the args
 		int argIndex(int arg); //returns index of arg in argList fails otherwise
 		ArgType argType(int argIndex);
-		int argDimension(int argIndex);	//return effective dimension, taking range into account
+		int argDimension(int argIndex);	//returns effective dimension, taking range into account
+		int argVectorAxis(int argIndex); //returns the dimension on which the vector spans
 		SgExpression* argVectorSize(int argIndex); //TODO
 	
 		//static attributes needed for parsing

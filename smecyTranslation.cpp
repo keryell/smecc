@@ -135,7 +135,7 @@ namespace smecy
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
 	{
 		//building parameters to build the func call (bottom-up building)
-		SgExprListExp * exprList = SageBuilder::buildExprListExp(mapName, mapNumber, functionToMap);
+		SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(functionToMap));
 		SgName name("SMECY_set");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
@@ -148,7 +148,7 @@ namespace smecy
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
 	{
 		//building parameters to build the func call (bottom-up building)
-		SgExprListExp * exprList = SageBuilder::buildExprListExp(mapName, mapNumber, functionToMap);
+		SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(functionToMap));
 		SgName name("SMECY_launch");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
@@ -163,7 +163,8 @@ namespace smecy
 	{
 		//building parameters to build the func call (bottom-up building)
 		SgExpression* argNumberExpr = SageBuilder::buildIntVal(argNumber);
-		SgExprListExp * exprList = SageBuilder::buildExprListExp(mapName, mapNumber, functionToMap, argNumberExpr, typeDescriptor, value);
+		SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
+				copy(typeDescriptor), copy(value));
 		SgName name("SMECY_send_arg");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
@@ -173,51 +174,21 @@ namespace smecy
 		SageInterface::insertStatement(target, funcCall);
 	}
 	
-	/*void processSendArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute)
-	{
-		std::vector<Arg> argList = attribute->getArgList();
-		for (unsigned int i=0; i<argList.size(); i++)
-		{
-			if ((argList[i].argType==_arg_in or argList[i].argType==_arg_inout) and (argList[i].argSize.size()==0))
-			{
-				int argNumber = argList[i].argNumber-1;	//counting from 0 instead of from 1
-				SgExpression* typeDescriptor = getArgTypeDescriptor(SageInterface::getNextStatement(target), argNumber);
-				SgExpression* value = getArgRef(SageInterface::getNextStatement(target), argNumber);
-				addSmecySendArg(target, mapName, mapNumber, functionToMap, argNumber, typeDescriptor, value);
-			}
-		}
-	}*/
-	
 	void addSmecyGetArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value)
 	{
 		//building parameters to build the func call (bottom-up building)
 		SgExpression* argNumberExpr = SageBuilder::buildIntVal(argNumber);
-		SgExprListExp * exprList = SageBuilder::buildExprListExp(mapName, mapNumber, functionToMap, argNumberExpr, typeDescriptor, value);
+		SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
+				copy(typeDescriptor), copy(value));
 		SgName name("SMECY_get_arg");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
 		
 		//building the function call
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
-		SageInterface::insertStatement(target, funcCall);
+		SageInterface::insertStatement(target, funcCall, false);
 	}
-	
-	/*void processGetArgs(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, Attribute* attribute)
-	{
-		std::vector<Arg> argList = attribute->getArgList();
-		for (unsigned int i=0; i<argList.size(); i++)
-		{
-			if ((argList[i].argType==_arg_out or argList[i].argType==_arg_inout) and (argList[i].argSize.size()==0))
-			{
-				int argNumber = argList[i].argNumber-1;	//counting from 0 instead of 1
-				SgExpression* typeDescriptor = getArgTypeDescriptor(SageInterface::getNextStatement(target), argNumber);
-				SgExpression* value = getArgRef(SageInterface::getNextStatement(target), argNumber);
-				addSmecyGetArg(target, mapName, mapNumber, functionToMap, argNumber, typeDescriptor, value);
-			}
-		}
-	}*/
-	
 	
 	/* SgXXX extractors :
 	functions to extract specific informations from the AST
@@ -309,13 +280,37 @@ namespace smecy
 	Checks the correct dimension and layout in memory of all arguments
 	then, creates the corresponding API calls
 	*/
-	void processArgs(SgStatement* target, Attribute* attribute)
+	void processArgs(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
 	{
 		//we go through the function's parameters
-		SgStatement* funcToMap = SageInterface::getNextStatement(target);
-		SgExprListExp* argList = getArgList(funcToMap);
-		for (unsigned int i=0; i<argList->get_expressions().size(); i++)
+		SgExprListExp* argList = getArgList(functionToMap);
+		for (unsigned int i=1; i<=argList->get_expressions().size(); i++) //counting from 1 !
 		{
+			//these lines include various verifications
+			int argIndex = attribute->argIndex(i);
+			ArgType argType = attribute->argType(argIndex);
+			int dimension = attribute->argDimension(argIndex);
+			
+			//parameters for the smecyAddXXX methods
+			SgExpression* mapName = attribute->getMapName();
+			SgExpression* mapNumber = attribute->getMapNumber();
+			SgExpression* funcToMapExp = getFunctionRef(functionToMap);
+			SgExpression* value = getArgRef(functionToMap, i-1);
+			
+			if (dimension==0) //scalar arg
+			{
+				SgExpression* typeDescriptor = getArgTypeDescriptor(functionToMap, i-1);
+				if (argType==_arg_in or argType==_arg_inout)
+					addSmecySendArg(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value);
+				if (argType==_arg_out or argType==_arg_inout)
+					addSmecyGetArg(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value);
+			}
+			
+			if (dimension==1) //vector arg
+			{
+				//SgExpression* typeDescriptor = getArgTypeDescriptor(functionToMap, i-1);
+				
+			}
 			
 		}
 	}
@@ -346,12 +341,14 @@ namespace smecy
 				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
 				SgExpression* mapName = attribute->getMapName();
 				SgExpression* mapNumber = attribute->getMapNumber();
-				SgExpression* funcToMap = getFunctionRef(SageInterface::getNextStatement(pragmaDeclaration));
+				SgStatement* funcToMap = SageInterface::getNextStatement(pragmaDeclaration);
 
-				addSmecySet(pragmaDeclaration, mapName, mapNumber, funcToMap);
-				//processSendArgs(pragmaDeclaration, mapName, mapNumber, funcToMap, attribute);
-				addSmecyLaunch(pragmaDeclaration, copy(mapName), copy(mapNumber), copy(funcToMap));
-				//processGetArgs(pragmaDeclaration, mapName, mapNumber, funcToMap, attribute);
+				//adding calls to SMECY API
+				addSmecySet(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));
+				processArgs(pragmaDeclaration, attribute, funcToMap);
+				addSmecyLaunch(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));
+				
+				//removing pragma declaration and function call
 			}
 		}
 	}

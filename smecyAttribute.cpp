@@ -146,21 +146,26 @@ namespace smecy
 	
 	SgExpression* Attribute::getMapNumber()
 	{
+		return this->intExprToSgExpression(this->mapNumber);
+	}
+	
+	SgExpression* Attribute::intExprToSgExpression(IntExpr ie)
+	{
 		//check if parsing has been done
 		if (this->sgExpressionList.size() != this->expressionList.size())
 		{
-			std::cerr << "Error : Parsing has not been done before accessing mapNumber" << std::endl;
+			std::cerr << "Error : Parsing has not been done before accessing IntExpr object" << std::endl;
 			throw 0;
 		}
 		
-		if (this->mapNumber.isInt())
-			return SageBuilder::buildIntVal(this->mapNumber.getInt());
+		if (ie.isInt())
+			return SageBuilder::buildIntVal(ie.getInt());
 		else
 		{
 			//FIXME improve vector security
 			int exprIndex = -1;
 			for (unsigned int i=0; i<this->expressionList.size(); i++)
-				if (this->expressionList[i] == this->mapNumber.getExpr())
+				if (this->expressionList[i] == ie.getExpr())
 					exprIndex = i;
 			return this->sgExpressionList[exprIndex];
 		}
@@ -205,9 +210,36 @@ namespace smecy
 	}
 	
 	//should not be called if arg is not a vector
+	int Attribute::argVectorAxis(int argIndex)
+	{
+		if (this->argList[argIndex].argSize.size()==1)
+			return 0;
+		else //we know range exists and has same size as size
+		{
+			for (unsigned int i=0; i<this->argList[argIndex].argSize.size(); i++)
+			{
+				if (!(!this->argList[argIndex].argRange[i].first.isMinus1() and this->argList[argIndex].argRange[i].second.isMinus1()))
+					return i;
+			}
+		}
+		std::cerr << "Arg is not a vector" << std::endl ;
+		throw 0;
+	}
+	
+	//should not be called if arg is not a vector
 	SgExpression* Attribute::argVectorSize(int argIndex)
 	{
-		
+		int axis = this->argVectorAxis(argIndex);
+		//case where the size of the vector is given by argSize
+		if ( (this->argList[argIndex].argRange.size()==0) or
+				(this->argList[argIndex].argRange[axis].first.isMinus1() and this->argList[argIndex].argRange[axis].second.isMinus1()) )
+			return this->intExprToSgExpression(this->argList[argIndex].argSize[axis]);
+		else //case where the size of the vector is given by argRange
+		{
+			SgExpression* leftOperand = this->intExprToSgExpression(this->argList[argIndex].argRange[axis].second);
+			SgExpression* rightOperand = this->intExprToSgExpression(this->argList[argIndex].argRange[axis].first);
+			return SageBuilder::buildSubtractOp(leftOperand, rightOperand);
+		}
 	}
 	
 	void Attribute::print()
