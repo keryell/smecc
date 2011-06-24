@@ -10,5 +10,4 @@
 #define SMECY_send_arg_vector(pe, instance, func, arg, type, value, size) printf("youplaboum !")
 #define SMECY_get_arg_vector(pe, instance, func, arg, type, value, size) printf("tsoin tsoin !")
 
-
 #endif //SMECY_H
