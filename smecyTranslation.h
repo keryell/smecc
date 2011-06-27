@@ -22,8 +22,6 @@ namespace smecy
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
 	void addSmecySendArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
-	void addSmecyGetArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
-			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
 	void addSmecySendArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size);
 	void addSmecyGetArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,

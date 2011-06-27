@@ -222,8 +222,7 @@ namespace smecy
 			//warning if actual dimension is >1
 			int dimension = this->argDimension(i);
 			if (dimension > 1)
-				std::cerr << "Warning: argument is of dimension " << dimension << " for argument "
-						<< this->argList[i].argNumber << "  but is used as a vector." << std::endl;
+				std::cerr << "Warning: argument " << this->argList[i].argNumber << " is of dimension " <<dimension << " but is used as a vector." << std::endl;
 		}
 		//this number is only a lower bound since we don't know the total number of arguments of the function
 		if (undocumentedArgs)	
@@ -270,36 +269,51 @@ namespace smecy
 		throw 0;
 	}
 	
-	//should not be called if arg is not a vector
-	int Attribute::argVectorAxis(int argIndex)
+	//returns the expression that gives the size of an argument
+	SgExpression* Attribute::argSizeExp(int arg)
 	{
-		if (this->argList[argIndex].argSize.size()==1)
-			return 0;
-		else //we know range exists and has same size as size
+		int index = this->argIndex(arg);
+		if (this->argList[index].argSize.size() == 0) //scalar
+			return SageBuilder::buildIntVal(1);
+		else if (this->argList[index].argRange.size() == 0) //no range, size is product of argSize elements
 		{
-			for (unsigned int i=0; i<this->argList[argIndex].argSize.size(); i++)
-			{
-				if (!(!this->argList[argIndex].argRange[i].first.isMinus1() and this->argList[argIndex].argRange[i].second.isMinus1()))
-					return i;
-			}
+			SgExpression* result = this->intExprToSgExpression(this->argList[index].argSize[0]);
+			for (unsigned int i=1; i<this->argList[index].argSize.size(); i++)
+				result = SageBuilder::buildMultiplyOp(result, this->intExprToSgExpression(this->argList[index].argSize[i]));
+			return result;
 		}
-		std::cerr << "Arg is not a vector" << std::endl ;
-		throw 0;
-	}
-	
-	//should not be called if arg is not a vector
-	SgExpression* Attribute::argVectorSize(int argIndex)
-	{
-		int axis = this->argVectorAxis(argIndex);
-		//case where the size of the vector is given by argSize
-		if ( (this->argList[argIndex].argRange.size()==0) or
-				(this->argList[argIndex].argRange[axis].first.isMinus1() and this->argList[argIndex].argRange[axis].second.isMinus1()) )
-			return this->intExprToSgExpression(this->argList[argIndex].argSize[axis]);
-		else //case where the size of the vector is given by argRange
+		else if (this->argList[index].argRange.size() == this->argList[index].argSize.size()) //argRange is present, size depends on range form
 		{
-			SgExpression* leftOperand = this->intExprToSgExpression(this->argList[argIndex].argRange[axis].second);
-			SgExpression* rightOperand = this->intExprToSgExpression(this->argList[argIndex].argRange[axis].first);
-			return SageBuilder::buildSubtractOp(leftOperand, rightOperand);
+			SgExpression* result = NULL;
+			SgExpression* partialResult;
+			for (unsigned int i=1; i<this->argList[index].argSize.size(); i++)
+			{
+				if (this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[]
+					partialResult = this->intExprToSgExpression(this->argList[index].argSize[i]);
+				else if (!this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[n]
+					{ /* result = result * 1 */ }
+				else if (!this->argList[index].argRange[i].first.isMinus1() and !this->argList[index].argRange[i].second.isMinus1()) //[n:m]
+					partialResult = SageBuilder::buildSubtractOp(this->intExprToSgExpression(this->argList[index].argRange[i].second),
+							this->intExprToSgExpression(this->argList[index].argRange[i].first)); //result = result * (m-n)
+				else
+				{
+					std::cerr << "Error: corrupted range for argument " << arg << " ." << std::endl;
+					throw 0;
+				}
+				if (!result) // to avoid useless 1* expression
+					result = partialResult;
+				else
+					result = SageBuilder::buildMultiplyOp(result, partialResult);
+			}
+			if (!result) //case where range is /[m][n]...[p]
+				return SageBuilder::buildIntVal(1);
+			else
+				return result;
+		}
+		else
+		{
+			std::cerr << "Error: range and size information do not match for argument " << arg << "." << std::endl;
+			throw 0;
 		}
 	}
 	

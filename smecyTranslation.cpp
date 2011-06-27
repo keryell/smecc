@@ -144,22 +144,6 @@ namespace smecy
 		SageInterface::insertStatement(target, funcCall);
 	}
 	
-	void addSmecyGetArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
-			int argNumber, SgExpression* typeDescriptor, SgExpression* value)
-	{
-		//building parameters to build the func call (bottom-up building)
-		SgExpression* argNumberExpr = SageBuilder::buildIntVal(argNumber);
-		SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
-				copy(typeDescriptor), copy(value));
-		SgName name("SMECY_get_arg");
-		SgType* type = SageBuilder::buildVoidType();
-		SgScopeStatement* scope = SageInterface::getScope(target);
-		
-		//building the function call
-		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
-		SageInterface::insertStatement(target, funcCall, false);
-	}
-	
 	void addSmecySendArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size)
 	{
@@ -286,11 +270,11 @@ namespace smecy
 	{
 		//we go through the function's parameters
 		SgExprListExp* argList = getArgList(functionToMap);
+		if (!attribute->checkAll()) //verification of pragma content
+				throw 0;
 		for (unsigned int i=1; i<=argList->get_expressions().size(); i++) //counting from 1 !
 		{
 			//these lines include various verifications
-			if (!attribute->checkAll())
-				throw 0;
 			int argIndex = attribute->argIndex(i);	//FIXME currently, missing mapping info provokes an error
 			ArgType argType = attribute->argType(argIndex);
 			int dimension = attribute->argDimension(argIndex);
@@ -307,14 +291,14 @@ namespace smecy
 				if (argType==_arg_in or argType==_arg_inout)
 					addSmecySendArg(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value);
 				if (argType==_arg_out or argType==_arg_inout)
-					addSmecyGetArg(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value);
+					std::cerr << "Warning: argument " << i << " is a scalar with type out or inout." << std::endl;
 			}
 			
-			if (dimension==1) //vector arg
+			if (dimension>0) //vector arg
 			{
 				SgExpression* typeDescriptor = getArgVectorTypeDescriptor(functionToMap, i-1);
 				//TODO insert verification of the fact that the vector spans over the last dimension
-				SgExpression* argSize = attribute->argVectorSize(argIndex);
+				SgExpression* argSize = attribute->argSizeExp(i);
 				if (argType==_arg_in or argType==_arg_inout)
 					addSmecySendArgVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize);
 				if (argType==_arg_out or argType==_arg_inout)

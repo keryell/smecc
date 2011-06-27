@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	
 	smecy::translateSmecy(project);
 	
-	generatePDF(*project);
+	//generatePDF(*project);
 	generateDOT(*project);
 	
 	//AstTests::runAllTests(project);

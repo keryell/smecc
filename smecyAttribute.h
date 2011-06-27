@@ -88,8 +88,7 @@ namespace smecy
 		int argIndex(int arg); //returns index of arg in argList fails otherwise
 		ArgType argType(int argIndex);
 		int argDimension(int argIndex);	//returns effective dimension, taking range into account
-		int argVectorAxis(int argIndex); //returns the dimension on which the vector spans
-		SgExpression* argVectorSize(int argIndex); //TODO
+		SgExpression* argSizeExp(int arg);
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;
