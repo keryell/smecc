@@ -171,6 +171,67 @@ namespace smecy
 		}
 	}
 	
+	bool Attribute::checkAll()
+	{
+		int undocumentedArgs = 0;
+		for (unsigned int i=0; i<this->argList.size(); i++)
+		{
+			//print a warning if exists arg with number >= number of Arg objects
+			if (this->argList[i].argNumber > (int)this->argList.size())
+				undocumentedArgs++;
+			
+			//presence of type information
+			if (this->argList[i].argType == _arg_unknown)
+			{
+				std::cerr << "Error: missing type (in, ou, inout, unused) information for argument " << this->argList[i].argNumber
+						<< " with size or range information." << std::endl;
+				return false;
+			}
+			
+			//check size information when range is used
+			if (this->argList[i].argRange.size() > this->argList[i].argSize.size())
+			{
+				std::cerr << "Error: missing size information for argument " << this->argList[i].argNumber << " with range information." << std::endl;
+				return false;
+			}
+			
+			//contiguity of each arg in memory
+			int level = 0; //[n]:0 [m:n]:1 []=2
+			int currentLevel;
+			for (unsigned int j=0; j<this->argList[i].argRange.size(); j++)
+			{
+				if (!this->argList[i].argRange[j].first.isMinus1() and this->argList[i].argRange[j].second.isMinus1()) //[n]
+					currentLevel = 0;
+				else if (!this->argList[i].argRange[j].first.isMinus1() and !this->argList[i].argRange[j].second.isMinus1()) //[m:n]
+					currentLevel = 1;
+				else if (this->argList[i].argRange[j].first.isMinus1() and this->argList[i].argRange[j].second.isMinus1()) //[]
+					currentLevel = 2;
+				else
+				{
+					std::cerr << "Error: corrupted range for argument " << this->argList[i].argNumber << " ." << std::endl;
+					return false;
+				}
+				if (level > currentLevel)
+				{
+					std::cerr << "Error: data not contiguous in memory for argument " << this->argList[i].argNumber << " ." << std::endl;
+					return false;
+				}
+				level = currentLevel;
+			}
+			
+			//warning if actual dimension is >1
+			int dimension = this->argDimension(i);
+			if (dimension > 1)
+				std::cerr << "Warning: argument is of dimension " << dimension << " for argument "
+						<< this->argList[i].argNumber << "  but is used as a vector." << std::endl;
+		}
+		//this number is only a lower bound since we don't know the total number of arguments of the function
+		if (undocumentedArgs)	
+				std::cerr << "Warning: missing mapping information for at least " << undocumentedArgs << " different arguments." << std::endl;
+		
+		return true;
+	}
+	
 	int Attribute::argIndex(int arg)
 	{
 		for (unsigned int i=0; i<this->argList.size(); i++)

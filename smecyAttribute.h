@@ -81,6 +81,9 @@ namespace smecy
 		SgExpression* getMapNumber();
 		SgExpression* intExprToSgExpression(IntExpr ie);
 		
+		//top level method to check correctness of pragma information
+		bool checkAll();
+		
 		//information about the args
 		int argIndex(int arg); //returns index of arg in argList fails otherwise
 		ArgType argType(int argIndex);

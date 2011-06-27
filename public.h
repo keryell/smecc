@@ -1,7 +1,7 @@
 #ifndef PUBLIC_H
 #define PUBLIC_H
 
-#include "rose.h"
+#include "sage3.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>

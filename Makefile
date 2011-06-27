@@ -12,11 +12,11 @@ YACCFLAGS			= -d
 RMFLAGS				= -f
 TESTFLAGS			= -rose:openmp:ast_only --edg:no_warnings #ast_only, lowering, parse_only
 
-allFiles = parseTest
+allFiles = smecyTest
 
 all: $(allFiles)
 
-parseTest: main.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
+smecyTest: main.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
 	@echo [Linking]
 	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_DIR)/include $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
 		
@@ -44,15 +44,15 @@ lex.yy.c : smecyLexer.ll public.h
 	@echo [Lexer $<]
 	@$(LEX) $(LEXFLAGS) $<
 	
-test: parseTest input.C
+test: smecyTest input.C
 	@echo [Testing $<]
-	@./parseTest $(TESTFLAGS) -c input.C
+	@./smecyTest $(TESTFLAGS) -c input.C
 
 dot: test
 	@$(SMECY_DIR)/apps/zgrviewer/run.sh ./input.C.dot
 
 clean:
-	@rm $(RMFLAGS) *.o parseTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.*
+	@rm $(RMFLAGS) *.o smecyTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.*
 	
 backup: clean
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/

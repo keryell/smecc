@@ -289,7 +289,9 @@ namespace smecy
 		for (unsigned int i=1; i<=argList->get_expressions().size(); i++) //counting from 1 !
 		{
 			//these lines include various verifications
-			int argIndex = attribute->argIndex(i);
+			if (!attribute->checkAll())
+				throw 0;
+			int argIndex = attribute->argIndex(i);	//FIXME currently, missing mapping info provokes an error
 			ArgType argType = attribute->argType(argIndex);
 			int dimension = attribute->argDimension(argIndex);
 			
@@ -318,7 +320,6 @@ namespace smecy
 				if (argType==_arg_out or argType==_arg_inout)
 					addSmecyGetArgVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize);
 			}
-			
 		}
 	}
 	
