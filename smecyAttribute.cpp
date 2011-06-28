@@ -238,35 +238,45 @@ namespace smecy
 			if (this->argList[i].argNumber==arg)
 				return i;
 		}
-		std::cerr << "No information in pragma for argument n°" << arg << std::endl ;
-		throw 0;
+		std::cerr << "Warning: no information in pragma for argument n°" << arg << std::endl ;
+		return -1;
 	}
 	
 	ArgType Attribute::argType(int argIndex)
 	{
-		if (this->argList[argIndex].argType!=_arg_unknown)
+		if (argIndex==-1)
+			return _arg_in; //default is a scalar
+		else if (this->argList[argIndex].argType!=_arg_unknown)
 			return this->argList[argIndex].argType;
-		std::cerr << "Missing argument type in pragma" << std::endl ;
-		throw 0;
+		else
+		{
+			std::cerr << "Error: no type for non-scalar argument n°" << this->argList[argIndex].argNumber << std::endl ;
+			throw 0;
+		}
 	}
 	
 	int Attribute::argDimension(int argIndex)
 	{
-		if (this->argList[argIndex].argRange.size()==0)
-			return this->argList[argIndex].argSize.size();
-		else if (this->argList[argIndex].argRange.size() == this->argList[argIndex].argSize.size())
+		if (argIndex==-1)
+			return 0; //default is a scalar
+		else
 		{
-			int dimension = 0;
-			for (unsigned int i=0; i<this->argList[argIndex].argSize.size(); i++)
+			if (this->argList[argIndex].argRange.size()==0)
+				return this->argList[argIndex].argSize.size();
+			else if (this->argList[argIndex].argRange.size() == this->argList[argIndex].argSize.size())
 			{
-				//if range is [n] then it dosen't count toward dimension
-				if (!(!this->argList[argIndex].argRange[i].first.isMinus1() and this->argList[argIndex].argRange[i].second.isMinus1()))
-					dimension++;
+				int dimension = 0;
+				for (unsigned int i=0; i<this->argList[argIndex].argSize.size(); i++)
+				{
+					//if range is [n] then it dosen't count toward dimension
+					if (!(!this->argList[argIndex].argRange[i].first.isMinus1() and this->argList[argIndex].argRange[i].second.isMinus1()))
+						dimension++;
+				}
+				return dimension;
 			}
-			return dimension;
+			std::cerr << "Error: Size and range dimensions do not match in pragma" << std::endl ;
+			throw 0;
 		}
-		std::cerr << "Size and range dimensions do not match in pragma" << std::endl ;
-		throw 0;
 	}
 	
 	//returns the expression that gives the size of an argument
