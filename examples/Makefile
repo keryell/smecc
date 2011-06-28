@@ -1,10 +1,11 @@
-TARGETS=2D_example remapping_example
+TARGETS=2D_example remapping_example pipeline_example
 
 all: $(TARGETS)
 
 run:
 	./2D_example
 	./remapping_example
+	./pipeline_example
 
 images: run remapping_example-output.png 2D_example-output.png
 

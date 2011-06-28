@@ -32,5 +32,5 @@ pub:
 	rsync -a $(DOCUMENT)-expose.pdf $(DOCUMENT)-copie.pdf $(HOME)/public_html/CINES
 
 sources:
-	tar zcvf SME-C.tar.gz pragma_SMECY.tex pragma_SMECY.pdf SMECY_pragma_slides-HPC-expose.pdf examples/{2D_example.c,example_helper.c,example_helper.h,Makefile,pragma_example.c,remapping_example.c,smecy.c,smecy.h}
+	tar zcvf SME-C.tar.gz pragma_SMECY.tex pragma_SMECY.pdf SMECY_pragma_slides-HPC-expose.pdf examples/{*.c,*.h}
 
