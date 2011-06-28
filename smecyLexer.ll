@@ -26,7 +26,7 @@ unused					{ return exprMode(UNUSED); }
 						  return INTEGER; }
 [a-zA-Z_][-a-zA-Z0-9_]*	{ yylval.stringType = strdup(yytext);
 						  return exprMode(ID); }
-[ \t\n]+				{ ; }
+[ \\\t\n]+				{ ; }
 .						{ if (!smecy::Attribute::isExprMode)
 							yyerror((char *)"Unknown character");
 						  else

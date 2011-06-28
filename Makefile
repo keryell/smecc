@@ -10,13 +10,13 @@ CXXFLAGS			= -g -Wall -Wno-write-strings
 LEXFLAGS			=
 YACCFLAGS			= -d
 RMFLAGS				= -f
-TESTFLAGS			= -rose:openmp:ast_only --edg:no_warnings #ast_only, lowering, parse_only
+TESTFLAGS			= -rose:openmp:ast_only --edg:no_warnings -I$(SMECY_DIR)/code/ #ast_only, lowering, parse_only
 
-allFiles = smecyTest
+allFiles = smecc
 
 all: $(allFiles)
 
-smecyTest: main.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
+smecc: main.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
 	@echo [Linking]
 	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_DIR)/include $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
 		
@@ -44,16 +44,19 @@ lex.yy.c : smecyLexer.ll public.h
 	@echo [Lexer $<]
 	@$(LEX) $(LEXFLAGS) $<
 	
-test: smecyTest input.C
+test: smecc input.C
 	@echo [Testing $<]
-	@./smecyTest $(TESTFLAGS) -c input.C
+	@./smecc $(TESTFLAGS) -c input.C
 
 dot: test
 	@$(SMECY_DIR)/apps/zgrviewer/run.sh ./input.C.dot
 
 clean:
-	@rm $(RMFLAGS) *.o smecyTest smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.*
+	@rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.*
 	
 backup: clean
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
 	@cp -r * ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
+	
+tohpc: backup
+	@cp -r ./* /hpc/projects/smecy/code/
