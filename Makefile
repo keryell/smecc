@@ -58,5 +58,5 @@ backup: clean
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
 	@cp -r * ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
 	
-tohpc: backup smecc
+tohpc: smecc backup
 	@cp -r ./* /hpc/projects/smecy/code/

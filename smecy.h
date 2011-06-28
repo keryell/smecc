@@ -1,5 +1,5 @@
-#ifndef SMECY_H
-#define SMECY_H
+#ifndef SMECY_LIB_H
+#define SMECY_LIB_H
 
 #include <stdio.h>
 
@@ -10,4 +10,4 @@
 #define SMECY_send_arg_vector(pe, instance, func, arg, type, value, size) printf("youplaboum !")
 #define SMECY_get_arg_vector(pe, instance, func, arg, type, value, size) printf("tsoin tsoin !")
 
-#endif //SMECY_H
+#endif //SMECY_LIB_H

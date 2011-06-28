@@ -71,11 +71,11 @@ namespace smecy
 					//now, we can collect the expression in the variable declaration...
 					SgVariableDeclaration* decl = isSgVariableDeclaration(SageInterface::getPreviousStatement(pragmaDeclaration));
 					if (!decl)
-						std::cerr << "Found invalid variable declaration while parsing expressions." << std::endl;
+						std::cerr << "Error: Found invalid variable declaration while parsing expressions." << std::endl;
 					SgInitializedName* initName = SageInterface::getFirstInitializedName(decl);
 					SgAssignInitializer* initializer = isSgAssignInitializer(initName->get_initializer());
 					if (!initializer)
-						std::cerr << "Found invalid initializer while parsing expressions." << std::endl;
+						std::cerr << "Error: Found invalid initializer while parsing expressions." << std::endl;
 					SgExpression* expr = initializer->get_operand();
 					
 					//...store it in the attribute...
@@ -99,7 +99,7 @@ namespace smecy
 		//FIXME compatible with multi-file projects ?
 		//TODO check if the include is already present
 		SgScopeStatement* scope = SageInterface::getFirstGlobalScope(sageFilePtr);
-		SageInterface::insertHeader("smecy.h", PreprocessingInfo::after, false, scope);
+		SageInterface::insertHeader("smecy.h", PreprocessingInfo::after, true, scope);
 	}
 	
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
@@ -214,7 +214,7 @@ namespace smecy
 			return args->get_expressions()[argNumber];
 		else
 		{
-			std::cerr << "Invalid arg number for extraction." << std::endl;
+			std::cerr << "Error: Invalid arg number for extraction." << std::endl;
 			throw 0;
 		}
 	}
@@ -230,7 +230,7 @@ namespace smecy
 			return SageBuilder::buildOpaqueVarRefExp("int", scope);
 		else
 		{
-			std::cerr << "Unsupported type" << SageInterface::get_name(argType) << std::endl;
+			std::cerr << "Error: Unsupported type" << SageInterface::get_name(argType) << std::endl;
 			throw 0;
 		}
 	}
@@ -241,17 +241,18 @@ namespace smecy
 		SgType* argType = argRef->get_type();
 		if (!SageInterface::isPointerType(argType))
 		{
-			std::cerr << "Argument was not a pointer." << std::endl;
+			std::cerr << "Error: Argument was not a pointer." << std::endl;
 			throw 0;
 		}
-		SgType* elementType = SageInterface::getElementType(argType);	//FIXME what will it to with int** for example ?
+		while (!SageInterface::isScalarType(argType))
+			argType = SageInterface::getElementType(argType);	//FIXME what will it to with int** for example ?
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
 		
-		if (isSgTypeInt(elementType))
+		if (isSgTypeInt(argType))
 			return SageBuilder::buildOpaqueVarRefExp("int", scope);
 		else
 		{
-			std::cerr << "Unsupported type." << SageInterface::get_name(elementType) << std::endl;
+			std::cerr << "Error: Unsupported type." << SageInterface::get_name(argType) << std::endl;
 			throw 0;
 		}
 	}
