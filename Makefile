@@ -47,12 +47,16 @@ lex.yy.c : smecyLexer.ll public.h
 test: smecc input.C
 	@echo [Testing $<]
 	@./smecc $(TESTFLAGS) -c input.C
+	
+testCompile: smecc input.C
+	@echo [Testing $<]
+	@./smecc $(TESTFLAGS) input.C -o compiledTest
 
 dot: test
 	@$(SMECY_DIR)/apps/zgrviewer/run.sh ./input.C.dot
 
 clean:
-	@rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.*
+	@rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.* compiledTest
 	
 backup: clean
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/

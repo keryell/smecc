@@ -77,7 +77,7 @@ namespace smecy
 		std::vector<std::string> getExpressionList();
 		
 		//high-level get methods to get Sg objects directly
-		SgExpression* getMapName();
+		SgExpression* getMapName(SgScopeStatement* scope);
 		SgExpression* getMapNumber();
 		SgExpression* intExprToSgExpression(IntExpr ie);
 		

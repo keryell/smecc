@@ -248,13 +248,15 @@ namespace smecy
 			argType = SageInterface::getElementType(argType);	//FIXME what will it to with int** for example ?
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
 		
-		if (isSgTypeInt(argType))
+		return SageBuilder::buildOpaqueVarRefExp(argType->unparseToString(), scope);
+		
+		/*if (isSgTypeInt(argType))
 			return SageBuilder::buildOpaqueVarRefExp("int", scope);
 		else
 		{
 			std::cerr << "Error: Unsupported type." << SageInterface::get_name(argType) << std::endl;
 			throw 0;
-		}
+		}*/
 	}
 	
 	SgExpression* copy(SgExpression* param)
@@ -281,7 +283,8 @@ namespace smecy
 			int dimension = attribute->argDimension(argIndex);
 			
 			//parameters for the smecyAddXXX methods
-			SgExpression* mapName = attribute->getMapName();
+			SgScopeStatement* scope = SageInterface::getScope(functionToMap);
+			SgExpression* mapName = attribute->getMapName(scope);
 			SgExpression* mapNumber = attribute->getMapNumber();
 			SgExpression* funcToMapExp = getFunctionRef(functionToMap);
 			SgExpression* value = getArgRef(functionToMap, i-1);
@@ -333,9 +336,10 @@ namespace smecy
 			{	
 				//parameters
 				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
-				SgExpression* mapName = attribute->getMapName();
 				SgExpression* mapNumber = attribute->getMapNumber();
 				SgStatement* funcToMap = SageInterface::getNextStatement(pragmaDeclaration);
+				SgScopeStatement* scope = SageInterface::getScope(funcToMap);
+				SgExpression* mapName = attribute->getMapName(scope);
 
 				//adding calls to SMECY API
 				addSmecySet(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));

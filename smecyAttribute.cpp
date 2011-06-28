@@ -139,9 +139,10 @@ namespace smecy
 		this->sgExpressionList.push_back(expr);
 	}
 	
-	SgExpression* Attribute::getMapName()
+	SgExpression* Attribute::getMapName(SgScopeStatement* scope)
 	{
-		return SageBuilder::buildStringVal(this->mapName);
+		//return SageBuilder::buildStringVal(this->mapName);
+		return SageBuilder::buildOpaqueVarRefExp(this->mapName, scope);
 	}
 	
 	SgExpression* Attribute::getMapNumber()
