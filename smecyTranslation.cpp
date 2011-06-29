@@ -176,6 +176,19 @@ namespace smecy
 		SageInterface::insertStatement(target, funcCall, false);
 	}
 	
+	SgExpression* smecyReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, SgType* returnType)
+	{
+		//parameters for the builder
+		SgScopeStatement* scope = SageInterface::getScope(target);
+		SgExpression* typeDescriptor = SageBuilder::buildOpaqueVarRefExp(returnType->unparseToString(), scope);
+		SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(functionToMap), copy(typeDescriptor));
+		SgName name("SMECY_get_return");
+
+		//since there's no proper builder for functionCallExp, we will extract it from a functionCallStmt		
+		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, returnType, exprList, scope);
+		return funcCall->get_expression();
+	}
+	
 	/* SgXXX extractors :
 	functions to extract specific informations from the AST
 	TODO : improve error messages
@@ -185,11 +198,9 @@ namespace smecy
 		//temp variables for downcasting
 		SgExpression* tempExp;
 		SgNode* tempNode;
-	
-		//checking the SgStatement in parameter and extracting func name TODO add !=NULL checking
-		SgExprStatement* exprSmt = isSgExprStatement(functionCall);
-		tempExp = exprSmt->get_expression();
-		SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(tempExp);
+
+		//going down the AST
+		SgFunctionCallExp* functionCallExp = getFunctionCallExp(functionCall);
 		tempExp = functionCallExp->get_function();
 		tempNode = SageInterface::deepCopyNode(tempExp);
 		return isSgExpression(tempNode);
@@ -197,13 +208,7 @@ namespace smecy
 	
 	SgExprListExp* getArgList(SgStatement* functionCall)
 	{
-		//temp variables for downcasting
-		SgExpression* tempExp;
-	
-		//checking the SgStatement in parameter and extracting func name TODO add !=NULL checking
-		SgExprStatement* exprSmt = isSgExprStatement(functionCall);
-		tempExp = exprSmt->get_expression();
-		SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(tempExp);
+		SgFunctionCallExp* functionCallExp = getFunctionCallExp(functionCall);
 		return functionCallExp->get_args();
 	}
 	
@@ -225,14 +230,7 @@ namespace smecy
 		SgType* argType = argRef->get_type();
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
 		
-		//TODO check if it is possible to extract a string from a type
-		if (isSgTypeInt(argType))
-			return SageBuilder::buildOpaqueVarRefExp("int", scope);
-		else
-		{
-			std::cerr << "Error: Unsupported type" << SageInterface::get_name(argType) << std::endl;
-			throw 0;
-		}
+		return SageBuilder::buildOpaqueVarRefExp(argType->unparseToString(), scope);
 	}
 	
 	SgExpression* getArgVectorTypeDescriptor(SgStatement* functionCall, int argNumber)
@@ -257,6 +255,50 @@ namespace smecy
 			std::cerr << "Error: Unsupported type." << SageInterface::get_name(argType) << std::endl;
 			throw 0;
 		}*/
+	}
+	
+	SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall)
+	{
+		//temp variables for downcasting
+		SgExpression* tempExp;
+	
+		//checking the SgStatement in parameter and extracting func name TODO add !=NULL checking
+		SgExprStatement* exprSmt = isSgExprStatement(functionCall);
+		SgVariableDeclaration* varDec = isSgVariableDeclaration(functionCall);
+		if (exprSmt)
+		{
+			tempExp = exprSmt->get_expression(); // case f(...) or a = f(...)
+			SgAssignOp* assignOp = isSgAssignOp(tempExp);
+			if (assignOp) // case a = f(...)
+			{
+				tempExp = assignOp->get_rhs_operand();
+			}
+		}
+		else if (varDec) // case int a = f(...)
+		{
+			SgInitializedName* initName = SageInterface::getFirstInitializedName(varDec);
+			SgAssignInitializer* assignInit = isSgAssignInitializer(initName->get_initializer());
+			if (!assignInit)
+			{
+				std::cerr << "Error: invalid form for variable declaration." << std::endl;
+				throw 0;
+			}
+			tempExp = assignInit->get_operand();
+		}
+		else
+		{
+			std::cerr << "Error: function call has invalid form." << std::endl;
+			throw 0;
+		}
+		SgFunctionCallExp* result = isSgFunctionCallExp(tempExp);
+		if (!result)
+		{
+			std::cerr << "Error: could not find function call in expression." << std::endl;
+			throw 0;
+		}
+		else
+			return result;
+		
 	}
 	
 	SgExpression* copy(SgExpression* param)
@@ -311,6 +353,45 @@ namespace smecy
 		}
 	}
 	
+	void processReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgStatement* functionToMap)
+	{
+		//temp variables for downcasting
+		SgExpression* tempExp;
+	
+		//check the function call statement
+		SgExprStatement* exprSmt = isSgExprStatement(functionToMap);
+		SgVariableDeclaration* varDec = isSgVariableDeclaration(functionToMap);
+		if(exprSmt)
+		{
+			tempExp = exprSmt->get_expression(); // case f(...) or a = f(...)
+			SgAssignOp* assignOp = isSgAssignOp(tempExp);
+			if (assignOp) // case a = f(...)
+			{
+				SgType* type = assignOp->get_lhs_operand()->get_type();
+				SageInterface::setRhsOperand(assignOp, smecyReturn(target, mapName, mapNumber, getFunctionRef(functionToMap), type));
+			}
+			else
+				SageInterface::removeStatement(functionToMap);
+		}
+		else if(varDec)
+		{
+			SgInitializedName* initName = SageInterface::getFirstInitializedName(varDec);
+			SgAssignInitializer* assignInit = isSgAssignInitializer(initName->get_initializer());
+			if (!assignInit)
+			{
+				std::cerr << "Error: invalid form for variable declaration." << std::endl;
+				throw 0;
+			}
+			SgType* type = SageInterface::getFirstVarType(varDec);
+			assignInit->set_operand_i(smecyReturn(target, mapName, mapNumber, getFunctionRef(functionToMap), type));
+		}
+		else
+		{
+			std::cerr << "Error: function call has invalid form." << std::endl;
+			throw 0;
+		}
+	}
+	
 	/* Top-level function :
 	this is the function that should be called to translate smecy pragmas
 	into calls to the SMECY API
@@ -345,10 +426,10 @@ namespace smecy
 				addSmecySet(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));
 				processArgs(pragmaDeclaration, attribute, funcToMap);
 				addSmecyLaunch(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));
+				processReturn(pragmaDeclaration, mapName, mapNumber, funcToMap);
 				
-				//removing pragma declaration and function call TODO free memory
+				//removing pragma declaration TODO free memory
 				SageInterface::removeStatement(pragmaDeclaration);
-				SageInterface::removeStatement(funcToMap);
 			}
 		}
 	}
