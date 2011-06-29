@@ -17,7 +17,8 @@ namespace smecy
 	class intExpr;
 	
 	//global wrapper for smecy directive parsing
-	Attribute* parseDirective(std::string);
+	Attribute* parseDirective(std::string, SgNode* parent=NULL);
+	std::string debugInfo(SgNode* context);
 }
 
 #endif //PUBLIC_H

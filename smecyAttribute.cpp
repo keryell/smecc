@@ -54,7 +54,7 @@ namespace smecy
 
 //==========================================================================//
 // Attribute
-	Attribute::Attribute(std::string mapName, IntExpr mapNumber) : mapName(mapName), mapNumber(mapNumber)
+	Attribute::Attribute(std::string mapName, IntExpr mapNumber, SgNode* parent) : parent(parent), mapName(mapName), mapNumber(mapNumber)
 	{
 	}
 
@@ -67,6 +67,7 @@ namespace smecy
 	std::pair<IntExpr,IntExpr> Attribute::currentPair;
 	IntExpr Attribute::currentIntExpr;
 	std::vector<std::string> Attribute::currentExpressionList;
+	SgNode* Attribute::currentParent = NULL;
 
 	void Attribute::addArg(int argNumber, ArgType argType)
 	{
@@ -155,7 +156,7 @@ namespace smecy
 		//check if parsing has been done
 		if (this->sgExpressionList.size() != this->expressionList.size())
 		{
-			std::cerr << "Error : Parsing has not been done before accessing IntExpr object" << std::endl;
+			std::cerr << debugInfo(this->parent) << "error: Parsing has not been done before accessing IntExpr object" << std::endl;
 			throw 0;
 		}
 		
@@ -184,7 +185,7 @@ namespace smecy
 			//presence of type information
 			if (this->argList[i].argType == _arg_unknown)
 			{
-				std::cerr << "Error: missing type (in, ou, inout, unused) information for argument " << this->argList[i].argNumber
+				std::cerr << debugInfo(this->parent) << "error: missing type (in, ou, inout, unused) information for argument " << this->argList[i].argNumber
 						<< " with size or range information." << std::endl;
 				return false;
 			}
@@ -192,7 +193,7 @@ namespace smecy
 			//check size information when range is used
 			if (this->argList[i].argRange.size() > this->argList[i].argSize.size())
 			{
-				std::cerr << "Error: missing size information for argument " << this->argList[i].argNumber << " with range information." << std::endl;
+				std::cerr << debugInfo(this->parent) << "error: missing size information for argument " << this->argList[i].argNumber << " with range information." << std::endl;
 				return false;
 			}
 			
@@ -209,12 +210,12 @@ namespace smecy
 					currentLevel = 2;
 				else
 				{
-					std::cerr << "Error: corrupted range for argument " << this->argList[i].argNumber << " ." << std::endl;
+					std::cerr << debugInfo(this->parent) << "error: corrupted range for argument " << this->argList[i].argNumber << " ." << std::endl;
 					return false;
 				}
 				if (level > currentLevel)
 				{
-					std::cerr << "Error: data not contiguous in memory for argument " << this->argList[i].argNumber << " ." << std::endl;
+					std::cerr << debugInfo(this->parent) << "error: data not contiguous in memory for argument " << this->argList[i].argNumber << " ." << std::endl;
 					return false;
 				}
 				level = currentLevel;
@@ -223,11 +224,11 @@ namespace smecy
 			//warning if actual dimension is >1
 			int dimension = this->argDimension(i);
 			if (dimension > 1)
-				std::cerr << "Warning: argument " << this->argList[i].argNumber << " is of dimension " <<dimension << " but is used as a vector." << std::endl;
+				std::cerr << debugInfo(this->parent) << "warning: argument " << this->argList[i].argNumber << " is of dimension " <<dimension << " but is used as a vector." << std::endl;
 		}
 		//this number is only a lower bound since we don't know the total number of arguments of the function
 		if (undocumentedArgs)	
-				std::cerr << "Warning: missing mapping information for at least " << undocumentedArgs << " different arguments." << std::endl;
+				std::cerr << debugInfo(this->parent) << "warning: missing mapping information for at least " << undocumentedArgs << " different arguments." << std::endl;
 		
 		return true;
 	}
@@ -239,7 +240,7 @@ namespace smecy
 			if (this->argList[i].argNumber==arg)
 				return i;
 		}
-		std::cerr << "Warning: no information in pragma for argument n°" << arg << std::endl ;
+		std::cerr << debugInfo(this->parent) << "warning: no information in pragma for argument n°" << arg << std::endl ;
 		return -1;
 	}
 	
@@ -251,7 +252,7 @@ namespace smecy
 			return this->argList[argIndex].argType;
 		else
 		{
-			std::cerr << "Error: no type for non-scalar argument n°" << this->argList[argIndex].argNumber << std::endl ;
+			std::cerr << debugInfo(this->parent) << "error: no type for non-scalar argument n°" << this->argList[argIndex].argNumber << std::endl ;
 			throw 0;
 		}
 	}
@@ -275,7 +276,7 @@ namespace smecy
 				}
 				return dimension;
 			}
-			std::cerr << "Error: Size and range dimensions do not match in pragma" << std::endl ;
+			std::cerr << debugInfo(this->parent) << "error: Size and range dimensions do not match in pragma" << std::endl ;
 			throw 0;
 		}
 	}
@@ -308,7 +309,7 @@ namespace smecy
 							this->intExprToSgExpression(this->argList[index].argRange[i].first)); //result = result * (m-n)
 				else
 				{
-					std::cerr << "Error: corrupted range for argument " << arg << " ." << std::endl;
+					std::cerr << debugInfo(this->parent) << "error: corrupted range for argument " << arg << " ." << std::endl;
 					throw 0;
 				}
 				if (!result) // to avoid useless 1* expression
@@ -323,7 +324,7 @@ namespace smecy
 		}
 		else
 		{
-			std::cerr << "Error: range and size information do not match for argument " << arg << "." << std::endl;
+			std::cerr << debugInfo(this->parent) << "error: range and size information do not match for argument " << arg << "." << std::endl;
 			throw 0;
 		}
 	}
@@ -347,7 +348,43 @@ namespace smecy
 
 	void Arg::print()
 	{
-		std::cout << "not implemented yet" << std::endl;
+		std::cout << "arg(" << this->argNumber;
+		if (this->argType != _arg_unknown)
+		{
+			std::cout << ", ";
+			switch (this->argType)
+			{
+				case (_arg_in):
+					std::cout << "in"; break;
+				case (_arg_out):
+					std::cout << "out"; break;
+				case (_arg_inout):
+					std::cout << "inout"; break;
+				default:
+					std::cerr << "error: invalid arg clause." << std::endl; throw 0;
+			}
+		}
+		if (this->argSize.size() != 0)
+		{
+			std::cout << ", ";
+			for (unsigned int i=0; i<this->argSize.size(); i++)
+				std::cout << "[" << this->argSize[i] << "]";
+		}
+		if (this->argRange.size() != 0)
+		{
+			std::cout << ", /";
+			for (unsigned int i=0; i<this->argRange.size(); i++)
+			{
+				if (this->argRange[i].first.isMinus1() and this->argRange[i].second.isMinus1())
+					std::cout << "[]";
+				else if (!this->argRange[i].first.isMinus1() and this->argRange[i].second.isMinus1())
+					std::cout << "[" << this->argRange[i].first << "]";
+				else if (!this->argRange[i].first.isMinus1() and !this->argRange[i].second.isMinus1())
+					std::cout << "[" << this->argRange[i].first << ":" << this->argRange[i].second << "]";
+			}
+		}
+		
+		std::cout << ")" << std::endl;
 	}
 } // namespace smecy
 

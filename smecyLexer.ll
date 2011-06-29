@@ -53,8 +53,9 @@ int exprMode(int token)
 		return token;
 }
 
-smecy::Attribute *smecy::parseDirective(std::string directive)
+smecy::Attribute *smecy::parseDirective(std::string directive, SgNode* parent)
 {
+	Attribute::currentParent = parent;
 	char *stream = new char[directive.size()];
 	directive.copy(stream, directive.size());
 	YY_FLUSH_BUFFER;

@@ -55,6 +55,7 @@ namespace smecy
 	class Attribute: public AstAttribute
 	{
 	protected:
+		SgNode* parent;
 		std::string mapName;
 		IntExpr mapNumber;
 		std::vector<Arg> argList;
@@ -66,7 +67,7 @@ namespace smecy
 		void addArg(int argNumber, std::vector<IntExpr> argSize);
 		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
 		void print();
-		Attribute(std::string mapName, IntExpr mapNumber);
+		Attribute(std::string mapName, IntExpr mapNumber, SgNode* parent=NULL);
 		void setExpressionList(std::vector<std::string> exprList);
 		
 		//FIXME remove this if possible
@@ -100,6 +101,7 @@ namespace smecy
 		static std::stringstream expr;
 		static IntExpr currentIntExpr;
 		static std::vector<std::string> currentExpressionList;
+		static SgNode* currentParent;
 	};
 }//namespace smecy
 

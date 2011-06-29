@@ -40,7 +40,7 @@ arg_clause_list
 					
 map_clause
 					: MAP '(' ID closing_map_clause { 
-						Attribute::currentAttribute = new Attribute($3,Attribute::currentIntExpr);
+						Attribute::currentAttribute = new Attribute($3,Attribute::currentIntExpr,Attribute::currentParent);
 						}
 					;
 					

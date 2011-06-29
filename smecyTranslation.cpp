@@ -27,11 +27,11 @@ namespace smecy
 			stream >> pragmaHead;
 			if (pragmaHead == "smecy")
 			{
-				std::cout << "Found pragma string : " << pragmaString << std::endl ;
-				smecy::parseDirective(pragmaString)->print();
+				//std::cout << "Found pragma string : " << pragmaString << std::endl ;
+				//smecy::parseDirective(pragmaString, pragmaDeclaration)->print();
 				//TODO handle merging with existing smecy attribute
 				//TODO handle syntax errors and print nice error message
-				pragmaDeclaration->addNewAttribute("smecy", smecy::parseDirective(pragmaString));
+				pragmaDeclaration->addNewAttribute("smecy", smecy::parseDirective(pragmaString, pragmaDeclaration));
 				//std::cout << "Adding smecy attribute !" << std::endl;
 			}
 		}
@@ -71,11 +71,11 @@ namespace smecy
 					//now, we can collect the expression in the variable declaration...
 					SgVariableDeclaration* decl = isSgVariableDeclaration(SageInterface::getPreviousStatement(pragmaDeclaration));
 					if (!decl)
-						std::cerr << "Error: Found invalid variable declaration while parsing expressions." << std::endl;
+						std::cerr << debugInfo(target) << "error: Found invalid variable declaration while parsing expressions." << std::endl;
 					SgInitializedName* initName = SageInterface::getFirstInitializedName(decl);
 					SgAssignInitializer* initializer = isSgAssignInitializer(initName->get_initializer());
 					if (!initializer)
-						std::cerr << "Error: Found invalid initializer while parsing expressions." << std::endl;
+						std::cerr << debugInfo(target) << "error: Found invalid initializer while parsing expressions." << std::endl;
 					SgExpression* expr = initializer->get_operand();
 					
 					//...store it in the attribute...
@@ -219,7 +219,7 @@ namespace smecy
 			return args->get_expressions()[argNumber];
 		else
 		{
-			std::cerr << "Error: Invalid arg number for extraction." << std::endl;
+			std::cerr << debugInfo(functionCall) << "error: Invalid arg number for extraction." << std::endl;
 			throw 0;
 		}
 	}
@@ -237,13 +237,14 @@ namespace smecy
 	{
 		SgExpression* argRef = getArgRef(functionCall, argNumber);
 		SgType* argType = argRef->get_type();
+		
 		if (!SageInterface::isPointerType(argType))
 		{
-			std::cerr << "Error: Argument was not a pointer." << std::endl;
+			std::cerr << debugInfo(functionCall) << "error: Argument is not a pointer." << std::endl;
 			throw 0;
 		}
 		while (!SageInterface::isScalarType(argType))
-			argType = SageInterface::getElementType(argType);	//FIXME what will it to with int** for example ?
+			argType = SageInterface::getElementType(argType);
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
 		
 		return SageBuilder::buildOpaqueVarRefExp(argType->unparseToString(), scope);
@@ -252,7 +253,7 @@ namespace smecy
 			return SageBuilder::buildOpaqueVarRefExp("int", scope);
 		else
 		{
-			std::cerr << "Error: Unsupported type." << SageInterface::get_name(argType) << std::endl;
+			std::cerr << "error: Unsupported type." << SageInterface::get_name(argType) << std::endl;
 			throw 0;
 		}*/
 	}
@@ -280,20 +281,20 @@ namespace smecy
 			SgAssignInitializer* assignInit = isSgAssignInitializer(initName->get_initializer());
 			if (!assignInit)
 			{
-				std::cerr << "Error: invalid form for variable declaration." << std::endl;
+				std::cerr << debugInfo(functionCall) << "error: invalid form for variable declaration." << std::endl;
 				throw 0;
 			}
 			tempExp = assignInit->get_operand();
 		}
 		else
 		{
-			std::cerr << "Error: function call has invalid form." << std::endl;
+			std::cerr << debugInfo(functionCall) << "error: function call has invalid form." << std::endl;
 			throw 0;
 		}
 		SgFunctionCallExp* result = isSgFunctionCallExp(tempExp);
 		if (!result)
 		{
-			std::cerr << "Error: could not find function call in expression." << std::endl;
+			std::cerr << debugInfo(functionCall) << "error: could not find function call in expression." << std::endl;
 			throw 0;
 		}
 		else
@@ -337,7 +338,7 @@ namespace smecy
 				if (argType==_arg_in or argType==_arg_inout)
 					addSmecySendArg(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value);
 				if (argType==_arg_out or argType==_arg_inout)
-					std::cerr << "Warning: argument " << i << " is a scalar with type out or inout." << std::endl;
+					std::cerr << debugInfo(target) << "warning: argument " << i << " is a scalar with type out or inout." << std::endl;
 			}
 			
 			if (dimension>0) //vector arg
@@ -379,7 +380,7 @@ namespace smecy
 			SgAssignInitializer* assignInit = isSgAssignInitializer(initName->get_initializer());
 			if (!assignInit)
 			{
-				std::cerr << "Error: invalid form for variable declaration." << std::endl;
+				std::cerr << debugInfo(target) << "error: invalid form for variable declaration." << std::endl;
 				throw 0;
 			}
 			SgType* type = SageInterface::getFirstVarType(varDec);
@@ -387,7 +388,7 @@ namespace smecy
 		}
 		else
 		{
-			std::cerr << "Error: function call has invalid form." << std::endl;
+			std::cerr << debugInfo(target) << "error: function call has invalid form." << std::endl;
 			throw 0;
 		}
 	}
@@ -432,6 +433,21 @@ namespace smecy
 				SageInterface::removeStatement(pragmaDeclaration);
 			}
 		}
+	}
+	
+	/* Other 
+	FIXME move to public.cpp
+	*/
+	std::string debugInfo(SgNode* context)
+	{
+		if (context)
+		{
+			std::stringstream ss("");
+			ss << context->get_file_info()->get_filenameString() << ":" << context->get_file_info()->get_line() << ": " ;
+			return ss.str();
+		}
+		else
+			return "";
 	}
 } //namespace smecy
 
