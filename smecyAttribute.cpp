@@ -11,19 +11,33 @@ namespace smecy
 {
 //==========================================================================//
 // IntExpt
-	IntExpr::IntExpr(int intValue) : intValue(intValue), exprValue("")
+	IntExpr::IntExpr(int intValue) : intValue(intValue), exprValue(""), sgExpr(NULL)
 	{
 		this->isIntBool = true;
+		this->isSgBool = false;
 	}
 	
-	IntExpr::IntExpr(std::string exprValue) : intValue(0), exprValue(exprValue)
+	IntExpr::IntExpr(std::string exprValue) : intValue(0), exprValue(exprValue), sgExpr(NULL)
 	{
 		this->isIntBool = false;
+		this->isSgBool = false;
 	}
+	
+	IntExpr::IntExpr(SgExpression* sgExpr) : intValue(0), exprValue(""), sgExpr(sgExpr)
+	{
+		this->isIntBool = false;
+		this->isSgBool = true;
+	}
+
 
 	bool IntExpr::isExpr()
 	{
-		return !this->isIntBool;
+		return (!this->isIntBool) and (!this->isSgBool);
+	}
+	
+	bool IntExpr::isSgExpr()
+	{
+		return this->isSgBool;
 	}
 	
 	bool IntExpr::isInt()
@@ -37,6 +51,14 @@ namespace smecy
 			return this->intValue;
 		else
 			return 0;
+	}
+	
+	SgExpression* IntExpr::getSgExpr()
+	{
+		if (this->isSgBool)
+			return this->sgExpr;
+		else
+			return NULL;
 	}
 	
 	std::string IntExpr::getExpr()
@@ -160,7 +182,9 @@ namespace smecy
 			throw 0;
 		}
 		
-		if (ie.isInt())
+		if (ie.isSgExpr())
+			return ie.getSgExpr();
+		else if (ie.isInt())
 			return SageBuilder::buildIntVal(ie.getInt());
 		else
 		{
@@ -193,7 +217,8 @@ namespace smecy
 			//check size information when range is used
 			if (this->argList[i].argRange.size() > this->argList[i].argSize.size())
 			{
-				std::cerr << debugInfo(this->parent) << "error: missing size information for argument " << this->argList[i].argNumber << " with range information." << std::endl;
+				std::cerr << debugInfo(this->parent) << "error: missing size information for argument " 
+						<< this->argList[i].argNumber << " with range information." << std::endl;
 				return false;
 			}
 			
@@ -215,7 +240,8 @@ namespace smecy
 				}
 				if (level > currentLevel)
 				{
-					std::cerr << debugInfo(this->parent) << "error: data not contiguous in memory for argument " << this->argList[i].argNumber << " ." << std::endl;
+					std::cerr << debugInfo(this->parent) << "error: data not contiguous in memory for argument " 
+							<< this->argList[i].argNumber << " ." << std::endl;
 					return false;
 				}
 				level = currentLevel;
@@ -224,11 +250,13 @@ namespace smecy
 			//warning if actual dimension is >1
 			int dimension = this->argDimension(i);
 			if (dimension > 1)
-				std::cerr << debugInfo(this->parent) << "warning: argument " << this->argList[i].argNumber << " is of dimension " <<dimension << " but is used as a vector." << std::endl;
+				std::cerr << debugInfo(this->parent) << "warning: argument " << this->argList[i].argNumber 
+						<< " is of dimension " <<dimension << " but is used as a vector." << std::endl;
 		}
 		//this number is only a lower bound since we don't know the total number of arguments of the function
 		if (undocumentedArgs)	
-				std::cerr << debugInfo(this->parent) << "warning: missing mapping information for at least " << undocumentedArgs << " different arguments." << std::endl;
+				std::cerr << debugInfo(this->parent) << "warning: missing mapping information for at least " 
+						<< undocumentedArgs << " different arguments." << std::endl;
 		
 		return true;
 	}
@@ -298,7 +326,7 @@ namespace smecy
 		{
 			SgExpression* result = NULL;
 			SgExpression* partialResult;
-			for (unsigned int i=1; i<this->argList[index].argSize.size(); i++)
+			for (unsigned int i=0; i<this->argList[index].argSize.size(); i++)
 			{
 				if (this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[]
 					partialResult = this->intExprToSgExpression(this->argList[index].argSize[i]);
@@ -327,6 +355,11 @@ namespace smecy
 			std::cerr << debugInfo(this->parent) << "error: range and size information do not match for argument " << arg << "." << std::endl;
 			throw 0;
 		}
+	}
+	
+	std::vector<IntExpr>& Attribute::getSize(int argIndex)
+	{
+		return this->argList[argIndex].argSize;
 	}
 	
 	void Attribute::print()
@@ -392,8 +425,10 @@ std::ostream& operator<<(std::ostream& os, smecy::IntExpr& ie)
 {
 	if (ie.isInt())
 		os << ie.getInt();
-	else
+	else if (!ie.isSgExpr())
 		os << ie.getExpr();
+	else
+		os << ie.getSgExpr()->unparseToString();
 	return os;
 }
 

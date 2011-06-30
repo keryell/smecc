@@ -24,16 +24,21 @@ namespace smecy
 	{
 	protected:
 		bool isIntBool;
+		bool isSgBool;
 		int intValue;
 		std::string exprValue;
+		SgExpression* sgExpr;
 	public:
 		IntExpr(int intValue);
+		IntExpr(SgExpression* sgExpr);
 		IntExpr(std::string exprValue="");
 	
 		bool isExpr();
+		bool isSgExpr();
 		bool isInt();
 		int getInt();
 		std::string getExpr();
+		SgExpression* getSgExpr();
 		
 		bool isMinus1();
 	};
@@ -90,6 +95,7 @@ namespace smecy
 		ArgType argType(int argIndex);
 		int argDimension(int argIndex);	//returns effective dimension, taking range into account
 		SgExpression* argSizeExp(int arg);
+		std::vector<IntExpr>& getSize(int argIndex); //FIXME implement better interface
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;

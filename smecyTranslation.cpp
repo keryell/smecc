@@ -19,7 +19,7 @@ namespace smecy
 		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
 		std::vector<SgNode*>::iterator iter;
 		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
-		{
+		{	
 			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
 			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
 			std::string pragmaHead;
@@ -32,7 +32,6 @@ namespace smecy
 				//TODO handle merging with existing smecy attribute
 				//TODO handle syntax errors and print nice error message
 				pragmaDeclaration->addNewAttribute("smecy", smecy::parseDirective(pragmaString, pragmaDeclaration));
-				//std::cout << "Adding smecy attribute !" << std::endl;
 			}
 		}
 		return ;
@@ -184,7 +183,7 @@ namespace smecy
 		SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(functionToMap), copy(typeDescriptor));
 		SgName name("SMECY_get_return");
 
-		//since there's no proper builder for functionCallExp, we will extract it from a functionCallStmt		
+		//since there's no proper builder for functionCallExp, we will extract it from a functionCallStmt FIXME memory
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, returnType, exprList, scope);
 		return funcCall->get_expression();
 	}
@@ -238,6 +237,9 @@ namespace smecy
 		SgExpression* argRef = getArgRef(functionCall, argNumber);
 		SgType* argType = argRef->get_type();
 		
+		//TEST
+		getArraySize(argRef);
+		
 		if (!SageInterface::isPointerType(argType))
 		{
 			std::cerr << debugInfo(functionCall) << "error: Argument is not a pointer." << std::endl;
@@ -248,14 +250,6 @@ namespace smecy
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
 		
 		return SageBuilder::buildOpaqueVarRefExp(argType->unparseToString(), scope);
-		
-		/*if (isSgTypeInt(argType))
-			return SageBuilder::buildOpaqueVarRefExp("int", scope);
-		else
-		{
-			std::cerr << "error: Unsupported type." << SageInterface::get_name(argType) << std::endl;
-			throw 0;
-		}*/
 	}
 	
 	SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall)
@@ -302,6 +296,48 @@ namespace smecy
 		
 	}
 	
+/*	void get_declarators(SgArrayType* t )
+	{
+		SgExpression* indexExp =  t->get_index();
+		if(indexExp)
+			SgArrayType* arraybase = isSgArrayType(t->get_base_type());
+			if (arraybase)
+		     get_declarators(arraybase);
+
+	}*/
+
+	
+	std::vector<SgExpression*> getArraySize(SgExpression* expression)
+	{		
+		//first, get the symbols in expression
+		std::vector<SgVariableSymbol*> symbolList = SageInterface::getSymbolsUsedInExpression(expression);
+		
+		//locate the array symbol in expression
+		SgArrayType* type = NULL;
+		int arrayCount = 0;
+		for (unsigned int i=0; i<symbolList.size(); i++)
+			if (isSgArrayType(symbolList[i]->get_type()))
+			{
+				arrayCount++;
+				type = isSgArrayType(symbolList[i]->get_type());
+			}
+		if (arrayCount != 1)
+		{
+			std::cerr << "error: could not single out array variable." << std::endl;
+			throw 0;
+		}
+		
+		//extract dimensions
+		std::vector<SgExpression*> result;
+		while (type)
+		{
+			//std::cout << "DEBUG:" << type->get_index()->unparseToString() << std::endl;
+			result.push_back(type->get_index());
+			type = isSgArrayType(type->get_base_type());
+		}
+		return result;
+	}
+	
 	SgExpression* copy(SgExpression* param)
 	{
 		SgNode* temp = SageInterface::deepCopyNode(param);
@@ -321,7 +357,7 @@ namespace smecy
 		for (unsigned int i=1; i<=argList->get_expressions().size(); i++) //counting from 1 !
 		{
 			//these lines include various verifications
-			int argIndex = attribute->argIndex(i);	//FIXME currently, missing mapping info provokes an error
+			int argIndex = attribute->argIndex(i);
 			ArgType argType = attribute->argType(argIndex);
 			int dimension = attribute->argDimension(argIndex);
 			
@@ -344,7 +380,6 @@ namespace smecy
 			if (dimension>0) //vector arg
 			{
 				SgExpression* typeDescriptor = getArgVectorTypeDescriptor(functionToMap, i-1);
-				//TODO insert verification of the fact that the vector spans over the last dimension
 				SgExpression* argSize = attribute->argSizeExp(i);
 				if (argType==_arg_in or argType==_arg_inout)
 					addSmecySendArgVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize);
@@ -393,6 +428,36 @@ namespace smecy
 		}
 	}
 	
+	void completeSizeInfo(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
+	{
+		//we go through the function's parameters
+		SgExprListExp* argList = getArgList(functionToMap);
+		for (unsigned int i=0; i<argList->get_expressions().size(); i++) //counting from 1 !
+		{
+			if (!SageInterface::isScalarType(argList->get_expressions()[i]->get_type())) //arg is a vector
+			{
+				int argIndex = attribute->argIndex(i+1);
+				if (argIndex == -1)	//no info in pragma
+					std::cerr << debugInfo(target) << "warning: non-scalar argument n°" << i << " has no associated arg clause" << std::endl;
+				else if (attribute->getSize(argIndex).size() == 0)
+				{
+					std::vector<SgExpression*> tentativeSize = getArraySize(argList->get_expressions()[i]);
+					if (tentativeSize.size()>0)
+					{
+						std::vector<IntExpr> newSize;
+						for (unsigned int j=0; j<tentativeSize.size(); j++)
+							newSize.push_back(IntExpr(tentativeSize[j]));
+						//std::cout << "DEBUG: found size for argument in program" << std::endl;
+						attribute->getSize(argIndex) = newSize;
+						//attribute->print();
+					}
+					else
+						std::cerr << debugInfo(target) << "warning: could not find size information for non-scalar argument" << std::endl;
+				}
+			}
+		}
+	}
+	
 	/* Top-level function :
 	this is the function that should be called to translate smecy pragmas
 	into calls to the SMECY API
@@ -422,6 +487,9 @@ namespace smecy
 				SgStatement* funcToMap = SageInterface::getNextStatement(pragmaDeclaration);
 				SgScopeStatement* scope = SageInterface::getScope(funcToMap);
 				SgExpression* mapName = attribute->getMapName(scope);
+				
+				//try to complete size information if not present in pragma
+				completeSizeInfo(pragmaDeclaration, attribute, funcToMap);
 
 				//adding calls to SMECY API
 				addSmecySet(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));

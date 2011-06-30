@@ -8,7 +8,7 @@ int init(unsigned int* tablo, int size)
 int main()
 {
 	unsigned int tab[10][100];
-	#pragma smecy map(PE,1) arg(1,out,[10][100],/[][])
+	#pragma smecy map(PE,1) arg(1,out)
 	init(&tab[0][0], 1000);
 	return 0;
 }

@@ -48,12 +48,19 @@ test: smecc input.C
 	@echo [Testing $<]
 	@./smecc $(TESTFLAGS) -c input.C
 	
+testFortran: smecc input.f
+	@echo [Testing $<]
+	@./smecc -c input.f
+	
 testCompile: smecc input.C
 	@echo [Testing $<]
 	@./smecc $(TESTFLAGS) input.C -o compiledTest
 
 dot: test
 	@$(SMECY_DIR)/apps/zgrviewer/run.sh ./input.C.dot
+	
+dotFortran: testFortran
+	@$(SMECY_DIR)/apps/zgrviewer/run.sh ./input.f.dot
 
 clean:
 	@rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.* compiledTest

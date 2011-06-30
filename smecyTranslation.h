@@ -32,6 +32,7 @@ namespace smecy
 	//high-level functions
 	void processArgs(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
 	void processReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgStatement* functionToMap);
+	void completeSizeInfo(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
 	
 	//functionas that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
@@ -40,6 +41,7 @@ namespace smecy
 	SgExpression* getArgTypeDescriptor(SgStatement* functionCall, int argNumber);
 	SgExpression* getArgVectorTypeDescriptor(SgStatement* functionCall, int argNumber);
 	SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall);
+	std::vector<SgExpression*> getArraySize(SgExpression* expression);
 	SgExpression* copy(SgExpression* param);
 	
 	//the top-level translating function
