@@ -199,13 +199,8 @@ namespace smecy
 	
 	bool Attribute::checkAll()
 	{
-		int undocumentedArgs = 0;
 		for (unsigned int i=0; i<this->argList.size(); i++)
 		{
-			//print a warning if exists arg with number >= number of Arg objects
-			if (this->argList[i].argNumber > (int)this->argList.size())
-				undocumentedArgs++;
-			
 			//presence of type information
 			if (this->argList[i].argType == _arg_unknown)
 			{
@@ -253,10 +248,6 @@ namespace smecy
 				std::cerr << debugInfo(this->parent) << "warning: argument " << this->argList[i].argNumber 
 						<< " is of dimension " <<dimension << " but is used as a vector." << std::endl;
 		}
-		//this number is only a lower bound since we don't know the total number of arguments of the function
-		if (undocumentedArgs)	
-				std::cerr << debugInfo(this->parent) << "warning: missing mapping information for at least " 
-						<< undocumentedArgs << " different arguments." << std::endl;
 		
 		return true;
 	}
@@ -268,7 +259,7 @@ namespace smecy
 			if (this->argList[i].argNumber==arg)
 				return i;
 		}
-		std::cerr << debugInfo(this->parent) << "warning: no information in pragma for argument n°" << arg << std::endl ;
+		//std::cerr << debugInfo(this->parent) << "warning: no information in pragma for argument n°" << arg << std::endl ;
 		return -1;
 	}
 	
@@ -333,8 +324,12 @@ namespace smecy
 				else if (!this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[n]
 					{ /* result = result * 1 */ }
 				else if (!this->argList[index].argRange[i].first.isMinus1() and !this->argList[index].argRange[i].second.isMinus1()) //[n:m]
-					partialResult = SageBuilder::buildSubtractOp(this->intExprToSgExpression(this->argList[index].argRange[i].second),
-							this->intExprToSgExpression(this->argList[index].argRange[i].first)); //result = result * (m-n)
+					partialResult = SageBuilder::buildSubtractOp(
+							SageBuilder::buildAddOp(
+								this->intExprToSgExpression(this->argList[index].argRange[i].second),
+								SageBuilder::buildIntVal(1)),
+							this->intExprToSgExpression(this->argList[index].argRange[i].first)
+							); //result = result * (m-n+1)
 				else
 				{
 					std::cerr << debugInfo(this->parent) << "error: corrupted range for argument " << arg << " ." << std::endl;

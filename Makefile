@@ -63,7 +63,7 @@ dotFortran: testFortran
 	@$(SMECY_DIR)/apps/zgrviewer/run.sh ./input.f.dot
 
 clean:
-	@rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.* compiledTest
+	@rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.* compiledTest input.f.*
 	
 backup: clean
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/

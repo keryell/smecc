@@ -458,6 +458,60 @@ namespace smecy
 		}
 	}
 	
+	//this function prevents pragmas to be caught by structures used without block body instead
+	//of the function they map
+	void correctParentBody(SgProject* sageFilePtr)
+	{
+		//algorithm: go up in the graph until a SgBasicBlock is encountered
+		//then, the next statement is the function call
+		
+		//first, go through the pragmas
+		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
+		std::vector<SgNode*>::iterator iter;
+		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
+		{
+			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
+			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+			std::string pragmaHead;
+			std::istringstream stream(pragmaString);
+			stream >> pragmaHead;
+			if (pragmaHead == "smecy")
+			{
+				//then, see if there's a potential problem
+				if (!isSgBasicBlock(pragmaDeclaration->get_parent()))
+				{
+					//then, locate the SgBasicBlock
+					SgNode* currentNode = pragmaDeclaration->get_parent()->get_parent();
+					SgNode* previousNode = pragmaDeclaration->get_parent();
+					while (!isSgBasicBlock(currentNode))
+					{
+						previousNode = currentNode;
+						currentNode = currentNode->get_parent();
+					}
+					
+					//then locate next statement
+					SgStatementPtrList statements = isSgBasicBlock(currentNode)->get_statements();
+					SgStatement* functionCall = NULL;
+					for (unsigned int i=0; i<statements.size(); i++)
+						if (statements[i] == previousNode and i!=statements.size()-1)
+							functionCall = statements[i+1];
+					if (!functionCall)
+					{
+						std::cerr << debugInfo(pragmaDeclaration) << "error: unexpected AST structure or missing function call" << std::endl;
+						throw 0;
+					}
+					//std::cout << "DEBUG: " << functionCall->unparseToString() << std::endl;
+					//reorganizes statements correctly
+					SgStatement* newFunctionCall = isSgStatement(SageInterface::copyStatement(functionCall));
+					SageInterface::ensureBasicBlockAsParent(pragmaDeclaration);
+					SageInterface::insertStatement(pragmaDeclaration, newFunctionCall, false);
+					SageInterface::removeStatement(functionCall);
+					
+				}
+			}
+		}
+	}
+	
 	/* Top-level function :
 	this is the function that should be called to translate smecy pragmas
 	into calls to the SMECY API
@@ -465,6 +519,7 @@ namespace smecy
 	void translateSmecy(SgProject *sageFilePtr)
 	{
 		//preprocessing
+		correctParentBody(sageFilePtr);
 		attachAttributes(sageFilePtr);
 		parseExpressions(sageFilePtr);
 		addSmecyInclude(sageFilePtr);
@@ -481,6 +536,9 @@ namespace smecy
 			stream >> pragmaHead;
 			if (pragmaHead == "smecy")
 			{	
+				//preprocessing to avoid {} problems
+				SageInterface::ensureBasicBlockAsParent(pragmaDeclaration);
+			
 				//parameters
 				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
 				SgExpression* mapNumber = attribute->getMapNumber();
