@@ -10,7 +10,7 @@ CXXFLAGS			= -g -Wall -Wno-write-strings
 LEXFLAGS			=
 YACCFLAGS			= -d
 RMFLAGS				= -f
-TESTFLAGS			= -rose:openmp:ast_only --edg:no_warnings -I$(SMECY_DIR)/code/ #ast_only, lowering, parse_only
+TESTFLAGS			= -smecy -fopenmp --smecy_lib=$(SMECY_DIR)/code/
 
 allFiles = smecc
 

@@ -98,7 +98,7 @@ namespace smecy
 		//FIXME compatible with multi-file projects ?
 		//TODO check if the include is already present
 		SgScopeStatement* scope = SageInterface::getFirstGlobalScope(sageFilePtr);
-		SageInterface::insertHeader("smecy.h", PreprocessingInfo::after, true, scope);
+		SageInterface::insertHeader("smecy.h", PreprocessingInfo::after, false, scope);
 	}
 	
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
@@ -510,6 +510,51 @@ namespace smecy
 				}
 			}
 		}
+	}
+	
+	bool processCommandLine(int &argc, char** (&argv))
+	{
+		//getting options in proper form
+		std::vector<std::string> list = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
+		
+		//openmp settings
+		CommandlineProcessing::removeArgs(list,"-rose:openmp");
+		if (CommandlineProcessing::isOption(list,"-fopenmp","",false))
+			list.push_back("-rose:openmp:ast_only");
+		
+		//astRewrite-related settings
+		if (!CommandlineProcessing::isOption(list,"--edg:","(no_warnings)",false))
+			list.push_back("--edg:no_warnings");
+			
+		if (!CommandlineProcessing::isOption(list,"--edg:","(c99)",false) and CommandlineProcessing::isOption(list,"-std=c99","",false))
+			list.push_back("--edg:c99");
+			
+		//include and linking smecy lib
+		std::vector<std::string>::iterator it;
+		std::string lib =  "";
+		for (it=list.begin() ; it<list.end(); it++)
+			if ((*it).substr(0,12) == "--smecy_lib=")
+			{
+				std::cout << "LIB : " << (*it).substr(12) << std::endl;
+				lib = (*it).substr(12);
+				list.erase(it);
+			}
+		if (lib!="" )
+		{
+			std::stringstream concat("");
+			concat << "-I" << lib << "/";
+			if (!CommandlineProcessing::isOption(list,"-c","",false))
+				concat << " " << lib << "/smecy.o";
+			list.push_back(concat.str());
+		}
+		
+		bool isSmecy = CommandlineProcessing::isOption(list,"-smecy","",true);
+		
+		//setting
+		argv=NULL;
+		CommandlineProcessing::generateArgcArgvFromList(list, argc, argv);
+		
+		return isSmecy;
 	}
 	
 	/* Top-level function :

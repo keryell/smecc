@@ -34,6 +34,7 @@ namespace smecy
 	void processReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgStatement* functionToMap);
 	void completeSizeInfo(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
 	void correctParentBody(SgProject* sageFilePtr);
+	bool processCommandLine(int &argc, char** (&argv));
 	
 	//functionas that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
