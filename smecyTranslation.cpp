@@ -526,7 +526,7 @@ namespace smecy
 		if (!CommandlineProcessing::isOption(list,"--edg:","(no_warnings)",false))
 			list.push_back("--edg:no_warnings");
 			
-		if (!CommandlineProcessing::isOption(list,"--edg:","(c99)",false) and CommandlineProcessing::isOption(list,"-std=c99","",false))
+		if (!CommandlineProcessing::isOption(list,"--edg","(:c99|=c99)",false) and CommandlineProcessing::isOption(list,"-std","(=c99)",false))
 			list.push_back("--edg:c99");
 			
 		//include and linking smecy lib
@@ -535,7 +535,7 @@ namespace smecy
 		for (it=list.begin() ; it<list.end(); it++)
 			if ((*it).substr(0,12) == "--smecy_lib=")
 			{
-				std::cout << "LIB : " << (*it).substr(12) << std::endl;
+				//std::cout << "LIB : " << (*it).substr(12) << std::endl;
 				lib = (*it).substr(12);
 				list.erase(it);
 			}
@@ -543,9 +543,13 @@ namespace smecy
 		{
 			std::stringstream concat("");
 			concat << "-I" << lib << "/";
-			if (!CommandlineProcessing::isOption(list,"-c","",false))
-				concat << " " << lib << "/smecy.o";
 			list.push_back(concat.str());
+			if (!CommandlineProcessing::isOption(list,"-c","",false))
+			{
+				concat.str("");
+				concat << " " << lib << "/smecy.o";
+				list.push_back(concat.str());
+			}
 		}
 		
 		bool isSmecy = CommandlineProcessing::isOption(list,"-smecy","",true);

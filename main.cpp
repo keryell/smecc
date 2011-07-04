@@ -7,8 +7,8 @@ int main(int argc, char *argv[])
 {
 	//command line processing
 	bool isSmecy = smecy::processCommandLine(argc, argv);
-	std::string test = CommandlineProcessing::generateStringFromArgList( CommandlineProcessing::generateArgListFromArgcArgv(argc, argv) );
-	std::cout << "command line :" << test << std::endl;
+	//std::string test = CommandlineProcessing::generateStringFromArgList( CommandlineProcessing::generateArgListFromArgcArgv(argc, argv) );
+	//std::cout << "command line :" << test << std::endl;
 
 	SgProject* project=frontend(argc,argv);
 	
