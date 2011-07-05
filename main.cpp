@@ -13,13 +13,13 @@ int main(int argc, char *argv[])
 	SgProject* project=frontend(argc,argv);
 	
 	//translating smecy
-	//std::cout << "Translating smecy" << std::endl;
+	std::cout << "Translating smecy" << std::endl;
 	if (isSmecy)
 		smecy::translateSmecy(project);
 	
 	//generatePDF(*project);
 	//std::cout << "Generating DOT" << std::endl;
-	generateDOT(*project);
+	//generateDOT(*project);
 	
 	//TEST
 	//std::vector<SgFile*> files = project->get_fileList();

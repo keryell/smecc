@@ -181,7 +181,6 @@ namespace smecy
 			std::cerr << debugInfo(this->parent) << "error: Parsing has not been done before accessing IntExpr object" << std::endl;
 			throw 0;
 		}
-		
 		if (ie.isSgExpr())
 			return ie.getSgExpr();
 		else if (ie.isInt())
@@ -316,7 +315,7 @@ namespace smecy
 		else if (this->argList[index].argRange.size() == this->argList[index].argSize.size()) //argRange is present, size depends on range form
 		{
 			SgExpression* result = NULL;
-			SgExpression* partialResult;
+			SgExpression* partialResult = NULL;
 			for (unsigned int i=0; i<this->argList[index].argSize.size(); i++)
 			{
 				if (this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[]

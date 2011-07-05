@@ -60,14 +60,17 @@ namespace smecy
 				SgStatement* target = pragmaDeclaration;//SageInterface::getScope(pragmaDeclaration);
 				
 				//we build a declaration for each of them
+				std::ostringstream declarations("");
+				for (unsigned int i=0; i<exprList.size(); i++)
+					declarations << std::endl << "int smecy" << i << " = " << exprList[i] << ";" ;
+				
+				//then we add the declarations before the current position
+				MiddleLevelRewrite::insert(target,declarations.str(),scope,
+					MidLevelCollectionTypedefs::BeforeCurrentPosition);
+					
+				//now, we can collect the expression in the variable declarations...
 				for (unsigned int i=0; i<exprList.size(); i++)
 				{
-					std::ostringstream declaration("");
-					declaration << std::endl << "int smecy" << i << " = " << exprList[i] << ";" ;
-					MiddleLevelRewrite::insert(target,declaration.str(),scope,
-						MidLevelCollectionTypedefs::BeforeCurrentPosition);
-						
-					//now, we can collect the expression in the variable declaration...
 					SgVariableDeclaration* decl = isSgVariableDeclaration(SageInterface::getPreviousStatement(pragmaDeclaration));
 					if (!decl)
 						std::cerr << debugInfo(target) << "error: Found invalid variable declaration while parsing expressions." << std::endl;
@@ -76,10 +79,10 @@ namespace smecy
 					if (!initializer)
 						std::cerr << debugInfo(target) << "error: Found invalid initializer while parsing expressions." << std::endl;
 					SgExpression* expr = initializer->get_operand();
-					
+				
 					//...store it in the attribute...
 					attribute->addParsedExpression(expr);
-					
+				
 					//...and remove the declaration
 					SageInterface::removeStatement(decl);
 					//TODO remove the rest of the declaration from memory
@@ -547,7 +550,7 @@ namespace smecy
 			if (!CommandlineProcessing::isOption(list,"-c","",false))
 			{
 				concat.str("");
-				concat << " " << lib << "/smecy.o";
+				concat << lib << "/smecy.o";
 				list.push_back(concat.str());
 			}
 		}
@@ -587,7 +590,7 @@ namespace smecy
 			{	
 				//preprocessing to avoid {} problems
 				SageInterface::ensureBasicBlockAsParent(pragmaDeclaration);
-			
+				
 				//parameters
 				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
 				SgExpression* mapNumber = attribute->getMapNumber();
@@ -603,7 +606,7 @@ namespace smecy
 				processArgs(pragmaDeclaration, attribute, funcToMap);
 				addSmecyLaunch(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));
 				processReturn(pragmaDeclaration, mapName, mapNumber, funcToMap);
-				
+
 				//removing pragma declaration TODO free memory
 				SageInterface::removeStatement(pragmaDeclaration);
 			}

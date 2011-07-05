@@ -46,7 +46,7 @@ lex.yy.c : smecyLexer.ll public.h
 	
 test: smecc input.C
 	@echo [Testing $<]
-	@./smecc $(TESTFLAGS) -c input.C
+	@./smecc $(TESTFLAGS) -c input.C > /dev/null
 	
 testFortran: smecc input.f
 	@echo [Testing $<]
