@@ -360,9 +360,8 @@ namespace smecy
 		for (unsigned int i=1; i<=argList->get_expressions().size(); i++) //counting from 1 !
 		{
 			//these lines include various verifications
-			int argIndex = attribute->argIndex(i);
-			ArgType argType = attribute->argType(argIndex);
-			int dimension = attribute->argDimension(argIndex);
+			ArgType argType = attribute->argType(i);
+			int dimension = attribute->argDimension(i);
 			
 			//parameters for the smecyAddXXX methods
 			SgScopeStatement* scope = SageInterface::getScope(functionToMap);
@@ -439,10 +438,7 @@ namespace smecy
 		{
 			if (!SageInterface::isScalarType(argList->get_expressions()[i]->get_type())) //arg is a vector
 			{
-				int argIndex = attribute->argIndex(i+1);
-				if (argIndex == -1)	//no info in pragma
-					std::cerr << debugInfo(target) << "warning: non-scalar argument n°" << i << " has no associated arg clause" << std::endl;
-				else if (attribute->getSize(argIndex).size() == 0)
+				if (attribute->getSize(i+1).size() == 0)
 				{
 					std::vector<SgExpression*> tentativeSize = getArraySize(argList->get_expressions()[i]);
 					if (tentativeSize.size()>0)
@@ -451,7 +447,7 @@ namespace smecy
 						for (unsigned int j=0; j<tentativeSize.size(); j++)
 							newSize.push_back(IntExpr(tentativeSize[j]));
 						//std::cout << "DEBUG: found size for argument in program" << std::endl;
-						attribute->getSize(argIndex) = newSize;
+						attribute->getSize(i+1) = newSize;
 						//attribute->print();
 					}
 					else

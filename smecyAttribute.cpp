@@ -147,11 +147,6 @@ namespace smecy
 		this->expressionList=exprList;
 	}
 	
-	std::vector<Arg>& Attribute::getArgList()
-	{
-		return this->argList;
-	}
-	
 	std::vector<std::string> Attribute::getExpressionList()
 	{
 		return this->expressionList;
@@ -193,6 +188,58 @@ namespace smecy
 				if (this->expressionList[i] == ie.getExpr())
 					exprIndex = i;
 			return this->sgExpressionList[exprIndex];
+		}
+	}
+	
+	//returns the expression that gives the size of an argument
+	SgExpression* Attribute::argSizeExp(int arg)
+	{
+		int index = this->argIndex(arg);
+		if (this->argList[index].argSize.size() == 0) //scalar
+			return SageBuilder::buildIntVal(1);
+		else if (this->argList[index].argRange.size() == 0) //no range, size is product of argSize elements
+		{
+			SgExpression* result = this->intExprToSgExpression(this->argList[index].argSize[0]);
+			for (unsigned int i=1; i<this->argList[index].argSize.size(); i++)
+				result = SageBuilder::buildMultiplyOp(result, this->intExprToSgExpression(this->argList[index].argSize[i]));
+			return result;
+		}
+		else if (this->argList[index].argRange.size() == this->argList[index].argSize.size()) //argRange is present, size depends on range form
+		{
+			SgExpression* result = NULL;
+			SgExpression* partialResult = NULL;
+			for (unsigned int i=0; i<this->argList[index].argSize.size(); i++)
+			{
+				if (this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[]
+					partialResult = this->intExprToSgExpression(this->argList[index].argSize[i]);
+				else if (!this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[n]
+					{ /* result = result * 1 */ }
+				else if (!this->argList[index].argRange[i].first.isMinus1() and !this->argList[index].argRange[i].second.isMinus1()) //[n:m]
+					partialResult = SageBuilder::buildSubtractOp(
+							SageBuilder::buildAddOp(
+								this->intExprToSgExpression(this->argList[index].argRange[i].second),
+								SageBuilder::buildIntVal(1)),
+							this->intExprToSgExpression(this->argList[index].argRange[i].first)
+							); //result = result * (m-n+1)
+				else
+				{
+					std::cerr << debugInfo(this->parent) << "error: corrupted range for argument " << arg << " ." << std::endl;
+					throw 0;
+				}
+				if (!result) // to avoid useless 1* expression
+					result = partialResult;
+				else
+					result = SageBuilder::buildMultiplyOp(result, partialResult);
+			}
+			if (!result) //case where range is /[m][n]...[p]
+				return SageBuilder::buildIntVal(1);
+			else
+				return result;
+		}
+		else
+		{
+			std::cerr << debugInfo(this->parent) << "error: range and size information do not match for argument " << arg << "." << std::endl;
+			throw 0;
 		}
 	}
 	
@@ -262,8 +309,9 @@ namespace smecy
 		return -1;
 	}
 	
-	ArgType Attribute::argType(int argIndex)
+	ArgType Attribute::argType(int arg)
 	{
+		int argIndex = this->argIndex(arg);
 		if (argIndex==-1)
 			return _arg_in; //default is a scalar
 		else if (this->argList[argIndex].argType!=_arg_unknown)
@@ -275,8 +323,9 @@ namespace smecy
 		}
 	}
 	
-	int Attribute::argDimension(int argIndex)
+	int Attribute::argDimension(int arg)
 	{
+		int argIndex = this->argIndex(arg);
 		if (argIndex==-1)
 			return 0; //default is a scalar
 		else
@@ -299,60 +348,9 @@ namespace smecy
 		}
 	}
 	
-	//returns the expression that gives the size of an argument
-	SgExpression* Attribute::argSizeExp(int arg)
+	std::vector<IntExpr>& Attribute::getSize(int arg)
 	{
-		int index = this->argIndex(arg);
-		if (this->argList[index].argSize.size() == 0) //scalar
-			return SageBuilder::buildIntVal(1);
-		else if (this->argList[index].argRange.size() == 0) //no range, size is product of argSize elements
-		{
-			SgExpression* result = this->intExprToSgExpression(this->argList[index].argSize[0]);
-			for (unsigned int i=1; i<this->argList[index].argSize.size(); i++)
-				result = SageBuilder::buildMultiplyOp(result, this->intExprToSgExpression(this->argList[index].argSize[i]));
-			return result;
-		}
-		else if (this->argList[index].argRange.size() == this->argList[index].argSize.size()) //argRange is present, size depends on range form
-		{
-			SgExpression* result = NULL;
-			SgExpression* partialResult = NULL;
-			for (unsigned int i=0; i<this->argList[index].argSize.size(); i++)
-			{
-				if (this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[]
-					partialResult = this->intExprToSgExpression(this->argList[index].argSize[i]);
-				else if (!this->argList[index].argRange[i].first.isMinus1() and this->argList[index].argRange[i].second.isMinus1()) //[n]
-					{ /* result = result * 1 */ }
-				else if (!this->argList[index].argRange[i].first.isMinus1() and !this->argList[index].argRange[i].second.isMinus1()) //[n:m]
-					partialResult = SageBuilder::buildSubtractOp(
-							SageBuilder::buildAddOp(
-								this->intExprToSgExpression(this->argList[index].argRange[i].second),
-								SageBuilder::buildIntVal(1)),
-							this->intExprToSgExpression(this->argList[index].argRange[i].first)
-							); //result = result * (m-n+1)
-				else
-				{
-					std::cerr << debugInfo(this->parent) << "error: corrupted range for argument " << arg << " ." << std::endl;
-					throw 0;
-				}
-				if (!result) // to avoid useless 1* expression
-					result = partialResult;
-				else
-					result = SageBuilder::buildMultiplyOp(result, partialResult);
-			}
-			if (!result) //case where range is /[m][n]...[p]
-				return SageBuilder::buildIntVal(1);
-			else
-				return result;
-		}
-		else
-		{
-			std::cerr << debugInfo(this->parent) << "error: range and size information do not match for argument " << arg << "." << std::endl;
-			throw 0;
-		}
-	}
-	
-	std::vector<IntExpr>& Attribute::getSize(int argIndex)
-	{
+		int argIndex = this->argIndex(arg);
 		return this->argList[argIndex].argSize;
 	}
 	

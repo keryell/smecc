@@ -66,17 +66,18 @@ namespace smecy
 		std::vector<Arg> argList;
 		std::vector<std::string> expressionList;
 		std::vector<SgExpression*> sgExpressionList;
+		
+		//private methods
+		int argIndex(int arg); //returns index of arg in argList -1 otherwise
+		
 	public: //TODO move methods to protected
 		//methods needed to create the attribute
 		void addArg(int argNumber, ArgType argType);
 		void addArg(int argNumber, std::vector<IntExpr> argSize);
 		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
 		void print();
-		Attribute(std::string mapName, IntExpr mapNumber, SgNode* parent=NULL);
+		Attribute(std::string mapName, IntExpr mapNumber, SgNode* parent=NULL); //TODO add new constructors
 		void setExpressionList(std::vector<std::string> exprList);
-		
-		//FIXME remove this if possible
-		std::vector<Arg>& getArgList();
 		
 		//expression-related methods
 		void addParsedExpression(SgExpression* expr);
@@ -86,16 +87,15 @@ namespace smecy
 		SgExpression* getMapName(SgScopeStatement* scope);
 		SgExpression* getMapNumber();
 		SgExpression* intExprToSgExpression(IntExpr ie);
+		SgExpression* argSizeExp(int arg);
 		
 		//top level method to check correctness of pragma information
 		bool checkAll();
 		
 		//information about the args
-		int argIndex(int arg); //returns index of arg in argList fails otherwise
-		ArgType argType(int argIndex);
-		int argDimension(int argIndex);	//returns effective dimension, taking range into account
-		SgExpression* argSizeExp(int arg);
-		std::vector<IntExpr>& getSize(int argIndex); //FIXME implement better interface
+		ArgType argType(int arg);
+		int argDimension(int arg);	//returns effective dimension, taking range into account
+		std::vector<IntExpr>& getSize(int arg); //FIXME FIXME FIXME
 	
 		//static attributes needed for parsing
 		static Attribute *currentAttribute ;
