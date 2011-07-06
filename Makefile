@@ -69,5 +69,8 @@ backup: clean
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
 	@cp -r * ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/
 	
-tohpc: smecc
+tohpc: smecc clean
 	@cp -r ./* /hpc/projects/smecy/code/
+	
+lib: smecy.h
+	@gcc -std=c99 -fopenmp smecy.c -c

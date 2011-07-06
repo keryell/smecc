@@ -61,8 +61,8 @@ namespace smecy
 				
 				//we build a declaration for each of them
 				std::ostringstream declarations("");
-				for (unsigned int i=0; i<exprList.size(); i++)
-					declarations << std::endl << "int smecy" << i << " = " << exprList[i] << ";" ;
+				for (int i=(int)exprList.size()-1; i>=0; i=i-1)
+					declarations << std::endl << "int __smecy__" << i << " = " << exprList[i] << ";" ;
 				
 				//then we add the declarations before the current position
 				MiddleLevelRewrite::insert(target,declarations.str(),scope,
@@ -542,7 +542,9 @@ namespace smecy
 				lib = (*it).substr(12);
 				list.erase(it);
 			}
-		if (lib!="" )
+		if (lib=="" and getenv("SMECY_LIB")) //if not in command line, search environment
+			lib=getenv("SMECY_LIB");
+		if (lib!="" ) 
 		{
 			std::stringstream concat("");
 			concat << "-I" << lib << "/";

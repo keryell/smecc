@@ -10,7 +10,7 @@ int main()
 	unsigned int tab[10][100];
 	for (int i=0; i<10; i++)
 	{
-		#pragma smecy map(PE,i) arg(1,out,/[i][])
+		#pragma smecy map(PE,2*i) arg(1,out,/[i][])
 			init(&tab[i][0], 100);
 	}
 	return 0;
