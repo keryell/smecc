@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
 		smecy::translateSmecy(project);
 	
 	//generatePDF(*project);
-	//std::cout << "Generating DOT" << std::endl;
-	//generateDOT(*project);
+	std::cerr << "Generating DOT" << std::endl;
+	generateDOT(*project);
 	
 	//TEST
 	//std::vector<SgFile*> files = project->get_fileList();

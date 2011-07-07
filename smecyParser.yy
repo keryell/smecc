@@ -17,7 +17,7 @@ int _yyparse();
 	const char *stringType;
 }
 
-%token SMECY MAP ARG '[' ']' '/' '(' ')' ':' ',' IN OUT INOUT UNUSED NOPAR
+%token SMECY MAP ARG '[' ']' '/' '(' ')' ':' ',' IN OUT INOUT UNUSED NOPAR STREAM_LOOP STREAM_NODE IF
 %token <intType> INTEGER
 %token <stringType> ID EXPR_THING
 
@@ -25,22 +25,28 @@ int _yyparse();
 
 %%
 smecy_directive
-					: SMECY { Attribute::currentExpressionList.clear(); }
-					  map_clause arg_clause_list { Attribute::currentAttribute->setExpressionList(Attribute::currentExpressionList) }
+					: SMECY { Attribute::currentExpressionList.clear(); Attribute::currentAttribute = new Attribute(Attribute::currentParent); }
+					  clause_list { Attribute::currentAttribute->setExpressionList(Attribute::currentExpressionList) }
+					;
+					
+clause_list
+					: /*empty*/
+					| map_clause clause_list
+					| arg_clause clause_list
+					| if_clause clause_list
+					;
+					
+if_clause
+					: IF '(' int ')' {Attribute::currentAttribute->addIf(Attribute::currentIntExpr);}
 					;
 
 arg_clause
 					: ARG '(' INTEGER ',' { Attribute::argNumber = $3; } arg_parameter_list ')'
 					;
 					
-arg_clause_list
-					: // empty 
-					| arg_clause arg_clause_list
-					;
-					
 map_clause
 					: MAP '(' ID closing_map_clause { 
-						Attribute::currentAttribute = new Attribute($3,Attribute::currentIntExpr,Attribute::currentParent);
+						Attribute::currentAttribute->addMap($3,Attribute::currentIntExpr);
 						}
 					;
 					

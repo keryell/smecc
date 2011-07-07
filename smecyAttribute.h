@@ -18,7 +18,7 @@ namespace smecy
 		_arg_unknown
 	};
 	
-	//can be either an int or an expression
+	//can be either an int or an expression or a SgExpression
 	//for internal use
 	class IntExpr
 	{
@@ -64,30 +64,34 @@ namespace smecy
 		std::string mapName;
 		IntExpr mapNumber;
 		std::vector<Arg> argList;
-		std::vector<std::string> expressionList;
+		std::vector<std::string> expressionList; //FIXME refactor to keep only a list of IntExpr
 		std::vector<SgExpression*> sgExpressionList;
+		IntExpr condition;
 		
 		//private methods
 		int argIndex(int arg); //returns index of arg in argList -1 otherwise
 		
 	public: //TODO move methods to protected
-		//methods needed to create the attribute
+		void print();
+		Attribute(SgNode* parent=NULL); //TODO add new constructors
+		
+		//adding clauses 
+		void addMap(std::string mapName, IntExpr mapNumber);
 		void addArg(int argNumber, ArgType argType);
 		void addArg(int argNumber, std::vector<IntExpr> argSize);
 		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
-		void print();
-		Attribute(std::string mapName, IntExpr mapNumber, SgNode* parent=NULL); //TODO add new constructors
-		void setExpressionList(std::vector<std::string> exprList);
+		void addIf(IntExpr condition);
 		
-		//expression-related methods
+		//get and set methods
 		void addParsedExpression(SgExpression* expr);
 		std::vector<std::string> getExpressionList();
-		
-		//high-level get methods to get Sg objects directly
+		void setExpressionList(std::vector<std::string> exprList);
 		SgExpression* getMapName(SgScopeStatement* scope);
 		SgExpression* getMapNumber();
 		SgExpression* intExprToSgExpression(IntExpr ie);
 		SgExpression* argSizeExp(int arg);
+		SgExpression* getIf();
+		
 		
 		//top level method to check correctness of pragma information
 		bool checkAll();

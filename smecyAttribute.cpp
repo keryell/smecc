@@ -76,7 +76,7 @@ namespace smecy
 
 //==========================================================================//
 // Attribute
-	Attribute::Attribute(std::string mapName, IntExpr mapNumber, SgNode* parent) : parent(parent), mapName(mapName), mapNumber(mapNumber)
+	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1))
 	{
 	}
 
@@ -90,6 +90,12 @@ namespace smecy
 	IntExpr Attribute::currentIntExpr;
 	std::vector<std::string> Attribute::currentExpressionList;
 	SgNode* Attribute::currentParent = NULL;
+
+	void Attribute::addMap(std::string mapName, IntExpr mapNumber)
+	{
+		this->mapName = mapName;
+		this->mapNumber = mapNumber;
+	}
 
 	void Attribute::addArg(int argNumber, ArgType argType)
 	{
@@ -140,6 +146,11 @@ namespace smecy
 		arg.argNumber=argNumber;
 		arg.argRange=argRange;
 		this->argList.push_back(arg);
+	}
+	
+	void Attribute::addIf(IntExpr condition)
+	{
+		this->condition = condition;
 	}
 	
 	void Attribute::setExpressionList(std::vector<std::string> exprList)
@@ -241,6 +252,14 @@ namespace smecy
 			std::cerr << debugInfo(this->parent) << "error: range and size information do not match for argument " << arg << "." << std::endl;
 			throw 0;
 		}
+	}
+	
+	SgExpression* Attribute::getIf()
+	{
+		if (this->condition.isMinus1())
+			return NULL;
+		else
+			return this->intExprToSgExpression(this->condition);
 	}
 	
 	bool Attribute::checkAll()

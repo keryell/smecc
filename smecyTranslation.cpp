@@ -326,7 +326,8 @@ namespace smecy
 			}
 		if (arrayCount != 1)
 		{
-			std::cerr << "error: could not single out array variable." << std::endl;
+			std::cerr << "error: could not single out array variable among " << arrayCount << std::endl;
+			std::cerr << "\texpression is: " << expression->unparseToString() << std::endl;
 			throw 0;
 		}
 		
@@ -391,10 +392,11 @@ namespace smecy
 		}
 	}
 	
-	void processReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgStatement* functionToMap)
+	void processReturn(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
 	{
-		//temp variables for downcasting
 		SgExpression* tempExp;
+		SgExpression* mapName = attribute->getMapName(SageInterface::getScope(functionToMap));
+		SgExpression* mapNumber = attribute->getMapNumber();
 	
 		//check the function call statement
 		SgExprStatement* exprSmt = isSgExprStatement(functionToMap);
@@ -562,6 +564,49 @@ namespace smecy
 		return isSmecy;
 	}
 	
+	void processIf(SgStatement*& target, Attribute* attribute, SgStatement*& functionToMap)
+	{
+		SgExpression* condition = attribute->getIf();
+		if (condition)
+		{
+			SgStatement* newFunctionCall = isSgStatement(SageInterface::copyStatement(functionToMap));
+			SgStatement* newTarget = isSgStatement(SageInterface::copyStatement(target));
+			SgStatement* newIf = SageBuilder::buildIfStmt(condition, newFunctionCall, newTarget);
+			SageInterface::replaceStatement(target, newIf);
+			target = newTarget;
+			SageInterface::removeStatement(functionToMap);
+			SageInterface::insertStatement(target,functionToMap,false);
+		}
+	}
+	
+	void processVariableDeclaration(SgStatement* target, Attribute* attribute, SgStatement*& functionToMap)
+	{
+		if (isSgVariableDeclaration(functionToMap))
+		{
+			SgVariableDeclaration* varDec = isSgVariableDeclaration(functionToMap);
+			SgInitializedName* initName = SageInterface::getFirstInitializedName(varDec);
+			SgAssignInitializer* assignInit = isSgAssignInitializer(initName->get_initializer());
+			if (!assignInit)
+			{
+				std::cerr << debugInfo(target) << "error: invalid form for variable declaration" << std::endl;
+				throw 0;
+			}
+			
+			//building assignment alone
+			SgExpression* operand = assignInit->get_operand_i();
+			SgStatement* assignment = SageBuilder::buildExprStatement(operand); //FIXME FIXME FIXME rajouter le var = (assignop)
+			
+			//now, remove right side of variable declaration
+			initName->set_initptr(NULL);
+			
+			//reorganize statements
+			SageInterface::insertStatement(functionToMap, assignment);
+			SageInterface::removeStatement(functionToMap);
+			SageInterface::insertStatement(target, functionToMap);
+			functionToMap = assignment;
+		}
+	}
+	
 	/* Top-level function :
 	this is the function that should be called to translate smecy pragmas
 	into calls to the SMECY API
@@ -586,27 +631,32 @@ namespace smecy
 			stream >> pragmaHead;
 			if (pragmaHead == "smecy")
 			{	
+				SgStatement* target = isSgStatement(pragmaDeclaration);
+			
 				//preprocessing to avoid {} problems
-				SageInterface::ensureBasicBlockAsParent(pragmaDeclaration);
+				SageInterface::ensureBasicBlockAsParent(target);
 				
 				//parameters
-				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
+				smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
 				SgExpression* mapNumber = attribute->getMapNumber();
-				SgStatement* funcToMap = SageInterface::getNextStatement(pragmaDeclaration);
+				SgStatement* funcToMap = SageInterface::getNextStatement(target);
 				SgScopeStatement* scope = SageInterface::getScope(funcToMap);
 				SgExpression* mapName = attribute->getMapName(scope);
 				
-				//try to complete size information if not present in pragma
-				completeSizeInfo(pragmaDeclaration, attribute, funcToMap);
+				//various preprocessing steps
+				//FIXME FIXME FIXME add a step to separate variable declaration when int a = f() is mapped
+				processVariableDeclaration(target, attribute, funcToMap);
+				completeSizeInfo(target, attribute, funcToMap);
+				processIf(target, attribute, funcToMap);
 
 				//adding calls to SMECY API
-				addSmecySet(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));
-				processArgs(pragmaDeclaration, attribute, funcToMap);
-				addSmecyLaunch(pragmaDeclaration, mapName, mapNumber, getFunctionRef(funcToMap));
-				processReturn(pragmaDeclaration, mapName, mapNumber, funcToMap);
+				addSmecySet(target, mapName, mapNumber, getFunctionRef(funcToMap));
+				processArgs(target, attribute, funcToMap);
+				addSmecyLaunch(target, mapName, mapNumber, getFunctionRef(funcToMap));
+				processReturn(target, attribute, funcToMap);
 
 				//removing pragma declaration TODO free memory
-				SageInterface::removeStatement(pragmaDeclaration);
+				SageInterface::removeStatement(target);
 			}
 		}
 	}
