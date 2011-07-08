@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 	SgProject* project=frontend(argc,argv);
 	
 	//translating smecy
-	std::cout << "Translating smecy" << std::endl;
+	std::cerr << "Translating smecy" << std::endl;
 	if (isSmecy)
 		smecy::translateSmecy(project);
 	

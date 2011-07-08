@@ -37,6 +37,7 @@ namespace smecy
 	bool processCommandLine(int &argc, char** (&argv));
 	void processIf(SgStatement*& target, Attribute* attribute, SgStatement*& functionToMap);
 	void processVariableDeclaration(SgStatement* target, Attribute* attribute, SgStatement*& functionToMap);
+	void processStreamNode(SgStatement* target, SgStatement*& functionToMap, Attribute* parentAttribute);
 	
 	//functionas that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
@@ -48,8 +49,10 @@ namespace smecy
 	std::vector<SgExpression*> getArraySize(SgExpression* expression);
 	SgExpression* copy(SgExpression* param);
 	
-	//the top-level translating function
+	//top-level translating functions
 	void translateSmecy(SgProject* sageFilePtr);
+	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
+	void translateStreamLoop(SgStatement* target, Attribute* attribute, SgStatement* whileLoop);
 }
 
 #endif //SMECY_TRANSLATION_H

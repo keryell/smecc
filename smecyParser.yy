@@ -34,10 +34,20 @@ clause_list
 					| map_clause clause_list
 					| arg_clause clause_list
 					| if_clause clause_list
+					| stream_loop_clause clause_list
+					| stream_node_clause clause_list
+					;
+					
+stream_loop_clause
+					: STREAM_LOOP { Attribute::currentAttribute->addStreamLoop(); }
+					;
+					
+stream_node_clause
+					: STREAM_NODE '(' INTEGER ')' { Attribute::currentAttribute->addStreamNode($3); }
 					;
 					
 if_clause
-					: IF '(' int ')' {Attribute::currentAttribute->addIf(Attribute::currentIntExpr);}
+					: IF '(' int ')' { Attribute::currentAttribute->addIf(Attribute::currentIntExpr); }
 					;
 
 arg_clause

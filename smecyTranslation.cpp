@@ -57,7 +57,7 @@ namespace smecy
 				
 				// Insert new code into the scope represented by the statement (applies to SgScopeStatements)
 				MiddleLevelRewrite::ScopeIdentifierEnum scope = MidLevelCollectionTypedefs::SurroundingScope;
-				SgStatement* target = pragmaDeclaration;//SageInterface::getScope(pragmaDeclaration);
+				SgStatement* target = pragmaDeclaration; //SageInterface::getScope(pragmaDeclaration);
 				
 				//we build a declaration for each of them
 				std::ostringstream declarations("");
@@ -65,8 +65,9 @@ namespace smecy
 					declarations << std::endl << "int __smecy__" << i << " = " << exprList[i] << ";" ;
 				
 				//then we add the declarations before the current position
-				MiddleLevelRewrite::insert(target,declarations.str(),scope,
-					MidLevelCollectionTypedefs::BeforeCurrentPosition);
+				if (declarations.str()!="")
+					MiddleLevelRewrite::insert(target,declarations.str(),scope,
+							MidLevelCollectionTypedefs::BeforeCurrentPosition);
 					
 				//now, we can collect the expression in the variable declarations...
 				for (unsigned int i=0; i<exprList.size(); i++)
@@ -356,8 +357,6 @@ namespace smecy
 	{
 		//we go through the function's parameters
 		SgExprListExp* argList = getArgList(functionToMap);
-		if (!attribute->checkAll()) //verification of pragma content
-				throw 0;
 		for (unsigned int i=1; i<=argList->get_expressions().size(); i++) //counting from 1 !
 		{
 			//these lines include various verifications
@@ -459,7 +458,7 @@ namespace smecy
 		}
 	}
 	
-	//this function prevents pragmas to be caught by structures used without block body instead
+	//this function prevents pragmas from being caught by structures and used without block body instead
 	//of the function they map
 	void correctParentBody(SgProject* sageFilePtr)
 	{
@@ -507,7 +506,6 @@ namespace smecy
 					SageInterface::ensureBasicBlockAsParent(pragmaDeclaration);
 					SageInterface::insertStatement(pragmaDeclaration, newFunctionCall, false);
 					SageInterface::removeStatement(functionCall);
-					
 				}
 			}
 		}
@@ -583,6 +581,7 @@ namespace smecy
 	{
 		if (isSgVariableDeclaration(functionToMap))
 		{
+			//preparing parameters
 			SgVariableDeclaration* varDec = isSgVariableDeclaration(functionToMap);
 			SgInitializedName* initName = SageInterface::getFirstInitializedName(varDec);
 			SgAssignInitializer* assignInit = isSgAssignInitializer(initName->get_initializer());
@@ -594,7 +593,9 @@ namespace smecy
 			
 			//building assignment alone
 			SgExpression* operand = assignInit->get_operand_i();
-			SgStatement* assignment = SageBuilder::buildExprStatement(operand); //FIXME FIXME FIXME rajouter le var = (assignop)
+			SgExpression* varRef = SageBuilder::buildVarRefExp(varDec);
+			SgExpression* assignOp = SageBuilder::buildAssignOp(varRef,operand);
+			SgStatement* assignment = SageBuilder::buildExprStatement(assignOp);
 			
 			//now, remove right side of variable declaration
 			initName->set_initptr(NULL);
@@ -630,35 +631,91 @@ namespace smecy
 			std::istringstream stream(pragmaString);
 			stream >> pragmaHead;
 			if (pragmaHead == "smecy")
-			{	
+			{
 				SgStatement* target = isSgStatement(pragmaDeclaration);
-			
-				//preprocessing to avoid {} problems
-				SageInterface::ensureBasicBlockAsParent(target);
 				
 				//parameters
 				smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
-				SgExpression* mapNumber = attribute->getMapNumber();
-				SgStatement* funcToMap = SageInterface::getNextStatement(target);
-				SgScopeStatement* scope = SageInterface::getScope(funcToMap);
-				SgExpression* mapName = attribute->getMapName(scope);
+				if (!attribute->checkAll()) //verification of pragma content FIXME FIXME add verifications for clause coherency
+					throw 0;
+				SgStatement* subject = SageInterface::getNextStatement(target);
 				
-				//various preprocessing steps
-				//FIXME FIXME FIXME add a step to separate variable declaration when int a = f() is mapped
-				processVariableDeclaration(target, attribute, funcToMap);
-				completeSizeInfo(target, attribute, funcToMap);
-				processIf(target, attribute, funcToMap);
-
-				//adding calls to SMECY API
-				addSmecySet(target, mapName, mapNumber, getFunctionRef(funcToMap));
-				processArgs(target, attribute, funcToMap);
-				addSmecyLaunch(target, mapName, mapNumber, getFunctionRef(funcToMap));
-				processReturn(target, attribute, funcToMap);
-
-				//removing pragma declaration TODO free memory
-				SageInterface::removeStatement(target);
+				if (attribute->isStreamLoop())
+					translateStreamLoop(target, attribute, subject);
+				else if (attribute->hasMapClause() and attribute->getStreamNode()==-1) //if stream node mapping is handled separately
+					translateMap(target, attribute, subject);
 			}
 		}
+	}
+	
+	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
+	{
+		//various preprocessing steps
+		SageInterface::ensureBasicBlockAsParent(target);
+		processVariableDeclaration(target, attribute, functionToMap);
+		completeSizeInfo(target, attribute, functionToMap);
+		processIf(target, attribute, functionToMap);
+		
+		//parameters
+		SgScopeStatement* scope = SageInterface::getScope(functionToMap);
+		SgExpression* mapNumber = attribute->getMapNumber();
+		SgExpression* mapName = attribute->getMapName(scope);
+
+		//adding calls to SMECY API
+		addSmecySet(target, mapName, mapNumber, getFunctionRef(functionToMap));
+		processArgs(target, attribute, functionToMap);
+		addSmecyLaunch(target, mapName, mapNumber, getFunctionRef(functionToMap));
+		processReturn(target, attribute, functionToMap);
+
+		//removing pragma declaration TODO free memory
+		SageInterface::removeStatement(target);
+	}
+	
+	void translateStreamLoop(SgStatement* target, Attribute* attribute, SgStatement* whileLoop)
+	{
+		if (!isSgWhileStmt(whileLoop))
+		{
+			std::cerr << debugInfo(target) << "error: target of stream_loop is not a while loop" << std::endl;
+			throw 0;
+		}
+		else
+		{
+			//getting loop's body and condition
+			SgWhileStmt* whileStmt = isSgWhileStmt(whileLoop);
+			SgStatement* body = whileStmt->get_body();
+			SgBasicBlock* block = isSgBasicBlock(body);
+			if (!block)
+			{
+				std::cerr << debugInfo(target) << "error: while body is a single statement" << std::endl;
+				throw 0;
+			}
+			SgStatementPtrList statements = block->get_statements();
+			SgStatement* condition = SageInterface::getLoopCondition(whileStmt);
+			
+			//locating the nodes to target
+			for (unsigned int i=0; i<statements.size(); i++)
+				if (isSgPragmaDeclaration(statements[i]) and i+1!=statements.size())
+				{
+					//isolating func call and pragma
+					std::cerr << "DEBUG: " << statements[i]->unparseToString() << std::endl;
+					SgFunctionCallExp* funcCall = NULL;
+					if (isSgExprStatement(statements[i+1]))
+						funcCall = getFunctionCallExp(statements[i+1]);
+					if (!funcCall)
+					{
+						std::cerr << debugInfo(statements[i+1]) << "error: mapped statement is not a function call" << std::endl;
+						throw 0;
+					}
+					
+					//calling functions to translate
+					processStreamNode(statements[i], statements[i+1], attribute);
+				}
+		}
+	}
+	
+	void processStreamNode(SgStatement* target, SgStatement*& functionToMap, Attribute* parentAttribute)
+	{
+		
 	}
 	
 	/* Other 
@@ -669,7 +726,7 @@ namespace smecy
 		if (context)
 		{
 			std::stringstream ss("");
-			ss << context->get_file_info()->get_filenameString() << ":" << context->get_file_info()->get_line() << ": " ;
+			ss << context->get_file_info()->get_filenameString() << ":" << context->get_file_info()->get_line() << ": ";
 			return ss.str();
 		}
 		else

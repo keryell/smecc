@@ -76,7 +76,7 @@ namespace smecy
 
 //==========================================================================//
 // Attribute
-	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1))
+	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1)), streamNode(-1), streamLoopBool(false)
 	{
 	}
 
@@ -151,6 +151,16 @@ namespace smecy
 	void Attribute::addIf(IntExpr condition)
 	{
 		this->condition = condition;
+	}
+	
+	void Attribute::addStreamLoop()
+	{
+		this->streamLoopBool = true;
+	}
+	
+	void Attribute::addStreamNode(int number)
+	{
+		this->streamNode = number;
 	}
 	
 	void Attribute::setExpressionList(std::vector<std::string> exprList)
@@ -260,6 +270,31 @@ namespace smecy
 			return NULL;
 		else
 			return this->intExprToSgExpression(this->condition);
+	}
+	
+	bool Attribute::isStreamLoop()
+	{
+		return this->streamLoopBool;
+	}
+	
+	int Attribute::getStreamNode()
+	{
+		return this->streamNode;
+	}
+	
+	bool Attribute::hasMapClause()
+	{
+		return (this->mapName!="");
+	}
+	
+	bool Attribute::hasArgClause()
+	{
+		return (this->argList.size()!=0);
+	}
+	
+	bool Attribute::hasIfClause()
+	{
+		return (this->getIf()!=NULL);
 	}
 	
 	bool Attribute::checkAll()

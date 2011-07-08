@@ -5,14 +5,23 @@ int init(unsigned int* tablo, int size)
 	return 0;
 }
 
+void stuff()
+{
+	
+}
+
 int main()
 {
 	unsigned int tab[10][100];
-	for (int i=0; i<10; i++)
+		
+	#pragma smecy stream_loop
+	while (1)
 	{
-		int b;
-		#pragma smecy map(PE,1) arg(1,out,/[1][]) if(i)
-			int a = init(&tab[i][0], 100);
+		#pragma smecy stream_node(1)
+			stuff();
+		#pragma smecy stream_node(2)
+			stuff();
 	}
+	
 	return 0;
 }
