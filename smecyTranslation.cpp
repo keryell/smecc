@@ -299,18 +299,7 @@ namespace smecy
 			return result;
 		
 	}
-	
-/*	void get_declarators(SgArrayType* t )
-	{
-		SgExpression* indexExp =  t->get_index();
-		if(indexExp)
-			SgArrayType* arraybase = isSgArrayType(t->get_base_type());
-			if (arraybase)
-		     get_declarators(arraybase);
 
-	}*/
-
-	
 	std::vector<SgExpression*> getArraySize(SgExpression* expression)
 	{		
 		//first, get the symbols in expression
@@ -692,6 +681,9 @@ namespace smecy
 			SgStatementPtrList statements = block->get_statements();
 			SgStatement* condition = SageInterface::getLoopCondition(whileStmt);
 			
+			std::vector<std::pair<SgStatement*,SgStatement*> > streamNodes;
+			std::vector<SgExpression*> stream;
+			
 			//locating the nodes to target
 			for (unsigned int i=0; i<statements.size(); i++)
 				if (isSgPragmaDeclaration(statements[i]) and i+1!=statements.size())
@@ -707,15 +699,40 @@ namespace smecy
 						throw 0;
 					}
 					
-					//calling functions to translate
-					processStreamNode(statements[i], statements[i+1], attribute);
+					//FIXME temporary, need real computation for stream
+					stream.clear();
+					SgExpressionPtrList argList = getArgList(statements[i+1])->get_expressions();
+					for (unsigned int j=0; j<argList.size(); j++)
+						stream.push_back(argList[j]);
+					//FIXME
+					
+					streamNodes.push_back(std::pair<SgStatement*,SgStatement*>(statements[i],statements[i+1]));
 				}
+			
+			//calling transformation afterwards since stream computation may depend on all the nodes
+			for (unsigned int i=0; i<streamNodes.size(); i++)
+			{
+				//calling functions to translate
+				processStreamNode(streamNodes[i].first, streamNodes[i].second, attribute, stream, i);
+			}
 		}
 	}
 	
-	void processStreamNode(SgStatement* target, SgStatement*& functionToMap, Attribute* parentAttribute)
-	{
+	void processStreamNode(SgStatement* target, SgStatement*& functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number)
+	{	
+		//creating function definition with empty body
+		SgGlobal* scope = SageInterface::getGlobalScope(target);
+		SgType* argType = SageBuilder::buildOpaqueType("DbLink", scope);
+		SgType* returnType = SageBuilder::buildVoidType();
+		SgInitializedName* param1 = SageBuilder::buildInitializedName("data_buffer", argType);
+		SgFunctionParameterList* paramList = SageBuilder::buildFunctionParameterList(param1);
+		std::stringstream uniqueName("");
+		uniqueName << "__Node" << number ;
+		SgFunctionDeclaration* declaration = SageBuilder::buildDefiningFunctionDeclaration(uniqueName.str(), returnType, paramList, scope);
 		
+		SageInterface::appendStatement(declaration, scope);
+		
+		//filling the body
 	}
 	
 	/* Other 

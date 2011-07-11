@@ -27,3 +27,11 @@ void square_symmetry_smecy(int width, int height, int* image,
 		     int square_size, int x_offset, int y_offset) ;
 		     
 
+typedef int DbLink;
+
+DbLink createDbLink(int size);
+void* DbLinkGetInitBuf(DbLink outputLink);
+void* DbLinkGetData(DbLink inputLink);
+void* DbLinkPutData(void*);
+int pth_CreateProcess(int (*f)(), ...);
+

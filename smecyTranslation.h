@@ -37,7 +37,7 @@ namespace smecy
 	bool processCommandLine(int &argc, char** (&argv));
 	void processIf(SgStatement*& target, Attribute* attribute, SgStatement*& functionToMap);
 	void processVariableDeclaration(SgStatement* target, Attribute* attribute, SgStatement*& functionToMap);
-	void processStreamNode(SgStatement* target, SgStatement*& functionToMap, Attribute* parentAttribute);
+	void processStreamNode(SgStatement* target, SgStatement*& functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number);
 	
 	//functionas that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
