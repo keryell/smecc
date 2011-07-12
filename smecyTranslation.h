@@ -37,9 +37,10 @@ namespace smecy
 	bool processCommandLine(int &argc, char** (&argv));
 	void processIf(SgStatement*& target, Attribute* attribute, SgStatement*& functionToMap);
 	void processVariableDeclaration(SgStatement* target, Attribute* attribute, SgStatement*& functionToMap);
-	void processStreamNode(SgStatement* target, SgStatement*& functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number);
+	void processStreamNode(SgStatement* target, SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream,
+			int number, SgStatement* condition);
 	
-	//functionas that get useful AST parts from the function call / attributes
+	//functions that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
 	SgExprListExp* getArgList(SgStatement* functionCall);
 	SgExpression* getArgRef(SgStatement* functionCall, int argNumber);
@@ -48,6 +49,9 @@ namespace smecy
 	SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall);
 	std::vector<SgExpression*> getArraySize(SgExpression* expression);
 	SgExpression* copy(SgExpression* param);
+	
+	//helper functions
+	void addBufferVariablesDeclarations(SgScopeStatement* scope, SgStatement* functionCall);
 	
 	//top-level translating functions
 	void translateSmecy(SgProject* sageFilePtr);

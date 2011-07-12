@@ -597,6 +597,25 @@ namespace smecy
 		}
 	}
 	
+	/* Helper functions
+	*/
+	void addBufferVariablesDeclarations(SgScopeStatement* scope, SgStatement* functionCall)
+	{
+		SgExpressionPtrList argList = getArgList(functionCall)->get_expressions();
+		for (unsigned int i=0; i<argList.size(); i++)
+		{
+			SgVarRefExp* varRef = isSgVarRefExp(argList[i]);
+			if (varRef)
+			{
+				SgType* type = isSgType(SageInterface::deepCopyNode(varRef->get_type()));
+				SgName name = varRef->get_symbol()->get_name();
+				SgAssignInitializer* initializer = NULL;//SageBuilder::buildAssignInitializer(SageBuilder::buildIntVal(1), type);
+				SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, scope);
+				SageInterface::appendStatement(varDec, scope);
+			}
+		}
+	}
+	
 	/* Top-level function :
 	this is the function that should be called to translate smecy pragmas
 	into calls to the SMECY API
@@ -629,7 +648,7 @@ namespace smecy
 					throw 0;
 				SgStatement* subject = SageInterface::getNextStatement(target);
 				
-				if (attribute->isStreamLoop())
+				if (attribute->getStreamLoop()!=-1)
 					translateStreamLoop(target, attribute, subject);
 				else if (attribute->hasMapClause() and attribute->getStreamNode()==-1) //if stream node mapping is handled separately
 					translateMap(target, attribute, subject);
@@ -713,12 +732,13 @@ namespace smecy
 			for (unsigned int i=0; i<streamNodes.size(); i++)
 			{
 				//calling functions to translate
-				processStreamNode(streamNodes[i].first, streamNodes[i].second, attribute, stream, i);
+				processStreamNode(streamNodes[i].first, streamNodes[i].second, attribute, stream, i, condition);
 			}
 		}
 	}
 	
-	void processStreamNode(SgStatement* target, SgStatement*& functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number)
+	void processStreamNode(SgStatement* target, SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number,
+			SgStatement* condition)
 	{	
 		//creating function definition with empty body
 		SgGlobal* scope = SageInterface::getGlobalScope(target);
@@ -727,12 +747,20 @@ namespace smecy
 		SgInitializedName* param1 = SageBuilder::buildInitializedName("data_buffer", argType);
 		SgFunctionParameterList* paramList = SageBuilder::buildFunctionParameterList(param1);
 		std::stringstream uniqueName("");
-		uniqueName << "__Node" << number ;
+		uniqueName << "__Node_" << number << "_" << parentAttribute->getStreamLoop() ;
 		SgFunctionDeclaration* declaration = SageBuilder::buildDefiningFunctionDeclaration(uniqueName.str(), returnType, paramList, scope);
 		
 		SageInterface::appendStatement(declaration, scope);
 		
 		//filling the body
+		SgFunctionDefinition* definition = declaration->get_definition();
+		SgBasicBlock* defBody = SageBuilder::buildBasicBlock(); //FIXME FIXME understand why definition can't handle several statements
+		SageInterface::appendStatement(defBody, definition);
+		addBufferVariablesDeclarations(defBody, functionToMap);
+		//TODO use helper function to fill while body with send/receive to buffer
+			//TODO use helper function do get local variables from buffer
+		SgStatement* whileLoop = SageBuilder::buildWhileStmt(SageInterface::copyStatement(condition), SageInterface::copyStatement(functionToMap));
+		SageInterface::appendStatement(whileLoop, defBody);
 	}
 	
 	/* Other 

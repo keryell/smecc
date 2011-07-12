@@ -76,7 +76,7 @@ namespace smecy
 
 //==========================================================================//
 // Attribute
-	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1)), streamNode(-1), streamLoopBool(false)
+	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1)), streamNode(-1), streamLoop(-1)
 	{
 	}
 
@@ -90,6 +90,8 @@ namespace smecy
 	IntExpr Attribute::currentIntExpr;
 	std::vector<std::string> Attribute::currentExpressionList;
 	SgNode* Attribute::currentParent = NULL;
+	
+	int Attribute::streamLoopTotal = 0;
 
 	void Attribute::addMap(std::string mapName, IntExpr mapNumber)
 	{
@@ -155,7 +157,8 @@ namespace smecy
 	
 	void Attribute::addStreamLoop()
 	{
-		this->streamLoopBool = true;
+		this->streamLoop = streamLoopTotal;
+		streamLoopTotal++;
 	}
 	
 	void Attribute::addStreamNode(int number)
@@ -272,9 +275,9 @@ namespace smecy
 			return this->intExprToSgExpression(this->condition);
 	}
 	
-	bool Attribute::isStreamLoop()
+	int Attribute::getStreamLoop()
 	{
-		return this->streamLoopBool;
+		return this->streamLoop;
 	}
 	
 	int Attribute::getStreamNode()

@@ -68,7 +68,7 @@ namespace smecy
 		std::vector<SgExpression*> sgExpressionList;
 		IntExpr condition;
 		int streamNode;
-		bool streamLoopBool;
+		int streamLoop;
 		
 		//private methods
 		int argIndex(int arg); //returns index of arg in argList -1 otherwise
@@ -85,6 +85,7 @@ namespace smecy
 		void addIf(IntExpr condition);
 		void addStreamLoop();
 		void addStreamNode(int number);
+		static int streamLoopTotal;
 		
 		//get and set methods
 		void addParsedExpression(SgExpression* expr);
@@ -97,7 +98,7 @@ namespace smecy
 		SgExpression* getIf();
 		
 		//methods to know the kind of pragma
-		bool isStreamLoop();
+		int getStreamLoop();
 		int getStreamNode();
 		bool hasMapClause();
 		bool hasArgClause();
