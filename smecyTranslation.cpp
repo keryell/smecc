@@ -616,6 +616,36 @@ namespace smecy
 		}
 	}
 	
+	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope)
+	{
+		std::stringstream ss("");
+		ss << "__buffer_type_" << attribute->getStreamLoop();
+		SgClassDeclaration* structDecl = SageBuilder::buildStructDeclaration(ss.str(), scope);
+		SgClassDefinition* structDef = SageBuilder::buildClassDefinition(structDecl);
+		for (unsigned int i=0; i<stream.size(); i++) //TODO refactor with addBufferVariablesDeclarations
+		{
+			SgVarRefExp* varRef = isSgVarRefExp(stream[i]);
+			if (varRef)
+			{
+				SgType* type = isSgType(SageInterface::deepCopyNode(varRef->get_type()));
+				SgName name = varRef->get_symbol()->get_name();
+				SgAssignInitializer* initializer = NULL;//SageBuilder::buildAssignInitializer(SageBuilder::buildIntVal(1), type);
+				SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, structDef);
+				SageInterface::appendStatement(varDec, structDef);
+			}
+			else
+				std::cerr << "warning: stream function parameter is not a variable reference" << std::endl;
+		}
+		structDecl->set_definition(structDef);
+		SageInterface::prependStatement(structDecl, scope);
+	}
+	
+	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number)
+	{
+		
+		return SageInterface::copyStatement(functionToMap);
+	}
+	
 	/* Top-level function :
 	this is the function that should be called to translate smecy pragmas
 	into calls to the SMECY API
@@ -727,6 +757,8 @@ namespace smecy
 					
 					streamNodes.push_back(std::pair<SgStatement*,SgStatement*>(statements[i],statements[i+1]));
 				}
+			//declaring the type for the buffer
+			addBufferTypedef(attribute, stream, SageInterface::getGlobalScope(target));
 			
 			//calling transformation afterwards since stream computation may depend on all the nodes
 			for (unsigned int i=0; i<streamNodes.size(); i++)
@@ -759,7 +791,8 @@ namespace smecy
 		addBufferVariablesDeclarations(defBody, functionToMap);
 		//TODO use helper function to fill while body with send/receive to buffer
 			//TODO use helper function do get local variables from buffer
-		SgStatement* whileLoop = SageBuilder::buildWhileStmt(SageInterface::copyStatement(condition), SageInterface::copyStatement(functionToMap));
+		SgStatement* whileBody = buildNodeWhileBody(functionToMap, parentAttribute, stream, number);
+		SgStatement* whileLoop = SageBuilder::buildWhileStmt(SageInterface::copyStatement(condition), whileBody);
 		SageInterface::appendStatement(whileLoop, defBody);
 	}
 	

@@ -15,6 +15,13 @@ void stuff2(int thing)
 	
 }
 
+typedef struct test
+{
+	int a;
+	int b[12];
+	int c[5][8];
+};
+
 int main()
 {
 	unsigned int tab[10][100];

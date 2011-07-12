@@ -52,6 +52,8 @@ namespace smecy
 	
 	//helper functions
 	void addBufferVariablesDeclarations(SgScopeStatement* scope, SgStatement* functionCall);
+	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope);
+	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number);
 	
 	//top-level translating functions
 	void translateSmecy(SgProject* sageFilePtr);
