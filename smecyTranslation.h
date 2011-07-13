@@ -38,7 +38,7 @@ namespace smecy
 	void processIf(SgStatement*& target, Attribute* attribute, SgStatement*& functionToMap);
 	void processVariableDeclaration(SgStatement* target, Attribute* attribute, SgStatement*& functionToMap);
 	void processStreamNode(SgStatement* target, SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream,
-			int number, SgStatement* condition);
+			int number, SgStatement* condition, ArgType inout);
 	
 	//functions that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
@@ -51,9 +51,10 @@ namespace smecy
 	SgExpression* copy(SgExpression* param);
 	
 	//helper functions
-	void addBufferVariablesDeclarations(SgScopeStatement* scope, SgStatement* functionCall);
+	void addBufferVariablesDeclarations(Attribute* attribute, SgScopeStatement* scope, SgStatement* functionCall);
 	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope);
-	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number);
+	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, Attribute* attribute, std::vector<SgExpression*> stream,
+			int number, SgScopeStatement* scope);
 	
 	//top-level translating functions
 	void translateSmecy(SgProject* sageFilePtr);

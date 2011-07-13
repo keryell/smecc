@@ -599,9 +599,17 @@ namespace smecy
 	
 	/* Helper functions
 	*/
-	void addBufferVariablesDeclarations(SgScopeStatement* scope, SgStatement* functionCall)
+	void addBufferVariablesDeclarations(Attribute* attribute, SgScopeStatement* scope, SgStatement* functionCall)
 	{
-		SgExpressionPtrList argList = getArgList(functionCall)->get_expressions();
+		std::stringstream ss("");
+		ss << "__buffer_type_" << attribute->getStreamLoop();
+		SgType* type = SageBuilder::buildPointerType(SageBuilder::buildOpaqueType(ss.str(), scope));
+		SgName name("struct_buffer");
+		SgAssignInitializer* initializer = NULL;
+		SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, scope);
+		SageInterface::appendStatement(varDec, scope);
+		
+		/*SgExpressionPtrList argList = getArgList(functionCall)->get_expressions();
 		for (unsigned int i=0; i<argList.size(); i++)
 		{
 			SgVarRefExp* varRef = isSgVarRefExp(argList[i]);
@@ -613,7 +621,7 @@ namespace smecy
 				SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, scope);
 				SageInterface::appendStatement(varDec, scope);
 			}
-		}
+		}*/
 	}
 	
 	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope)
@@ -640,10 +648,49 @@ namespace smecy
 		SageInterface::prependStatement(structDecl, scope);
 	}
 	
-	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number)
+	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, Attribute* attribute, std::vector<SgExpression*> stream,
+			int number, SgScopeStatement* scope)
 	{
+		//TODO TODO TODO separate in/ou and inout
 		
-		return SageInterface::copyStatement(functionToMap);
+		//body where statements will be added
+		SgBasicBlock* body = SageBuilder::buildBasicBlock();
+		
+		//parameters for the builder
+		SgExpression* buffer = SageBuilder::buildVarRefExp("data_buffer", scope);
+		SgExprListExp * exprList = SageBuilder::buildExprListExp(buffer);
+		SgName name("DbLinkGetData");
+		SgType* returnType = SageBuilder::buildPointerType(SageBuilder::buildVoidType());
+
+		//since there's no proper builder for functionCallExp, we will extract it from a functionCallStmt FIXME memory
+		SgExprStatement* temp = SageBuilder::buildFunctionCallStmt(name, returnType, exprList, scope);
+		SgExpression* value = temp->get_expression();
+		
+		//type for the cast
+		std::stringstream ss("");
+		ss << "__buffer_type_" << attribute->getStreamLoop();
+		SgType* castType = SageBuilder::buildPointerType(SageBuilder::buildOpaqueType(ss.str(), scope));
+		
+		//actual building of the assignment
+		SgCastExp* cast = SageBuilder::buildCastExp(value, castType);
+		SgVarRefExp* variable = SageBuilder::buildVarRefExp("struct_buffer", scope);
+		SgAssignOp* assignment = SageBuilder::buildAssignOp(variable, cast);
+		SgExprStatement* assignStmt = SageBuilder::buildExprStatement(assignment);
+		
+		//now, we work on the function call
+		SgStatement* funcCall = SageInterface::copyStatement(functionToMap);
+		SgExprListExp* argList = getArgList(funcCall);
+		SgExpressionPtrList& args = argList->get_expressions();
+		for (unsigned int i=0; i<args.size(); i++)
+		{
+			SgExpression* dot = SageBuilder::buildArrowExp(copy(variable), args[i]);
+			args[i] = dot;
+		}
+		
+		//adding statements to the body
+		SageInterface::appendStatement(assignStmt, body);
+		SageInterface::appendStatement(funcCall, body);
+		return body;
 	}
 	
 	/* Top-level function :
@@ -764,13 +811,13 @@ namespace smecy
 			for (unsigned int i=0; i<streamNodes.size(); i++)
 			{
 				//calling functions to translate
-				processStreamNode(streamNodes[i].first, streamNodes[i].second, attribute, stream, i, condition);
+				processStreamNode(streamNodes[i].first, streamNodes[i].second, attribute, stream, i, condition, _arg_inout);
 			}
 		}
 	}
 	
 	void processStreamNode(SgStatement* target, SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream, int number,
-			SgStatement* condition)
+			SgStatement* condition, ArgType inout)
 	{	
 		//creating function definition with empty body
 		SgGlobal* scope = SageInterface::getGlobalScope(target);
@@ -788,10 +835,10 @@ namespace smecy
 		SgFunctionDefinition* definition = declaration->get_definition();
 		SgBasicBlock* defBody = SageBuilder::buildBasicBlock(); //FIXME FIXME understand why definition can't handle several statements
 		SageInterface::appendStatement(defBody, definition);
-		addBufferVariablesDeclarations(defBody, functionToMap);
+		addBufferVariablesDeclarations(parentAttribute, defBody, functionToMap);
 		//TODO use helper function to fill while body with send/receive to buffer
 			//TODO use helper function do get local variables from buffer
-		SgStatement* whileBody = buildNodeWhileBody(functionToMap, parentAttribute, stream, number);
+		SgStatement* whileBody = buildNodeWhileBody(functionToMap, parentAttribute, stream, number, defBody);
 		SgStatement* whileLoop = SageBuilder::buildWhileStmt(SageInterface::copyStatement(condition), whileBody);
 		SageInterface::appendStatement(whileLoop, defBody);
 	}
