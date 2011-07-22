@@ -11,6 +11,8 @@ namespace smecy
 {
 //==========================================================================//
 // IntExpt
+//==========================================================================//
+	//constructors
 	IntExpr::IntExpr(int intValue) : intValue(intValue), exprValue(""), sgExpr(NULL)
 	{
 		this->isIntBool = true;
@@ -29,7 +31,7 @@ namespace smecy
 		this->isSgBool = true;
 	}
 
-
+	//methods to know the type
 	bool IntExpr::isExpr()
 	{
 		return (!this->isIntBool) and (!this->isSgBool);
@@ -45,6 +47,7 @@ namespace smecy
 		return this->isIntBool;
 	}
 	
+	//get methods
 	int IntExpr::getInt()
 	{
 		if (this->isIntBool)
@@ -69,6 +72,7 @@ namespace smecy
 			return this->exprValue;
 	}
 	
+	//returns true if is -1
 	bool IntExpr::isMinus1()
 	{
 		return (this->isIntBool and this->intValue==-1);
@@ -76,10 +80,12 @@ namespace smecy
 
 //==========================================================================//
 // Attribute
+	//initializes all fields to a value that means the field is uninitialized
 	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1)), streamNode(-1), streamLoop(-1)
 	{
 	}
 
+	//static attributes used in parsing
 	Attribute* Attribute::currentAttribute ;
 	std::vector<IntExpr> Attribute::argSize;
 	std::vector<std::pair<IntExpr,IntExpr> > Attribute::argRange;
@@ -91,8 +97,10 @@ namespace smecy
 	std::vector<std::string> Attribute::currentExpressionList;
 	SgNode* Attribute::currentParent = NULL;
 	
+	//static attribute used in counting the stream loops (smecy lowering part, see smecyTranslation)
 	int Attribute::streamLoopTotal = 0;
 
+	//methods to add clauses
 	void Attribute::addMap(std::string mapName, IntExpr mapNumber)
 	{
 		this->mapName = mapName;
@@ -155,6 +163,7 @@ namespace smecy
 		this->condition = condition;
 	}
 	
+	//uses the static couonter streamLoopTotal
 	void Attribute::addStreamLoop()
 	{
 		this->streamLoop = streamLoopTotal;
@@ -165,6 +174,8 @@ namespace smecy
 	{
 		this->streamNode = number;
 	}
+	
+	//get and set methods
 	
 	void Attribute::setExpressionList(std::vector<std::string> exprList)
 	{
@@ -183,7 +194,7 @@ namespace smecy
 	
 	SgExpression* Attribute::getMapName(SgScopeStatement* scope)
 	{
-		//return SageBuilder::buildStringVal(this->mapName);
+		//we use opaque var ref since
 		return SageBuilder::buildOpaqueVarRefExp(this->mapName, scope);
 	}
 	
@@ -192,6 +203,8 @@ namespace smecy
 		return this->intExprToSgExpression(this->mapNumber);
 	}
 	
+	//transforms a intExpr into a SgExpression regardless of the actual type stored in the intexpr
+	//parsing of expressions must have been done (see smecyTranslation)
 	SgExpression* Attribute::intExprToSgExpression(IntExpr ie)
 	{
 		//check if parsing has been done
@@ -300,6 +313,7 @@ namespace smecy
 		return (this->getIf()!=NULL);
 	}
 	
+	/*proceeds to various checks on the attribute*/
 	bool Attribute::checkAll()
 	{
 		for (unsigned int i=0; i<this->argList.size(); i++)
@@ -355,6 +369,7 @@ namespace smecy
 		return true;
 	}
 	
+	//gets the index of an argument (in the Arg vector) from its index in the function's parameter list
 	int Attribute::argIndex(int arg)
 	{
 		for (unsigned int i=0; i<this->argList.size(); i++)

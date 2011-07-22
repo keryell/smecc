@@ -45,6 +45,13 @@ int yywrap(void)
 	return 1;
 }
 
+/* The lexer has two "modes".
+The first one is used to parse the smecy pragmas themselves
+The second one is used to isolate expressions contained in the pragmas
+the exprMode function will return either a smecy token (first mode) or
+a EXPR_THING token (second mode)
+variable smecy::Attribute::isExprMode is used to set mode
+*/
 int exprMode(int token)
 {
 	if (smecy::Attribute::isExprMode)
@@ -56,14 +63,24 @@ int exprMode(int token)
 		return token;
 }
 
+
+/* This is a wrapper for the parser.
+It takes the string to parse ex: "smecy map(PE,1)" and returns
+a corresponding smecy::Attribute object
+*/
 smecy::Attribute *smecy::parseDirective(std::string directive, SgNode* parent)
 {
-	Attribute::currentParent = parent;
+	Attribute::currentParent = parent; //initializing static attribute (see smecyAttribute.h)
+	YY_FLUSH_BUFFER; //to recover from a preceding syntax error
+	
+	//preparing a FILE object to be read by yyparse
 	char *stream = new char[directive.size()];
 	directive.copy(stream, directive.size());
-	YY_FLUSH_BUFFER;
 	yyin = fmemopen(stream, directive.size(), "r");
-	_yyparse();
+	
+	//actual parsing
+	_yyparse(); 
+	
 	fclose(yyin);
 	return smecy::Attribute::currentAttribute;
 }

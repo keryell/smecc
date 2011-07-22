@@ -23,23 +23,31 @@ namespace smecy
 	class IntExpr
 	{
 	protected:
+		//booleans to know the type
 		bool isIntBool;
 		bool isSgBool;
+		
+		//actual values
 		int intValue;
 		std::string exprValue;
 		SgExpression* sgExpr;
 	public:
+		//one constructor for each type
 		IntExpr(int intValue);
 		IntExpr(SgExpression* sgExpr);
 		IntExpr(std::string exprValue="");
-	
+		
+		//methods to know the type
 		bool isExpr();
 		bool isSgExpr();
 		bool isInt();
+		
+		//get method when type is know (returns 0/NULL/"" when wrong type)
 		int getInt();
 		std::string getExpr();
 		SgExpression* getSgExpr();
 		
+		//returns true if the value is -1
 		bool isMinus1();
 	};
 
@@ -61,14 +69,14 @@ namespace smecy
 	{
 	protected:
 		SgNode* parent;
-		std::string mapName;
-		IntExpr mapNumber;
-		std::vector<Arg> argList;
+		std::string mapName; //name of the accelerator to map to
+		IntExpr mapNumber; //number of said accelerator
+		std::vector<Arg> argList; //list of arguments
 		std::vector<std::string> expressionList; //FIXME refactor to keep only a list of IntExpr
 		std::vector<SgExpression*> sgExpressionList;
-		IntExpr condition;
-		int streamNode;
-		int streamLoop;
+		IntExpr condition; //condition if if clause
+		int streamNode; //number of stream node or -1 if not a stream node
+		int streamLoop; //number of stream loop or -1 if not a stream loop
 		
 		//private methods
 		int argIndex(int arg); //returns index of arg in argList -1 otherwise

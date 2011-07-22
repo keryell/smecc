@@ -12,7 +12,7 @@ int main()
 {
 	unsigned int tab[10][100];
 		
-	int b=2;
+	int b=sizeof(int);
 	int c=3;
 	#pragma smecy stream_loop
 	while (1)

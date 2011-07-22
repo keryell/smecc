@@ -24,6 +24,11 @@ int _yyparse();
 %start smecy_directive
 
 %%
+/* a smecy directive is a list of clauses 
+the static attribute object that will be used
+to store the result of the parsing is initialized
+a list meant to contain all C expressions contained in
+the directive is also initilaized*/
 smecy_directive
 					: SMECY { Attribute::currentExpressionList.clear(); Attribute::currentAttribute = new Attribute(Attribute::currentParent); }
 					  clause_list { Attribute::currentAttribute->setExpressionList(Attribute::currentExpressionList) }
@@ -37,7 +42,12 @@ clause_list
 					| stream_loop_clause clause_list
 					| stream_node_clause clause_list
 					;
-					
+
+/*From there, we use the various methods of Attribute objects
+(see smecyAttribute.h) to add the information regarding
+the different types of clause
+*/
+			
 stream_loop_clause
 					: STREAM_LOOP { Attribute::currentAttribute->addStreamLoop(); }
 					;
@@ -48,10 +58,12 @@ stream_node_clause
 					
 if_clause
 					: IF '(' int ')' { Attribute::currentAttribute->addIf(Attribute::currentIntExpr); }
+					/* some computation is hidden in int*/
 					;
 
 arg_clause
 					: ARG '(' INTEGER ',' { Attribute::argNumber = $3; } arg_parameter_list ')'
+					/* some computation is hidden in arg_parameter_list*/
 					;
 					
 map_clause
@@ -63,11 +75,13 @@ map_clause
 closing_map_clause
 					: ')'
 					| ',' int ')'
+					/* some computation is hidden in int*/
 					;
 					
 arg_parameter_list
 					: arg_parameter
 					| arg_parameter ',' arg_parameter_list
+					/* some computation is hidden in arg_parameter*/
 					;
 					
 arg_parameter		
@@ -77,21 +91,30 @@ arg_parameter
 					| UNUSED { Attribute::currentAttribute->addArg(Attribute::argNumber,_arg_unused); }
 					| size
 					| range
+					/* some computation is hidden in size and range*/
 					;
 					
 size
 					: '[' int ']' { Attribute::argSize.clear();
 						Attribute::argSize.push_back(Attribute::currentIntExpr);
 						} size_list
+					/* some computation is hidden in int*/
 					;
 
 size_list
 					: /*empty*/ { Attribute::currentAttribute->addArg(Attribute::argNumber,Attribute::argSize);}
 					| '[' int ']' { Attribute::argSize.push_back(Attribute::currentIntExpr); } size_list
+					/* some computation is hidden in int*/
 					;
 
 //here we have to trigger expression mode early otherwise first token of 'int' will not be lexed correctly
 // FIXME the way expression mode is triggered should be improved to avoid this sort of problem
+/* range is divided in several parts to cover the different cases ([], [n] and [n:m])
+a range is made of pairs of intExpr with the following correspondance :
+[] -> (-1,-1)
+[n] -> (n,-1)
+[n:m] -> (n,m)
+*/
 range
 					: '/' '[' { Attribute::argRange.clear(); Attribute::isExprMode=1; } range_begin
 					;
@@ -120,6 +143,9 @@ range_open
 
 //isExprMode=1 means we enter "expression mode"
 //in this mode the lexer will return EXPR_THING for everything except ( ) [ } ,
+//int is a generic C expression (can also be a boolean)
+//parenthesis are counted so as to make sure the expression does not
+//include parts of the directive
 int
 					: { Attribute::isExprMode=1; Attribute::expr.str(""); } 
 					  int_expr 
@@ -142,7 +168,11 @@ expr
 					| '(' { Attribute::expr << '('; } vexpr ')' { Attribute::expr << ')'; } expr
 					| '[' { Attribute::expr << '['; } cexpr ']' { Attribute::expr << ']'; } expr
 					;
-					
+
+//we need vexpr (expressions where commas are allowed) and cexpr (same with colons)
+//since we want to allow commas and colons in certain parts of expressions
+//(but not anywhere in the expressions since commas and colons are used
+//to separate the expression from the pragma)
 vexpr
 					: expr
 					| expr ',' { Attribute::expr << ','; } vexpr
@@ -159,6 +189,9 @@ void yyerror(char *s)
 	std::cerr << s << std::endl;
 }
 
+/* function yyparse needs to be wrapped so as to
+be used in another file (see smecyLexer.ll
+*/
 int _yyparse()
 {
 	return yyparse();
