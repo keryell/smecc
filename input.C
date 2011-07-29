@@ -1,4 +1,4 @@
-void stuff(int thing, int other_thing)
+void stuff(int thing)
 {
 	
 }
@@ -17,9 +17,9 @@ int main()
 	#pragma smecy stream_loop
 	while (1)
 	{
-		#pragma smecy stream_node(1)
-			stuff(b,c);
-		#pragma smecy stream_node(2)
+		#pragma smecy stream_node(1) arg(1,out)
+			stuff(b);
+		#pragma smecy stream_node(2) arg(1,in)
 			stuff2(b,c);
 	}
 	

@@ -116,6 +116,7 @@ namespace smecy
 		bool checkAll();
 		
 		//information about the args
+		int getArgNumber();
 		ArgType argType(int arg);
 		int argDimension(int arg);	//returns effective dimension, taking range into account
 		std::vector<IntExpr>& getSize(int arg); //FIXME FIXME FIXME

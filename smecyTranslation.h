@@ -29,6 +29,12 @@ namespace smecy
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
 	SgExpression* smecyReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, SgType* returnType);
 	
+	//functions that add streaming API functions
+	SgExprStatement* addPutData(Attribute* attribute, SgScopeStatement* scope);
+	SgExprStatement* addGetData(Attribute* attribute, SgScopeStatement* scope);
+	SgExprStatement* addGetInitBuff(Attribute* attribute, SgScopeStatement* scope);
+
+	
 	//high-level functions
 	void processArgs(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
 	void processReturn(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
@@ -54,7 +60,7 @@ namespace smecy
 	void addBufferVariablesDeclarations(Attribute* attribute, SgScopeStatement* scope, SgStatement* functionCall);
 	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope);
 	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, Attribute* attribute, std::vector<SgExpression*> stream,
-			int number, SgScopeStatement* scope, ArgType type);
+			int number, SgScopeStatement* scope, bool in, bool out);
 	void addGlobalBufferDeclaration(SgStatement* target, Attribute* attribute);
 	
 	//top-level translating functions

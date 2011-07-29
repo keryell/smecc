@@ -381,6 +381,11 @@ namespace smecy
 		return -1;
 	}
 	
+	int Attribute::getArgNumber()
+	{
+		return this->argList.size();
+	}
+	
 	ArgType Attribute::argType(int arg)
 	{
 		int argIndex = this->argIndex(arg);
