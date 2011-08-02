@@ -19,13 +19,16 @@
 																			}
 #else
 	#define SMECY_launch(pe, instance, func)
-#endif 
+#endif
 #define SMECY_get_arg_vector(pe, instance, func, arg, type, value, size)	printf("arg\n");
 #define SMECY_get_return(pe, instance, func, type)							printf("Getting return of function %s on %s n°%d\n",#func,#pe,instance)
 
 void square_symmetry_smecy(int width, int height, int* image,
 		     int square_size, int x_offset, int y_offset) ;
-		     
+
+// RK: je ne suis pas sûr que cette histoire de DbLink devrait apparaître
+// Pourquoi int ?
+
 //prototypes for the stream library
 typedef int DbLink;
 

@@ -55,7 +55,13 @@ stream_loop_clause
 stream_node_clause
 					: STREAM_NODE '(' INTEGER ')' { Attribute::currentAttribute->addStreamNode($3); }
 					;
-					
+
+/* RK: normalement il suffit d'utiliser $$ = ... pour passer des
+   paramètres entre règles plutôt que de passer par des variables globales,
+   des arg_ranges.push_back(), Attribute::currentIntExpr et tout et tout...
+   Cf la doc de bison :-)
+   J'ai peur si Rose est programmé comme ça... :-/
+*/
 if_clause
 					: IF '(' int ')' { Attribute::currentAttribute->addIf(Attribute::currentIntExpr); }
 					/* some computation is hidden in int*/
@@ -106,6 +112,9 @@ size_list
 					| '[' int ']' { Attribute::argSize.push_back(Attribute::currentIntExpr); } size_list
 					/* some computation is hidden in int*/
 					;
+
+// RK: ah mais quelle horreur !
+// Voilà pourquoi cela m'a échappé ! Normalement on utilise les "Start Conditions" pour faire ça. Cf. la doc de flex, section 10.
 
 //here we have to trigger expression mode early otherwise first token of 'int' will not be lexed correctly
 // FIXME the way expression mode is triggered should be improved to avoid this sort of problem
@@ -161,6 +170,7 @@ int_expr
 					  Attribute::currentExpressionList.push_back(Attribute::expr.str()); }
 					;
 
+// RK: du coup tout ceci me semble bien compliqué...
 expr
 					: /*empty*/
 					| INTEGER { Attribute::expr << $1; } expr
