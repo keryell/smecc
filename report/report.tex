@@ -20,6 +20,8 @@
 \usepackage{listings}
 %\renewcommand{\algorithmiccomment}[1]{//#1}
 
+\newtheorem{defdef}{Definition}
+
 \renewcommand{\lstlistingname}{Source code}
 \lstset{
 language=c,
@@ -46,22 +48,31 @@ captionpos=b
 		I have implemented a prototype translating annotated C/C++ code to the SME-C low-level API and validated it on a few examples. The present report presents SME-C and ROSE then details the conception and implementation of the prototype.
 	\end{abstract}
 	
+	\newpage
 	\tableofcontents
+	\newpage
 	
 \section*{Introduction}
 	This internship took place at HPC Project in Montpellier under the direction of Ronan Keryell. It lasted 10 weeks, from May 2011 to August 2011. The original title of the internship was \emph{Generating Par4All Accel from annotated sequential code with ROSE compiler}.
 	
+	\paragraph{}With the recent stop of CPU frequency increase, multi-core architecture have begun to become more common. Today CPU clusters can count up to hundreds of cores. Moreover, specialized hardware accelerators exist and can speed up greatly some types of computing.  Making the most of these architectures require programs made specifically for them. 
+	
+	The field is likely to evolve quickly and many already existing programs are fully sequential. Being able to program specialized parallel programs from scratch is one thing but parallelizing existing programs easily could speed up their execution dramatically. Annotation-based methods like OpenMP can easily parallelize a program but works only with shared-memory multi-CPUs architectures.
+	
+	During this internship I was to work on an ongoing project called SMECY that aim at providing a high-level set of annotations to parallelize code targeting heterogeneous architectures mixing CPUs and hardware accelerators.
+	
 
 \section{SME-C}
 	\subsection{Artemis \& SMECY}
-	%define SMECY
  	\emph{SMECY} stands for \emph{Smart Multicore Embedded Systems}. SMECY is part of the European project \emph{Artemis}, which stands for \emph{Advanced Research \& Technology for EMbedded Intelligence and Systems}. Artemis is a European initiative aiming at rivaling initiatives from Asia and North America in the domain of embedded systems.
 	
 	Within Artemis, SMECY focuses on heterogeneous multicore architectures and aims at providing new programming technologies to exploit the potential of such architectures. Targeted architectures may include various hardware accelerators (GPU, FGPA, specialized vector processors\ldots).
 
 	\subsection{SME-C}
-	%FIXME present pragmas
 	SMECY requires a portable intermediate representation to be used between programming tools, this language is called \emph{SME-C}.
+	
+	\begin{defdef} In C, a \emph{pragma directive}, often called a \emph{pragma}, is a compiler directive that provides additional information to the compiler.
+	\end{defdef}
 	
 	SME-C adds a few \emph{pragma directives} and an \emph{API} to the C99 language. Indeed, the C language is both portable and expressive while still readable.
 	
@@ -74,24 +85,30 @@ captionpos=b
 	
 	As many existing compilers already compile OpenMP, it would be interesting to use them. Moreover, mapping and streaming can be done using only a few API functions. This suggests dividing the compilation in two separate parts: first, transforming the input code (that contains SME-C pragmas) into a simpler code containing only SME-C API calls and OpenMP pragmas and API; then, compile the resulting code using a regular OpenMP-compliant compiler.
 
-	The goal of the internship is to program this first step (SME-C pragmas to SMECY API). The infrastructure that has been used is presented in the next part.
+	The goal of the internship is to program this first step (SME-C pragmas to SMECY API).
+	
+	\subsection{Par4All}
+	\emph{Par4All} is an automatic parallelizing and optimizing compiler developed notably by HPC Project. Par4All uses a set of macros and API functions collectively called \emph{Par4All Accel} to ease parallelized code generation by masking implementation-dependent or hardware-dependent details. Par4All can parallelize on several CPUs (using OpenMP) or GPUs (Cuda, OpenCL).
+	
+	Adding the possibilities offered by SME-C to Par4All would extend the Par4All targets with the different architectures that will be supported by SME-C in the future. The work to be done during the internship would go toward such an addition and is destined to be incorporated to Par4All at some point in the future.
 
 \section{ROSE: a tool for source-to-source compiling}
 	\subsection{What is source-to-source compiling ?}
-	%define source-to-source compiling FIXME real definition.
-	\paragraph{def}A \emph{source-to-source compiler} is a compiler that takes a high-level language as input and outputs a high-level language.
+	\begin{defdef}A \emph{source-to-source compiler} is a compiler that takes a high-level language as input and outputs a high-level language.
+	\end{defdef}
 	
 	Possible uses of source-to-source compilers include analysis, program transformation, optimization... In the case where input and output languages are the same, a source-to-source compiler is not to be confused with a preprocessor which has no understanding of the grammar of the language.
+	
+	We will often call the process of going through a source-to-source compiler \emph{translation}.
 	
 	%TODO advantages of source-to-source compiling
 
 	\subsection{The ROSE compiler infrastructure}
-	%presentating ROSE + description (example)
 	\emph{ROSE} is an open-source compiler infrastructure for programs that can read and write source code in various languages including C, C++ and FORTRAN. ROSE is written in C++ and object-oriented. ROSE can be used to build analyzers or source-to-source compilers.
 	
-	ROSE works by reading the input source code and generating an \emph{Abstract Syntax Tree} (AST). The AST is a graph representing the structure of the source code. Then the AST is modified and/or analyzed using mechanisms provided by ROSE. Finally, the AST is turned back into source code. 
+	ROSE works by reading the input source code and generating an \emph{Abstract Syntax Tree} (AST). The AST is a graph representing the structure of the source code. Then the AST is modified and/or analyzed using mechanisms provided by ROSE. Finally, the AST is turned back into source code.
 	
-	%TODO TODO whole-project compatibility / object-oriented imperative approach / EDG frontend / limitations
+	ROSE has a few limitations: although it is easy to use to make analyses or optimizations it is difficult to extend the existing set of AST node types to represent extensions of the input language. This limitation is partly due to the use of the Edison Design Group (EDG) frontend whose source code is not accessible which limits greatly the possibilities of modifications of the frontend.
 	
 \section{Design and implementation of the compiler}
 
@@ -110,6 +127,8 @@ captionpos=b
 	SME-C allows mapping function calls to hardware accelerators. This means that instead of being executed by the main processor the function call will be dispatched to a hardware accelerator. Function input data will be send to the accelerator, then the computing will take place, then function output will be transmitted back from the accelerator to memory.
 	
 	The user is supposed to provide information about the shape in memory of the data used and produced by the function. The compiler will use this information for the communication with the accelerator, sending and receiving as little data as possible. To keep things simple, memory shapes are limited to hyperparallelepipedes.
+	
+	\subsubsection{Example input and output code}
 	
 	\begin{lstlisting}[label=mapinput,caption={Input code with hardware mapping pragma}]
 void init(int* array, int size) {
@@ -152,7 +171,6 @@ int main() {
 	return 0;
 }
 	\end{lstlisting}
-	%FIXME define translation somewhere
 	Source code \ref{mapoutput} is the expected output code after translation of source code \ref{mapinput}. The SMECY pragma and the function call have been replaced by calls to SMECY API. The original function has been broken down into :
 	\begin{enumerate}
 		\item Initialization of the hardware accelerator (using \verb+SMECY_set+)
@@ -161,7 +179,7 @@ int main() {
 		\item Getting back the return value and modified arrays from the accelerator (using \verb+SMECY_get_return+ or \verb+SMECY_get_arg_vector+).
 	\end{enumerate}
 	
-	\paragraph{Implementation} Replacing the pragma and the function call with the corresponding API calls is quite straightforward with the numerous AST edition tools in ROSE. Nevertheless, some scenarios require a special handling :
+	\subsubsection{Implementation} Replacing the pragma and the function call with the corresponding API calls is quite straightforward with the numerous AST edition tools in ROSE. Nevertheless, some scenarios require a special handling :
 	\begin{itemize}
 		\item If a \verb+If+ clause is present then the API calls and function calls will be both kept and organized as follows:
 		\begin{lstlisting}[frame=none, numbers=none]
@@ -204,6 +222,8 @@ else
 
 	\subsection{Streaming}
 	When the body of a while loop can be divided into parts (called \emph{nodes}) with a sequential dependency between them, parallelization can still be obtained through \emph{pipelining}. Each node is run in parallel and, when a node $n$ has finished its work for iteration $i$ it sends the produced data to node $n+1$ and waits for stage $n-1$ to send data for iteration $i+1$; when this data has arrived, node $n$ begins its work for iteration $i+1$ immediately.
+	
+	\subsubsection{Example input and output code}
 	
 	\begin{lstlisting}[label=streaminput,caption={Input code with streaming pragmas. Definitions of functions \texttt{Produce} and \texttt{Consume} are not shown.}]
 int main() {
@@ -283,15 +303,26 @@ int main() {
 		\end{itemize}
 	\end{itemize}
 	
-	\paragraph{Implementation} Once again, ROSE provides all the necessary tools to add the pieces of code mentioned above to the original code but this time the transformation is more than replacing some code. Several delicate points must be considered:
+	\subsubsection{Using macros}
+	The example output code above (source code \ref{streamoutput}) is quite complicated. The source code \ref{macros} below shows how \emph{C macros} could be used to simplify the output code and the translation process.
+	
+	\begin{lstlisting}[label=streamoutput,caption={}]
+	Some example code here
+	\end{lstlisting}
+	
+	The translator built using ROSE does not need to know the \verb+P4A_+ calls will be expanded when output code is compiled. Using such macros not only allow for a simpler translation and a more readable output code but it also encapsulates the API calls. It means the produced code becomes independent of the use of the SMECY API.
+	
+	\subsubsection{Implementation} Once again, ROSE provides all the necessary tools to add the pieces of code mentioned above to the original code but this time the transformation is more than replacing some code. Several delicate points must be considered:
 	\begin{itemize}
 		\item The definitions of the nodes' newly created functions cannot be placed anywhere since they require the newly created struct type and the function originally pointed out by the \verb+stream_node+ pragma. Consequently, they are being placed right before the definition of the function containing the original \verb+stream_loop+ directive. The declaration of the struct type is placed right above them.
 	\end{itemize}
 	
-	All these remarks have been taken into account in the following algorithm:
-	\begin{enumerate}
-		\item
-	\end{enumerate}
+	%All these remarks have been taken into account in the following algorithm:
+	%\begin{enumerate}
+	%	\item
+	%\end{enumerate}
+	
+	%FIXME expand this part
 	
 	\subsection{Mapping in conjunction with streaming}
 	Streaming is interesting when combined with mapping. Each node can be mapped to a different hardware accelerator. The threads and the memory are used to coordinate data transfers between the accelerators and to synchronize them.
@@ -315,18 +346,20 @@ int main() {
 	\paragraph{Implementation} Practically there is not much to do to compile source codes such as source code \ref{conjin}. After the \verb+stream_loop+ has been processed a function has been created for each node. This function contains a call to the function originally pointed by the \verb+stream_node+ pragma. The compiler function that process the \verb+map+ directives just needs to be called on this function with the original \verb+stream_node+ pragma.
 
 \section{Perspectives and conclusions}
-%outlining
 	\subsection{Tests}
 	Since SME-C is an ongoing project, no implementation of the SMECY API existed when the compiler was tested. I have written an "empty" (i.e with functions that do nothing) implementation so as to check at least the syntax of the translated source code. I have also written an example-specific OpenMP implementation to run a full test on one example.
 	
 	Examples were provided with the SME-C specifications. Most of them were correctly compiled. Some were impossible to compile due to the unfinished state of the specifications (remapping). One example was fully tested using a specific implementation of the SMECY API and was compiled and run correctly.
 	
 	\subsection{Possible improvements}
-	The main limitation of the compiler prototype is the need for user-provided information. Analysis could be made to automate the gathering of information about arguments. Such analysis could be implemented using some of ROSE analysis tools like the virtual Control Flow Graphs \cite{tuto}.
+	The main limitation of the compiler prototype is the need for user-provided information. Analyses could be made to automate the gathering of information about arguments. Such analyses could be implemented using some of ROSE analysis tools like the virtual Control Flow Graphs \cite{tuto}.
 	
 	If such a mechanism was present, \verb+arg+ clauses would not be necessary (although they would remain useful to minimize data transfers). It means that \verb+map+ and \verb+stream_node+ directives could be applied to blocks of code instead of just function calls. This would easily be done using the ROSE outliner \cite{tuto,outliner}.
 	
 	\subsection{Conclusion}
+	Although the SME-C compiler could not be run because of the lack of SMECY API implementation, the use of the ROSE compiler infrastructure proved successful in translating SMECY pragmas to a lower-level API. Breaking down the problem into several layers (pragmas, macros and API) and into several steps (source-to-source translation then compilation) turned out to be a efficient approach.
+	
+	%FIXME expand a bit
 	
 	\newpage
 	\appendix
