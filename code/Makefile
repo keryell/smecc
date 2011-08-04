@@ -1,5 +1,5 @@
 ROSE_DIR			= /hpc/projects/smecy/libs/roseInstall
-SMECY_DIR			= /hpc/projects/smecy/
+SMECY_DIR			= /hpc/projects/smecy/code
 BOOST_CPPFLAGS		= -pthread -I/hpc/projects/smecy/libs/boostInstall/include
 ROSE_LIBS			= $(ROSE_DIR)/lib/librose.la
 CXX					= g++
@@ -10,7 +10,7 @@ CXXFLAGS			= -g -Wall -Wno-write-strings
 LEXFLAGS			=
 YACCFLAGS			= -d
 RMFLAGS				= -f
-TESTFLAGS			= -smecy -fopenmp --smecy_lib=$(SMECY_DIR)/code/
+TESTFLAGS			= -smecy -fopenmp
 
 allFiles = smecc
 
@@ -54,7 +54,7 @@ testFortran: smecc input.f
 	
 testCompile: smecc input.C
 	@echo [Testing $<]
-	@./smecc $(TESTFLAGS) input.C -o compiledTest
+	./smecc $(TESTFLAGS) input.C -o compiledTest
 
 dot: test
 	@$(SMECY_DIR)/apps/zgrviewer/run.sh ./input.C.dot
