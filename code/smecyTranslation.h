@@ -34,6 +34,8 @@ namespace smecy
 	SgExprStatement* addGetData(Attribute* attribute, SgScopeStatement* scope);
 	SgExprStatement* addGetInitBuff(Attribute* attribute, SgScopeStatement* scope);
 
+	SgExprStatement* addP4aMacro(std::string name, int arg1, SgScopeStatement* scope);
+	SgExprStatement* addP4aMacro(std::string name, int arg1, int arg2, SgScopeStatement* scope);
 	
 	//high-level functions
 	void processArgs(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
