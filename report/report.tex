@@ -269,7 +269,7 @@ void __Node_0_1(DbLink data_buffer) {
 }
 
 int main() {
-	int data_buffer;
+	data_buff data_buffer ;
 	DbLink __stream_buffer_0 = 
 	  pth_CreateDbLink(sizeof(__buffer_type_0 ));
 	pth_CreateProcess((int (*)())__Node_0_0,
@@ -306,8 +306,38 @@ int main() {
 	\subsubsection{Using macros}
 	The example output code above (source code \ref{streamoutput}) is quite complicated. The source code \ref{macros} below shows how \emph{C macros} could be used to simplify the output code and the translation process.
 	
-	\begin{lstlisting}[label=streamoutput,caption={}]
-	Some example code here
+	\begin{lstlisting}[label=macros,caption={Streaming output code with macro calls. Definitions of functions \texttt{Produce} and \texttt{Consume} are not shown.}]
+#include "p4a_macros.h" 
+
+struct __buffer_type_0 {
+	int data_buffer;
+};
+
+void __Node_0_0() {
+	__buffer_type_0* struct_buffer;
+	p4a_stream_get_init_buf(0);
+	while(1){
+		Produce(struct_buffer -> data_buffer);
+		p4a_stream_put_data(0);
+	}
+}
+
+void __Node_0_1() {
+	__buffer_type_0 *struct_buffer;
+	while(1){
+		p4a_stream_get_data(0);
+		Consume(struct_buffer -> data_buffer);
+	}
+}
+
+int main() {
+	data_buff data_buffer ;
+	p4a_init_stream(0);
+	p4a_launch_stream(0,0);
+	p4a_launch_stream(0,1);
+	pause();
+	return 0;
+}
 	\end{lstlisting}
 	
 	The translator built using ROSE does not need to know the \verb+P4A_+ calls will be expanded when output code is compiled. Using such macros not only allow for a simpler translation and a more readable output code but it also encapsulates the API calls. It means the produced code becomes independent of the use of the SMECY API.
