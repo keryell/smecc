@@ -29,11 +29,9 @@ namespace smecy
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
 	SgExpression* smecyReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, SgType* returnType);
 	
-	//functions that add streaming API functions
-	SgExprStatement* addPutData(Attribute* attribute, SgScopeStatement* scope);
-	SgExprStatement* addGetData(Attribute* attribute, SgScopeStatement* scope);
-	SgExprStatement* addGetInitBuff(Attribute* attribute, SgScopeStatement* scope);
-
+	//functions that add p4a macro calls
+	SgExprStatement* addP4aMacro(std::string name, int arg1, SgScopeStatement* scope);
+	SgExprStatement* addP4aMacro(std::string name, int arg1, int arg2, SgScopeStatement* scope);
 	
 	//high-level functions
 	void processArgs(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
@@ -43,8 +41,8 @@ namespace smecy
 	bool processCommandLine(int &argc, char** (&argv));
 	void processIf(SgStatement*& target, Attribute* attribute, SgStatement*& functionToMap);
 	void processVariableDeclaration(SgStatement* target, Attribute* attribute, SgStatement*& functionToMap);
-	void processStreamNode(SgStatement* target, SgStatement* functionToMap, Attribute* parentAttribute, std::vector<SgExpression*> stream,
-			int number, SgStatement* condition, ArgType inout);
+	void processStreamNode(SgStatement* target, SgStatement* functionToMap, int nLoop,
+			int nNode, SgStatement* condition, ArgType inout);
 	
 	//functions that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
@@ -57,11 +55,9 @@ namespace smecy
 	SgExpression* copy(SgExpression* param);
 	
 	//helper functions
-	void addBufferVariablesDeclarations(Attribute* attribute, SgScopeStatement* scope, SgStatement* functionCall);
+	void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope, SgStatement* functionCall);
 	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope);
-	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, Attribute* attribute, std::vector<SgExpression*> stream,
-			int number, SgScopeStatement* scope, bool in, bool out);
-	void addGlobalBufferDeclaration(SgStatement* target, Attribute* attribute);
+	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, int nLoop, int nNode, SgScopeStatement* scope, bool in, bool out);
 	
 	//top-level translating functions
 	void translateSmecy(SgProject* sageFilePtr);

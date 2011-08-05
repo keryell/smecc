@@ -32,11 +32,11 @@ void square_symmetry_smecy(int width, int height, int* image,
 //prototypes for the stream library
 typedef int DbLink;
 
-DbLink pth_CreateDbLink(int size);
-void* DbLinkGetInitBuf(DbLink outputLink);
-void* DbLinkGetData(DbLink inputLink);
-void* DbLinkPutData(DbLink inputLink);
-int pth_CreateProcess(int (*f)(), ...);
-void pause();
+DbLink pth_CreateDbLink(int size) { return (DbLink)0; }
+void* DbLinkGetInitBuf(DbLink outputLink) { return NULL; }
+void* DbLinkGetData(DbLink inputLink) { return NULL; }
+void* DbLinkPutData(DbLink inputLink) { return NULL; }
+int pth_CreateProcess(int (*f)(), ...) {return 0;}
+void pause() {}
 
 #endif //SMECY_LIB_H
