@@ -1,6 +1,7 @@
 %FIXME FIXME FIXME
 % talk about auto-detect array size
 % add "what I've done" sentences at the beggining of each part
+% explain the OpenMP bits in the input codes
 %FIXME FIXME FIXME
 
 %=====HEADER=====%
@@ -42,7 +43,7 @@ captionpos=b
 %=====TITLE=====%
 \title{Generating SMECY API from annotated sequential code with ROSE compiler}
 \author{Vincent \sc Lanore}
-\date{June and July 2011}
+\date{May 2011 to August 2011}
 
 %=====DOCUMENT=====%
 \begin{document}
@@ -73,16 +74,17 @@ captionpos=b
 	
 
 \section{SME-C}
-	\subsection{ARTEMIS \& SMECY}
+	\subsection{Presenting SME-C}
+	\subsubsection{ARTEMIS \& SMECY}
  	\emph{SMECY} stands for \emph{Smart Multicore Embedded
       Systems}.\footnote{\url{http://www.smecy.eu}} SMECY is a European
     project, part of the \emph{ARTEMIS} European project initiative, which stands for \emph{Advanced Research \& Technology for EMbedded Intelligence and Systems}.\footnote{\url{http://www.artemis.eu}} ARTEMIS is a European initiative aiming at rivaling initiatives from Asia and North America in the domain of embedded systems.
 
 	Within ARTEMIS, SMECY focuses on heterogeneous multicore architectures and aims at providing new programming technologies to exploit the potential of such architectures. Targeted architectures may include various hardware accelerators (GPU, FGPA, specialized vector processors\ldots).
 
-	\subsection{SME-C}
+	\subsubsection{SME-C}
 	SMECY requires a portable intermediate representation to be used
-    between programming tools. To increase portability and readability, is
+    between programming tools. To increase portability and readability, it
     is based on a programming language and this language is called
     \emph{SME-C}.
 
@@ -99,14 +101,7 @@ captionpos=b
 
 	SME-C is designed to work with \emph{OpenMP}, a programming model for shared-memory platforms. SME-C provides directives and API for mapping and streaming while OpenMP provides directives and API for parallelization and synchronization.
 	
-	\subsection{Compiling SME-C}
-	Since SMECY is an ongoing project, there is no implementation of a SME-C compiler yet. Since SME-C includes OpenMP, the final compiler needs to compile both SME-C pragmas and API and OpenMP pragmas and API.
-	
-	As many existing compilers already compile OpenMP, it would be interesting to use them. Moreover, mapping and streaming can be done using only a few API functions. This suggests dividing the compilation in two separate parts: first, transforming the input code (that contains SME-C pragmas) into a simpler code containing only SME-C API calls and OpenMP pragmas and API; then, compile the resulting code using a regular OpenMP-compliant compiler.
-
-	The goal of the internship is to program this first step (SME-C pragmas to SMECY API).
-	
-	\subsection{Par4All}
+	\subsubsection{Par4All}
 	\emph{Par4All} is an automatic parallelizing and optimizing compiler
     developed notably by HPC Project. Par4All uses a set of macros and API
     functions collectively called \emph{Par4All Accel runtime} to ease
@@ -115,44 +110,16 @@ captionpos=b
     (using OpenMP) or GPUs (Cuda, OpenCL).
 
 	Adding the possibilities offered by SME-C to Par4All would extend the Par4All targets with the different architectures that will be supported by SME-C in the future. The work to be done during the internship would go toward such an addition and is destined to be incorporated to Par4All at some point in the future.
-
-\section{ROSE: a tool for source-to-source compiling}
-	\subsection{What is source-to-source compiling ?}
-	\begin{defdef}A \emph{source-to-source compiler} is a compiler that takes a high-level language as input and outputs a high-level language.
-	\end{defdef}
 	
-	Possible uses of source-to-source compilers include analysis, program transformation, optimization... In the case where input and output languages are the same, a source-to-source compiler is not to be confused with a preprocessor which has no understanding of the grammar of the language.
+	\subsection{SME-C features}
 	
-	We will often call the process of going through a source-to-source compiler \emph{translation}.
-	
-	%TODO advantages of source-to-source compiling
-
-	\subsection{The ROSE compiler infrastructure}
-	\emph{ROSE} is an open-source compiler infrastructure for programs that can read and write source code in various languages including C, C++ and FORTRAN. ROSE is written in C++ and object-oriented. ROSE can be used to build analyzers or source-to-source compilers.
-	
-	ROSE works by reading the input source code and generating an \emph{Abstract Syntax Tree} (AST). The AST is a graph representing the structure of the source code. Then the AST is modified and/or analyzed using mechanisms provided by ROSE. Finally, the AST is turned back into source code.
-	
-	ROSE has a few limitations: although it is easy to use to make analyses or optimizations, it is difficult to extend the existing set of AST node types to represent extensions of the input language. This limitation is partly due to the use of the Edison Design Group (EDG) frontend whose source code is not accessible which limits greatly the possibilities of modifications of the frontend.
-	
-\section{Design and implementation of the compiler}
-
-	\subsection{Structure of the compiler}
-	The SME-C compiler structure is inspired by the structure of the ROSE OpenMP compiler \cite{roseomp}. Since ROSE frontend does not parse C pragmas and leave them as string, I have made a SMECY pragma parser using \texttt{flex} \& \texttt{bison}. This parser generates an object containing the pragma information.
-	
-	After ROSE frontend has been called, SMECY pragmas are parsed using the SMECY pragma parser and generated objects are attached to the corresponding pragma AST nodes as persistent attributes. The C expressions contained in the pragmas are extracted and parsed on the fly using a high-level tool from ROSE to parse strings.
-	
-	Once the pragmas have been parsed and their C expressions as well, the actual code transformations can take place. They are made using ROSE mid-level AST manipulation tools. The attributes attached to the pragma nodes are heavily used since they contain the directives information. During this step, SMECY pragmas are removed and replaced by calls to the SMECY API.
-	
-	Finally, AST is unparsed to source code. To actually compile a SMECY program this output source code must be compiled itself to machine code using a regular OpenMP-compliant C compiler.
-	
-	%TODO ajouter un schéma
-	
-	\subsection{Mapping to hardware accelerators}
+	\subsubsection{Mapping to hardware accelerators}
 	SME-C allows mapping function calls to hardware accelerators. This means that, instead of being executed by the main processor, the function call will be dispatched to a hardware accelerator. Function input data will be send to the accelerator, then the computing will take place, then function output will be transmitted back from the accelerator to memory.
 	
 	The user is supposed to provide information about the shape in memory of the data used and produced by the function. The compiler will use this information for the communication with the accelerator, sending and receiving as little data as possible. To keep things simple, memory shapes are limited to hyperparallelepipedes.
 	
-	\subsubsection{Example input and output code}
+	\paragraph{Example input and output code}
+	Source code \ref{mapinput} is an example of input code showing how to use smecy pragmas in conjunction with OpenMP pragmas. An array is initialized in parallel on 10 different processing units. Since we do not want to send the whole array to each processing unit, we restrict the shape of the lines to send using \verb+/[i][]+.
 	
 	\begin{lstlisting}[label=mapinput,caption={Input code with hardware mapping pragma.}]
 void init(int* array, int size) {
@@ -175,7 +142,13 @@ int main() {
 }
 	\end{lstlisting}
 	
-	Source code \ref{mapinput} is an example of input code showing how to use smecy pragmas in conjunction with OpenMP pragmas. An array is initialized in parallel on 10 different processing units. Since we do not want to send the whole array to each processing unit, we restrict the shape of the lines to send using \verb+/[i][]+.
+	Source code \ref{mapoutput} is the expected output code after translation of source code \ref{mapinput}. The SMECY pragma and the function call have been replaced by calls to SMECY API. The original function has been broken down into :
+	\begin{enumerate}
+		\item Initialization of the hardware accelerator (using \verb+SMECY_set+)
+		\item Sending input parameters to the accelerator (using \verb+SMECY_send_arg+ or \verb+SMECY_send_arg_vector+)
+		\item Actual execution of the function on the accelerator (using \verb+SMECY_launch+)
+		\item Getting back the return value and modified arrays from the accelerator (using \verb+SMECY_get_return+ or \verb+SMECY_get_arg_vector+).
+	\end{enumerate}
 	
 	\begin{lstlisting}[label=mapoutput,caption={Expected output code.}]
 #include "smecy.h"
@@ -198,15 +171,188 @@ int main() {
 	return 0;
 }
 	\end{lstlisting}
-	Source code \ref{mapoutput} is the expected output code after translation of source code \ref{mapinput}. The SMECY pragma and the function call have been replaced by calls to SMECY API. The original function has been broken down into :
-	\begin{enumerate}
-		\item Initialization of the hardware accelerator (using \verb+SMECY_set+)
-		\item Sending input parameters to the accelerator (using \verb+SMECY_send_arg+ or \verb+SMECY_send_arg_vector+)
-		\item Actual execution of the function on the accelerator (using \verb+SMECY_launch+)
-		\item Getting back the return value and modified arrays from the accelerator (using \verb+SMECY_get_return+ or \verb+SMECY_get_arg_vector+).
-	\end{enumerate}
 	
-	\subsubsection{Implementation} Replacing the pragma and the function call with the corresponding API calls is quite straightforward with the numerous AST edition tools in ROSE. Nevertheless, some scenarios require a special handling :
+	\subsubsection{Streaming}
+	When the body of a while loop can be divided into parts (called \emph{nodes}) with a sequential dependency between them, parallelization can still be obtained through \emph{pipelining}. Each node is run in parallel and, when a node $n$ has finished its work for iteration $i$ it sends the produced data to node $n+1$ and waits for node $n-1$ to send data for iteration $i+1$; when this data has arrived, node $n$ begins its work for iteration $i+1$ immediately.
+	
+	\paragraph{Example input and output code}
+	SME-C allows streaming using SMECY pragmas as shown in source code~\ref{streaminput}. The \verb+stream_loop+ pragma designates the while loop that contains the nodes. Each node is designated by a \verb+stream_node+ pragma. Each stage must be a single function call.
+    \marginpar{RK: Passer aussi cette section dans la section 1}
+	
+	\begin{lstlisting}[label=streaminput,caption={Input code with
+streaming pragmas. The definitions of \texttt{Produce} and \texttt{Consume} functions are not shown.}]
+int main() {
+	data_buff data_buffer ;
+#pragma smecy stream_loop
+	while (1) {
+#pragma smecy stream_node(1)
+		Produce(data_buffer);
+#pragma smecy stream_node(2)
+		Consume(data_buffer);
+	}
+	return 0 ;
+}
+	\end{lstlisting}
+	
+		Source code \ref{streamoutput} shows a possible output code for source code \ref{streaminput}. Several elements have been added to the original code :
+	\begin{itemize}
+		\item declaration of a struct type whose fields are the arguments given to the functions in the stream nodes;
+		\item declaration and definition of a function for each node:
+		\begin{itemize}
+			\item these functions take a \verb+DbLink+ object as parameter;
+			\item first, a pointer named \verb+struct_buffer+ to a struct whose type is the new declared struct type mentioned above is declared;
+			\item if the node is the first node of the loop then the \verb+DbLink+ is initialized using \verb+DbLinkGetInitBuff+;
+			\item then there is a while loop with the same condition as in the while loop pointed out by the \verb+stream_loop+ pragma:
+			\begin{itemize}
+				\item if the node is not the first node then then result of the process of the preceding node is obtained using \verb+DbLinkGetData+;
+				\item the function originally pointed out by the \verb+stream_node+ directive is called here, its parameters are obtained as fields of the struct pointed by \verb+struct_buffer+;
+				\item if the node is not the last node of the stream loop then the results are sent to the next node using \verb+DbLinkPutData+;
+			\end{itemize}
+		\end{itemize}
+		\item the original stream loop is replaced with the following:
+		\begin{itemize}
+			\item declaration and initialization of a \verb+DbLink+ whose size is the size of the struct type mentioned above;
+			\item launching one thread per node using \verb+pth_CreateProcess+; each thread launches the newly created function associated to the node.
+		\end{itemize}
+	\end{itemize}
+
+	\begin{lstlisting}[label=streamoutput,caption={Possible output
+code. The definitions of \texttt{Produce} and \texttt{Consume} functions are not shown.}]
+#include "smecy.h" 
+
+struct __buffer_type_0 {
+	int data_buffer;
+};
+
+void __Node_0_0(DbLink data_buffer) {
+	__buffer_type_0 *struct_buffer;
+	struct_buffer =
+	  (__buffer_type_0 *)DbLinkgetInitBuff(data_buffer);
+	while(1){
+		Produce(struct_buffer -> data_buffer);
+		struct_buffer = 
+		  (__buffer_type_0 *)DbLinkPutData(data_buffer);
+	}
+}
+
+void __Node_0_1(DbLink data_buffer) {
+	__buffer_type_0 *struct_buffer;
+	while(1){
+		struct_buffer = 
+		  (__buffer_type_0 *)DbLinkGetData(data_buffer);
+		Consume(struct_buffer -> data_buffer);
+	}
+}
+
+int main() {
+	data_buff data_buffer ;
+	DbLink __stream_buffer_0 = 
+	  pth_CreateDbLink(sizeof(__buffer_type_0 ));
+	pth_CreateProcess((int (*)())__Node_0_0,
+	  __stream_buffer_0);
+	pth_CreateProcess((int (*)())__Node_0_1,
+	  __stream_buffer_0);
+	pause();
+	return 0;
+}
+	\end{lstlisting}
+	
+\section{Building a SME-C compiler}
+
+	%TODO expand: goal of the internship blah blah
+	Since SMECY is an ongoing project, there is no implementation of a SME-C compiler yet.
+	
+	\subsection{Simplifying the problem}
+	%TODO explain the need to simplify the problem
+
+	\subsubsection{Source-to-source compiling}
+	%TODO this is A; merge with B
+	Since SMECY is an ongoing project, there is no implementation of a SME-C compiler yet. Since SME-C includes OpenMP, the final compiler needs to compile both SME-C pragmas and API and OpenMP pragmas and API.
+	
+	As many existing compilers already compile OpenMP, it would be interesting to use them. Moreover, mapping and streaming can be done using only a few API functions. This suggests dividing the compilation in two separate parts: first, transforming the input code (that contains SME-C pragmas) into a simpler code containing only SME-C API calls and OpenMP pragmas and API; then, compile the resulting code using a regular OpenMP-compliant compiler.
+
+	The goal of the internship is to program this first step (SME-C pragmas to SMECY API).
+
+	%TODO this is B; merge with A
+	\begin{defdef}A \emph{source-to-source compiler} is a compiler that takes a high-level language as input and outputs a high-level language.
+	\end{defdef}
+	
+	Possible uses of source-to-source compilers include analysis, program transformation, optimization... In the case where input and output languages are the same, a source-to-source compiler is not to be confused with a preprocessor which has no understanding of the grammar of the language.
+	
+	We will often call the process of going through a source-to-source compiler \emph{translation}.
+	
+	%TODO advantages of source-to-source compiling
+
+	\subsubsection{The ROSE compiler infrastructure}
+	\emph{ROSE} is an open-source compiler infrastructure for programs that can read and write source code in various languages including C, C++ and FORTRAN. ROSE is written in C++ and object-oriented. ROSE can be used to build analyzers or source-to-source compilers.
+	
+	ROSE works by reading the input source code and generating an \emph{Abstract Syntax Tree} (AST). The AST is a graph representing the structure of the source code. Then the AST is modified and/or analyzed using mechanisms provided by ROSE. Finally, the AST is turned back into source code.
+	
+	ROSE has a few limitations: although it is easy to use to make analyses or optimizations, it is difficult to extend the existing set of AST node types to represent extensions of the input language. This limitation is partly due to the use of the Edison Design Group (EDG) frontend whose source code is not accessible which limits greatly the possibilities of modifications of the frontend.
+	
+	\subsubsection{Using macros}
+	
+	%TODO modify the intro to make it make sense
+	The example output code above (source code \ref{streamoutput}) is
+    quite complicated. The source code \ref{macros} below shows how
+    \emph{C macros} could be used to simplify the output code and the translation process.
+
+	\begin{lstlisting}[label=macros,caption={Streaming output code with
+macro calls. The definitions of \texttt{Produce} and \texttt{Consume} functions are not shown.}]
+#include "p4a_macros.h" 
+
+struct __buffer_type_0 {
+	int data_buffer;
+};
+
+void __Node_0_0() {
+	__buffer_type_0* struct_buffer;
+	p4a_stream_get_init_buf(0);
+	while(1){
+		Produce(struct_buffer -> data_buffer);
+		p4a_stream_put_data(0);
+	}
+}
+
+void __Node_0_1() {
+	__buffer_type_0 *struct_buffer;
+	while(1){
+		p4a_stream_get_data(0);
+		Consume(struct_buffer -> data_buffer);
+	}
+}
+
+int main() {
+	data_buff data_buffer ;
+	p4a_init_stream(0);
+	p4a_launch_stream(0,0);
+	p4a_launch_stream(0,1);
+	pause();
+	return 0;
+}
+	\end{lstlisting}
+
+	The translator built using ROSE does not need to know the \verb+P4A_+
+    calls will be expanded when output code is compiled. Using such macros
+    not only allows for a simpler translation and a more readable output
+    code but it also encapsulates the API calls. It means the produced
+    code becomes independent of the use of the SMECY API and independent
+    of the way the pipeline is really implemented.
+
+	\subsection{Structure of the compiler}
+	The SME-C compiler structure is inspired by the structure of the ROSE OpenMP compiler \cite{roseomp}. Since ROSE frontend does not parse C pragmas and leave them as string, I have made a SMECY pragma parser using \texttt{flex} \& \texttt{bison}. This parser generates an object containing the pragma information.
+	
+	After ROSE frontend has been called, SMECY pragmas are parsed using the SMECY pragma parser and generated objects are attached to the corresponding pragma AST nodes as persistent attributes. The C expressions contained in the pragmas are extracted and parsed on the fly using a high-level tool from ROSE to parse strings.
+	
+	Once the pragmas have been parsed and their C expressions as well, the actual code transformations can take place. They are made using ROSE mid-level AST manipulation tools. The attributes attached to the pragma nodes are heavily used since they contain the directives information. During this step, SMECY pragmas are removed and replaced by calls to the SMECY API.
+	
+	Finally, AST is unparsed to source code. To actually compile a SMECY program this output source code must be compiled itself to machine code using a regular OpenMP-compliant C compiler.
+	
+	%TODO ajouter un schéma
+	
+	\subsection{Implementation}
+	
+	\subsubsection{Mapping} Replacing the pragma and the function call with the corresponding API calls is quite straightforward with the numerous AST edition tools in ROSE. Nevertheless, some scenarios require a special handling :
 	\begin{itemize}
 		\item If an \verb+If+ clause is present then the API calls and
           function calls will be both kept and organized as follows:
@@ -261,140 +407,7 @@ else
 		\item If there was no \verb+If+ clause, remove the function call.
 	\end{enumerate}
 
-	\subsection{Streaming}
-	When the body of a while loop can be divided into parts (called \emph{nodes}) with a sequential dependency between them, parallelization can still be obtained through \emph{pipelining}. Each node is run in parallel and, when a node $n$ has finished its work for iteration $i$ it sends the produced data to node $n+1$ and waits for stage $n-1$ to send data for iteration $i+1$; when this data has arrived, node $n$ begins its work for iteration $i+1$ immediately.
-	
-	\subsubsection{Example input and output code}
-	
-	\begin{lstlisting}[label=streaminput,caption={Input code with
-streaming pragmas. The definitions of \texttt{Produce} and \texttt{Consume} functions are not shown.}]
-int main() {
-	data_buff data_buffer ;
-#pragma smecy stream_loop
-	while (1) {
-#pragma smecy stream_node(1)
-		Produce(data_buffer);
-#pragma smecy stream_node(2)
-		Consume(data_buffer);
-	}
-	return 0 ;
-}
-	\end{lstlisting}
-	
-	SME-C allows streaming using SMECY pragmas as shown in source code~\ref{streaminput}. The \verb+stream_loop+ pragma designates the while loop that contains the nodes. Each node is designated by a \verb+stream_node+ pragma. Each stage must be a single function call.
-    \marginpar{RK: Passer aussi cette section dans la section 1}
-
-	\begin{lstlisting}[label=streamoutput,caption={Possible output
-code. The definitions of \texttt{Produce} and \texttt{Consume} functions are not shown.}]
-#include "smecy.h" 
-
-struct __buffer_type_0 {
-	int data_buffer;
-};
-
-void __Node_0_0(DbLink data_buffer) {
-	__buffer_type_0 *struct_buffer;
-	struct_buffer =
-	  (__buffer_type_0 *)DbLinkgetInitBuff(data_buffer);
-	while(1){
-		Produce(struct_buffer -> data_buffer);
-		struct_buffer = 
-		  (__buffer_type_0 *)DbLinkPutData(data_buffer);
-	}
-}
-
-void __Node_0_1(DbLink data_buffer) {
-	__buffer_type_0 *struct_buffer;
-	while(1){
-		struct_buffer = 
-		  (__buffer_type_0 *)DbLinkGetData(data_buffer);
-		Consume(struct_buffer -> data_buffer);
-	}
-}
-
-int main() {
-	data_buff data_buffer ;
-	DbLink __stream_buffer_0 = 
-	  pth_CreateDbLink(sizeof(__buffer_type_0 ));
-	pth_CreateProcess((int (*)())__Node_0_0,
-	  __stream_buffer_0);
-	pth_CreateProcess((int (*)())__Node_0_1,
-	  __stream_buffer_0);
-	pause();
-	return 0;
-}
-	\end{lstlisting}
-	
-	Source code \ref{streamoutput} shows a possible output code for source code \ref{streaminput}. Several elements have been added to the original code :
-	\begin{itemize}
-		\item declaration of a struct type whose fields are the arguments given to the functions in the stream nodes;
-		\item declaration and definition of a function for each node:
-		\begin{itemize}
-			\item these functions take a \verb+DbLink+ object as parameter;
-			\item first, a pointer named \verb+struct_buffer+ to a struct whose type is the new declared struct type mentioned above is declared;
-			\item if the node is the first node of the loop then the \verb+DbLink+ is initialized using \verb+DbLinkGetInitBuff+;
-			\item then there is a while loop with the same condition as in the while loop pointed out by the \verb+stream_loop+ pragma:
-			\begin{itemize}
-				\item if the node is not the first node then then result of the process of the preceding node is obtained using \verb+DbLinkGetData+;
-				\item the function originally pointed out by the \verb+stream_node+ directive is called here, its parameters are obtained as fields of the struct pointed by \verb+struct_buffer+;
-				\item if the node is not the last node of the stream loop then the results are sent to the next node using \verb+DbLinkPutData+;
-			\end{itemize}
-		\end{itemize}
-		\item the original stream loop is replaced with the following:
-		\begin{itemize}
-			\item declaration and initialization of a \verb+DbLink+ whose size is the size of the struct type mentioned above;
-			\item launching one thread per node using \verb+pth_CreateProcess+; each thread launches the newly created function associated to the node.
-		\end{itemize}
-	\end{itemize}
-	
-	\subsubsection{Using macros}
-	The example output code above (source code \ref{streamoutput}) is
-    quite complicated. The source code \ref{macros} below shows how
-    \emph{C macros} could be used to simplify the output code and the translation process.
-
-	\begin{lstlisting}[label=macros,caption={Streaming output code with
-macro calls. The definitions of \texttt{Produce} and \texttt{Consume} functions are not shown.}]
-#include "p4a_macros.h" 
-
-struct __buffer_type_0 {
-	int data_buffer;
-};
-
-void __Node_0_0() {
-	__buffer_type_0* struct_buffer;
-	p4a_stream_get_init_buf(0);
-	while(1){
-		Produce(struct_buffer -> data_buffer);
-		p4a_stream_put_data(0);
-	}
-}
-
-void __Node_0_1() {
-	__buffer_type_0 *struct_buffer;
-	while(1){
-		p4a_stream_get_data(0);
-		Consume(struct_buffer -> data_buffer);
-	}
-}
-
-int main() {
-	data_buff data_buffer ;
-	p4a_init_stream(0);
-	p4a_launch_stream(0,0);
-	p4a_launch_stream(0,1);
-	pause();
-	return 0;
-}
-	\end{lstlisting}
-
-	The translator built using ROSE does not need to know the \verb+P4A_+
-    calls will be expanded when output code is compiled. Using such macros
-    not only allows for a simpler translation and a more readable output
-    code but it also encapsulates the API calls. It means the produced
-    code becomes independent of the use of the SMECY API and independent
-    of the way the pipeline is really implemented.
-
-	\subsubsection{Implementation} Once again, ROSE provides all the necessary tools to add the pieces of code mentioned above to the original code but this time the transformation is more than replacing some code. Several delicate points must be considered:
+	\subsubsection{Streaming} Once again, ROSE provides all the necessary tools to add the pieces of code mentioned above to the original code but this time the transformation is more than replacing some code. Several delicate points must be considered:
 	\begin{itemize}
 		\item the definitions of the nodes' newly created functions cannot be placed anywhere since they require the newly created struct type and the function originally pointed out by the \verb+stream_node+ pragma. Consequently, they are being placed right before the definition of the function containing the original \verb+stream_loop+ directive;
         \item the declaration of the \texttt{struct} type is placed right above them.
@@ -407,7 +420,8 @@ int main() {
 	
 	%FIXME expand this part
 	
-	\subsection{Mapping in conjunction with streaming}
+	\subsubsection{Mapping in conjunction with streaming}
+	%TODO move a part to the SMECY features
 	Streaming is interesting when combined with mapping. Each node can be mapped to a different hardware accelerator. The threads and the memory are used to coordinate data transfers between the accelerators and to synchronize them.
 	
 	To map the function call of a \verb+stream_node+ to a hardware accelerator using SMECY pragmas is easy: just add the \verb+map+ and \verb+arg+ clauses to the \verb+stream_node+ directive as shown in source code \ref{conjin}.
@@ -426,8 +440,6 @@ int main() {
 	return 0 ;
 }
 	\end{lstlisting}
-	
-	\subsubsection{Implementation}
 
  Practically there is not much to do to compile source codes such as source code \ref{conjin}. After the \verb+stream_loop+ has been processed a function has been created for each node. This function contains a call to the function originally pointed by the \verb+stream_node+ pragma. The compiler function that process the \verb+map+ directives just needs to be called on this function with the original \verb+stream_node+ pragma.
 
