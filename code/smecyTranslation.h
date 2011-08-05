@@ -55,7 +55,7 @@ namespace smecy
 	SgExpression* copy(SgExpression* param);
 	
 	//helper functions
-	void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope, SgStatement* functionCall);
+	void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope, SgStatement* functionCall, std::string varName);
 	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope);
 	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, int nLoop, int nNode, SgScopeStatement* scope, bool in, bool out);
 	

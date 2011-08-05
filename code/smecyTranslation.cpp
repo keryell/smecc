@@ -645,12 +645,12 @@ namespace smecy
 	*/
 	
 	//creates a variable named struct_buffer of type __buffer_type_n* where n is the stream_loop number
-	void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope, SgStatement* functionCall)
+	void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope, SgStatement* functionCall, std::string varName)
 	{
 		std::stringstream ss("");
 		ss << "__buffer_type_" << nLoop;
 		SgType* type = SageBuilder::buildPointerType(SageBuilder::buildOpaqueType(ss.str(), scope));
-		SgName name("struct_buffer");
+		SgName name(varName);
 		SgAssignInitializer* initializer = NULL;
 		SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, scope);
 		SageInterface::appendStatement(varDec, scope);
@@ -696,17 +696,23 @@ namespace smecy
 		SgExpressionPtrList& args = argList->get_expressions();
 		for (unsigned int i=0; i<args.size(); i++)
 		{
-			SgVarRefExp* varRef = SageBuilder::buildVarRefExp("struct_buffer", scope);
+			SgVarRefExp* varRef;
+			if (out)
+				varRef = SageBuilder::buildVarRefExp("struct_buffer_out", scope);
+			else
+				varRef = SageBuilder::buildVarRefExp("struct_buffer_in", scope);
 			SgExpression* dot = SageBuilder::buildArrowExp(varRef, args[i]);
 			args[i] = dot;
 		}
 		
 		//adding statements to the body
-		if (in)
-			SageInterface::appendStatement(addP4aMacro("p4a_stream_get_data", nLoop, scope), body);
+		if (in) //not the first node, we need to copy the input buffer to the output
+			SageInterface::appendStatement(addP4aMacro("p4a_stream_get_data", nLoop, nNode-1, scope), body);
+		if (in and out)
+			SageInterface::appendStatement(addP4aMacro("p4a_stream_copy_data", nLoop, nNode, scope), body);
 		SageInterface::appendStatement(funcCall, body);
 		if (out)
-			SageInterface::appendStatement(addP4aMacro("p4a_stream_put_data", nLoop, scope), body);
+			SageInterface::appendStatement(addP4aMacro("p4a_stream_put_data", nLoop, nNode, scope), body);
 		return body;
 	}
 	
@@ -848,7 +854,7 @@ namespace smecy
 			//buffer declaration
 			//addGlobalBufferDeclaration(target, attribute);
 			SgScopeStatement* scope = SageInterface::getScope(target);
-			SageInterface::insertStatement(target, addP4aMacro("p4a_init_stream", attribute->getStreamLoop(), scope));
+			SageInterface::insertStatement(target, addP4aMacro("p4a_init_stream", attribute->getStreamLoop(), streamNodes.size()-1, scope));
 			
 			//thread launching
 			for (unsigned int i=0; i<streamNodes.size(); i++)
@@ -893,10 +899,15 @@ namespace smecy
 		SgFunctionDefinition* definition = declaration->get_definition();
 		SgBasicBlock* defBody = SageBuilder::buildBasicBlock(); //FIXME FIXME understand why definition can't handle several statements
 		SageInterface::appendStatement(defBody, definition);
-		addBufferVariablesDeclarations(nLoop, defBody, functionToMap);
 		
-		if (!argIn) //first node, need to initialize the buffer
-			SageInterface::appendStatement(addP4aMacro("p4a_stream_get_init_buf", nLoop, defBody), defBody);
+		if (argIn)
+			addBufferVariablesDeclarations(nLoop, defBody, functionToMap, "struct_buffer_in");
+		
+		if (argOut) //not the first node
+		{
+			addBufferVariablesDeclarations(nLoop, defBody, functionToMap, "struct_buffer_out");
+			SageInterface::appendStatement(addP4aMacro("p4a_stream_get_init_buf", nLoop, nNode, defBody), defBody);
+		}
 		
 		SgStatement* whileBody = buildNodeWhileBody(functionToMap, nLoop, nNode, defBody, argIn, argOut);
 		SgStatement* whileLoop = SageBuilder::buildWhileStmt(SageInterface::copyStatement(condition), whileBody);

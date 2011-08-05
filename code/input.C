@@ -21,8 +21,10 @@ int main()
 	{
 		#pragma smecy stream_node(1) arg(1,out)
 			stuff(b);
-		#pragma smecy stream_node(2) arg(1,in)
+		#pragma smecy stream_node(2) arg(1,inout)
 			stuff2(b,c);
+		#pragma smecy stream_node(2) arg(1,in)
+			stuff(b);
 	}
 	
 	return 0;
