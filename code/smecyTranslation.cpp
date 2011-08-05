@@ -685,7 +685,7 @@ namespace smecy
 	}
 	
 	//constructs the content of the while body contained in a stream_loop associated function
-	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, int nLoop, int nNode, SgScopeStatement* scope, bool in, bool out)
+	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, int nLoop, int nNode, SgScopeStatement* scope, bool in, bool out, SgStatement* pragma)
 	{		
 		//body where statements will be added
 		SgBasicBlock* body = SageBuilder::buildBasicBlock();
@@ -713,6 +713,18 @@ namespace smecy
 		SageInterface::appendStatement(funcCall, body);
 		if (out)
 			SageInterface::appendStatement(addP4aMacro("p4a_stream_put_data", nLoop, nNode, scope), body);
+		
+		//if there is a map clause, process it
+		Attribute* attribute = (Attribute*)pragma->getAttribute("smecy");
+		if (attribute->hasMapClause()) //if stream node mapping is handled separately
+		{
+			SgStatement* newPragma = SageInterface::copyStatement(pragma);
+			SageInterface::insertStatement(funcCall, newPragma);
+			newPragma->removeAttribute("smecy"); //copy does not deep copy attributes well
+			newPragma->addNewAttribute("smecy", attribute);
+			//translateMap(newPragma, attribute, funcCall);
+		}
+		
 		return body;
 	}
 	
@@ -723,10 +735,20 @@ namespace smecy
 	void translateSmecy(SgProject *sageFilePtr)
 	{
 		//preprocessing
-		correctParentBody(sageFilePtr);
 		attachAttributes(sageFilePtr);
 		parseExpressions(sageFilePtr);
 		addSmecyInclude(sageFilePtr);
+		
+		//translating the different kinds of pragmas
+		translateStreaming(sageFilePtr);
+		translateMapping(sageFilePtr);
+		
+	}
+	
+	void translateStreaming(SgProject *sageFilePtr)
+	{
+		//preprocessing
+		correctParentBody(sageFilePtr);
 		
 		//making a list of all pragma nodes in AST and going through it
 		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
@@ -750,7 +772,36 @@ namespace smecy
 				
 				if (attribute->getStreamLoop()!=-1)
 					translateStreamLoop(target, attribute, subject);
-				else if (attribute->hasMapClause() and attribute->getStreamNode()==-1) //if stream node mapping is handled separately
+			}
+		}
+	}
+	
+	void translateMapping(SgProject *sageFilePtr)
+	{
+		//preprocessing
+		correctParentBody(sageFilePtr);
+		
+		//making a list of all pragma nodes in AST and going through it
+		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
+		std::vector<SgNode*>::iterator iter;
+		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
+		{
+			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
+			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+			std::string pragmaHead;
+			std::istringstream stream(pragmaString);
+			stream >> pragmaHead;
+			if (pragmaHead == "smecy")
+			{
+				SgStatement* target = isSgStatement(pragmaDeclaration);
+				
+				//parameters
+				smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
+				if (!attribute->checkAll()) //verification of pragma content FIXME FIXME add verifications for clause coherency
+					throw 0;
+				SgStatement* subject = SageInterface::getNextStatement(target);
+
+				if (attribute->hasMapClause()) //if stream node mapping is handled separately
 					translateMap(target, attribute, subject);
 			}
 		}
@@ -909,7 +960,7 @@ namespace smecy
 			SageInterface::appendStatement(addP4aMacro("p4a_stream_get_init_buf", nLoop, nNode, defBody), defBody);
 		}
 		
-		SgStatement* whileBody = buildNodeWhileBody(functionToMap, nLoop, nNode, defBody, argIn, argOut);
+		SgStatement* whileBody = buildNodeWhileBody(functionToMap, nLoop, nNode, defBody, argIn, argOut, target);
 		SgStatement* whileLoop = SageBuilder::buildWhileStmt(SageInterface::copyStatement(condition), whileBody);
 		SageInterface::appendStatement(whileLoop, defBody);
 	}
