@@ -1,0 +1,94 @@
+%============================%
+%                            %
+%     DOC SMECY COMPILER     %
+%                            %
+%============================%
+
+%=====HEADER=====%
+\documentclass[A4]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+%\usepackage{algorithmic}
+%\usepackage{algorithm}
+%\usepackage[left=90px,hmarginratio=1:1,top=25mm]{geometry}
+%\usepackage{amsthm}
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{mathrsfs}
+\usepackage{graphicx}
+%\renewcommand{\algorithmiccomment}[1]{//#1}
+\newcommand{\compiler}{SMECC}
+\newcommand{\scompiler}{SMECC }
+
+%=====TITLE=====%
+\title{\scompiler -- A SME-C compiler using ROSE}
+\author{Vincent \sc Lanore}
+
+%=====DOCUMENT=====%
+\begin{document}
+	\maketitle
+
+	\section{Presentation}
+		\scompiler (for SME-C Compiler) is a C99/C++ compiler able to process SMECY pragmas to map function calls to hardware accelerators. \scompiler is written using ROSE \cite{rose}, a tool to write source-to-source translators. First, input code is parsed using ROSE front-end (depends on the input language) into a SageIII AST (ROSE's AST). Then, SMECY pragmas are processed and translated into calls to the SMECY API. Finally, the ROSE backend is called to produce C code with calls to the SMECY API which can be compiled using a regular compiler.
+	
+	\section{Features}
+		\scompiler currently supports the following features :
+		\begin{itemize}
+			\item translation of \verb+#pragma smecy map+ directives applied to function calls of the form \verb+function(parameters);+, \verb+varName = function(parameters);+ or \verb+type varName = function(parameters);+;
+			\item support from following \verb+arg+ clauses : type (in, out...), size and range;
+			\item verification of the contiguity of the vector arguments in memory;
+			\item computing ranges to get the actual dimension of any argument, printing warning when arguments with dimension $>1$ are used as vectors;
+			\item automatically finding the size of arrays if not specified in pragma.
+		\end{itemize}
+	
+	\section{How to use}
+		\paragraph{Environment} Before using the compiler a few environment variable should be set.
+		\begin{itemize}
+			\item add \scompiler directory to the \verb+$PATH+ : \begin{verbatim}$export PATH=smecc_directory/:$PATH\end{verbatim}
+			\item set \verb+SMECY_LIB+ to the directory containing the SMECY library : \begin{verbatim}$export SMECY_LIB=smecy_lib_directory/\end{verbatim}
+		\end{itemize}
+		
+		\paragraph{Usage}
+		\scompiler works mostly like a regular C/C++ compiler. Most C/C++ usual compiler flags will work with a few exceptions and additions (see below). By default, it will \emph{not} compile smecy pragmas (see below).
+		
+		\paragraph{Specific flags}
+		\scompiler supports some specific flags. Here are a few examples, for a more complete list type \verb+$smecc --help+.
+		\begin{itemize}
+			\item \verb+-smecy+ triggers smecy pragmas translation/compilation; if pragmas contain many expressions \scompiler may produce a lot of output : \verb+>\dev\null+ is recommended;
+			\item \verb+--smecy_lib=smecy_lib_directory/+ can be used to specify the path to the SMECY library; if specified it will be used instead of the environment variable \verb+SEMCY_LIB+;
+			\item \verb+-std=c99+ should be used when compiling C99;
+			\item \verb+-c+ will only translate input file instead of compiling it; with input file \verb+fileName.C+, \scompiler will generate a \verb+rose_fileName.C+ file with calls to SMECY API instead of SMECY pragmas;
+			\item \verb+-fopenmp+ triggers OpenMP pragmas compilation using the back-end compiler.
+		\end{itemize}
+		
+		\paragraph{Example} To compile a C99 input file with smecy and OpenMP pragmas without useless output type:
+		\begin{verbatim}$smecc -std=c99 -fopenmp -smecy input.c >\dev\null\end{verbatim}
+	
+	\section{Known bugs and limitations}
+	
+		\paragraph{Features not yet implemented:}
+		\begin{itemize}
+			\item FORTRAN support;
+			\item only toy implementation of the SMECY API.
+		\end{itemize}
+		
+		\paragraph{AstRewriteMechanism bugs:}
+		\begin{itemize}
+			\item crash if the C++ input file has certain extensions (like ".cpp"), changing the extension to ".C" seems to solve the problem;
+			\item the parser called for the strings is always in C++ mode (not C), commenting out a few lines in a ROSE header prevents front-end errors;
+			\item the parsing of expressions is extremely slow (several seconds to parse ten expressions) and generates 1 file per expression to parse.
+		\end{itemize}
+
+		\paragraph{Compatibility with ROSE OpenMP lowering}
+		\begin{itemize}
+			\item ROSE OpenMP built-in support conflicts with smecy lowering and requires special handling;
+			\item OpenMP files lowered using XOMP library require special linking, see in \verb+rose_install_dir/src/midend/programTransformation/ompLowering/+ for the library files.
+		\end{itemize}
+		
+		\paragraph{Other bugs}
+		\begin{itemize}
+			\item if \verb+-smecy+ is not set, multi-line pragmas will lose their \verb+\+ and fail to compile.
+		\end{itemize}
+\end{document}
