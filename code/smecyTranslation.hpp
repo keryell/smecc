@@ -1,8 +1,8 @@
 #ifndef SMECY_TRANSLATION_H
 #define SMECY_TRANSLATION_H
 
-#include "public.h"
-#include "smecyAttribute.h"
+#include "public.hpp"
+#include "smecyAttribute.hpp"
 
 //================================================================
 // Defines functions used during the translation of SMECY programs
@@ -12,11 +12,11 @@ namespace smecy
 {
 	//attaches smecy attributes to smecy pragmas
 	void attachAttributes(SgProject* sageFilePtr);
-	
+
 	//transforms all C expressions into their SageIII representation
 	//using the high level string interface of the ASR rewrite mechanism
 	void parseExpressions(SgProject* sageFilePtr);
-	
+
 	//functions that add SMECY API functions
 	void addSmecyInclude(SgProject* sageFilePtr);
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
@@ -28,11 +28,11 @@ namespace smecy
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size);
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
 	SgExpression* smecyReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, SgType* returnType);
-	
+
 	//functions that add p4a macro calls
 	SgExprStatement* addP4aMacro(std::string name, int arg1, SgScopeStatement* scope);
 	SgExprStatement* addP4aMacro(std::string name, int arg1, int arg2, SgScopeStatement* scope);
-	
+
 	//high-level functions
 	void processArgs(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
 	void processReturn(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
@@ -43,7 +43,7 @@ namespace smecy
 	void processVariableDeclaration(SgStatement* target, Attribute* attribute, SgStatement*& functionToMap);
 	void processStreamNode(SgStatement* target, SgStatement* functionToMap, int nLoop,
 			int nNode, SgStatement* condition, ArgType inout);
-	
+
 	//functions that get useful AST parts from the function call / attributes
 	SgExpression* getFunctionRef(SgStatement* functionCall);
 	SgExprListExp* getArgList(SgStatement* functionCall);
@@ -53,12 +53,12 @@ namespace smecy
 	SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall);
 	std::vector<SgExpression*> getArraySize(SgExpression* expression);
 	SgExpression* copy(SgExpression* param);
-	
+
 	//helper functions
 	void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope, SgStatement* functionCall, std::string varName);
 	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope);
 	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, int nLoop, int nNode, SgScopeStatement* scope, bool in, bool out, SgStatement* pragma);
-	
+
 	//top-level translating functions
 	void translateSmecy(SgProject* sageFilePtr);
 	void translateStreaming(SgProject *sageFilePtr);

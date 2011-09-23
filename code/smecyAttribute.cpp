@@ -1,7 +1,7 @@
 #ifndef SMECY_ATTRIBUTE_CPP
 #define SMECY_ATTRIBUTE_CPP
 
-#include "smecyAttribute.h"
+#include "smecyAttribute.hpp"
 
 //====================================================================================
 // Implements attributes destined to be attached to SMECY pragma nodes of the ROSE AST
@@ -18,13 +18,13 @@ namespace smecy
 		this->isIntBool = true;
 		this->isSgBool = false;
 	}
-	
+
 	IntExpr::IntExpr(std::string exprValue) : intValue(0), exprValue(exprValue), sgExpr(NULL)
 	{
 		this->isIntBool = false;
 		this->isSgBool = false;
 	}
-	
+
 	IntExpr::IntExpr(SgExpression* sgExpr) : intValue(0), exprValue(""), sgExpr(sgExpr)
 	{
 		this->isIntBool = false;
@@ -36,17 +36,17 @@ namespace smecy
 	{
 		return (!this->isIntBool) and (!this->isSgBool);
 	}
-	
+
 	bool IntExpr::isSgExpr()
 	{
 		return this->isSgBool;
 	}
-	
+
 	bool IntExpr::isInt()
 	{
 		return this->isIntBool;
 	}
-	
+
 	//get methods
 	int IntExpr::getInt()
 	{
@@ -55,7 +55,7 @@ namespace smecy
 		else
 			return 0;
 	}
-	
+
 	SgExpression* IntExpr::getSgExpr()
 	{
 		if (this->isSgBool)
@@ -63,7 +63,7 @@ namespace smecy
 		else
 			return NULL;
 	}
-	
+
 	std::string IntExpr::getExpr()
 	{
 		if (this->isIntBool)
@@ -71,7 +71,7 @@ namespace smecy
 		else
 			return this->exprValue;
 	}
-	
+
 	//returns true if is -1
 	bool IntExpr::isMinus1()
 	{
@@ -96,7 +96,7 @@ namespace smecy
 	IntExpr Attribute::currentIntExpr;
 	std::vector<std::string> Attribute::currentExpressionList;
 	SgNode* Attribute::currentParent = NULL;
-	
+
 	//static attribute used in counting the stream loops (smecy lowering part, see smecyTranslation)
 	int Attribute::streamLoopTotal = 0;
 
@@ -123,7 +123,7 @@ namespace smecy
 		arg.argType=argType;
 		this->argList.push_back(arg);
 	}
-	
+
 	void Attribute::addArg(int argNumber, std::vector<IntExpr> argSize)
 	{
 		for (unsigned int i=0; i<this->argList.size(); i++)
@@ -140,7 +140,7 @@ namespace smecy
 		arg.argSize=argSize;
 		this->argList.push_back(arg);
 	}
-	
+
 	void Attribute::addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange)
 	{
 		for (unsigned int i=0; i<this->argList.size(); i++)
@@ -157,52 +157,52 @@ namespace smecy
 		arg.argRange=argRange;
 		this->argList.push_back(arg);
 	}
-	
+
 	void Attribute::addIf(IntExpr condition)
 	{
 		this->condition = condition;
 	}
-	
+
 	//uses the static couonter streamLoopTotal
 	void Attribute::addStreamLoop()
 	{
 		this->streamLoop = streamLoopTotal;
 		streamLoopTotal++;
 	}
-	
+
 	void Attribute::addStreamNode(int number)
 	{
 		this->streamNode = number;
 	}
-	
+
 	//get and set methods
-	
+
 	void Attribute::setExpressionList(std::vector<std::string> exprList)
 	{
 		this->expressionList=exprList;
 	}
-	
+
 	std::vector<std::string> Attribute::getExpressionList()
 	{
 		return this->expressionList;
 	}
-	
+
 	void Attribute::addParsedExpression(SgExpression* expr)
 	{
 		this->sgExpressionList.push_back(expr);
 	}
-	
+
 	SgExpression* Attribute::getMapName(SgScopeStatement* scope)
 	{
 		//we use opaque var ref since
 		return SageBuilder::buildOpaqueVarRefExp(this->mapName, scope);
 	}
-	
+
 	SgExpression* Attribute::getMapNumber()
 	{
 		return this->intExprToSgExpression(this->mapNumber);
 	}
-	
+
 	//transforms a intExpr into a SgExpression regardless of the actual type stored in the intexpr
 	//parsing of expressions must have been done (see smecyTranslation)
 	SgExpression* Attribute::intExprToSgExpression(IntExpr ie)
@@ -227,7 +227,7 @@ namespace smecy
 			return this->sgExpressionList[exprIndex];
 		}
 	}
-	
+
 	//returns the expression that gives the size of an argument
 	SgExpression* Attribute::argSizeExp(int arg)
 	{
@@ -279,7 +279,7 @@ namespace smecy
 			throw 0;
 		}
 	}
-	
+
 	SgExpression* Attribute::getIf()
 	{
 		if (this->condition.isMinus1())
@@ -287,32 +287,32 @@ namespace smecy
 		else
 			return this->intExprToSgExpression(this->condition);
 	}
-	
+
 	int Attribute::getStreamLoop()
 	{
 		return this->streamLoop;
 	}
-	
+
 	int Attribute::getStreamNode()
 	{
 		return this->streamNode;
 	}
-	
+
 	bool Attribute::hasMapClause()
 	{
 		return (this->mapName!="");
 	}
-	
+
 	bool Attribute::hasArgClause()
 	{
 		return (this->argList.size()!=0);
 	}
-	
+
 	bool Attribute::hasIfClause()
 	{
 		return (this->getIf()!=NULL);
 	}
-	
+
 	/*proceeds to various checks on the attribute*/
 	bool Attribute::checkAll()
 	{
@@ -325,15 +325,15 @@ namespace smecy
 						<< " with size or range information." << std::endl;
 				return false;
 			}
-			
+
 			//check size information when range is used
 			if (this->argList[i].argRange.size() > this->argList[i].argSize.size())
 			{
-				std::cerr << debugInfo(this->parent) << "error: missing size information for argument " 
+				std::cerr << debugInfo(this->parent) << "error: missing size information for argument "
 						<< this->argList[i].argNumber << " with range information." << std::endl;
 				return false;
 			}
-			
+
 			//contiguity of each arg in memory
 			int level = 0; //[n]:0 [m:n]:1 []=2
 			int currentLevel;
@@ -352,23 +352,23 @@ namespace smecy
 				}
 				if (level > currentLevel)
 				{
-					std::cerr << debugInfo(this->parent) << "error: data not contiguous in memory for argument " 
+					std::cerr << debugInfo(this->parent) << "error: data not contiguous in memory for argument "
 							<< this->argList[i].argNumber << " ." << std::endl;
 					return false;
 				}
 				level = currentLevel;
 			}
-			
+
 			//warning if actual dimension is >1
 			int dimension = this->argDimension(i);
 			if (dimension > 1)
-				std::cerr << debugInfo(this->parent) << "warning: argument " << this->argList[i].argNumber 
+				std::cerr << debugInfo(this->parent) << "warning: argument " << this->argList[i].argNumber
 						<< " is of dimension " <<dimension << " but is used as a vector." << std::endl;
 		}
-		
+
 		return true;
 	}
-	
+
 	//gets the index of an argument (in the Arg vector) from its index in the function's parameter list
 	int Attribute::argIndex(int arg)
 	{
@@ -380,12 +380,12 @@ namespace smecy
 		//std::cerr << debugInfo(this->parent) << "warning: no information in pragma for argument n°" << arg << std::endl ;
 		return -1;
 	}
-	
+
 	int Attribute::getArgNumber()
 	{
 		return this->argList.size();
 	}
-	
+
 	ArgType Attribute::argType(int arg)
 	{
 		int argIndex = this->argIndex(arg);
@@ -399,7 +399,7 @@ namespace smecy
 			throw 0;
 		}
 	}
-	
+
 	int Attribute::argDimension(int arg)
 	{
 		int argIndex = this->argIndex(arg);
@@ -424,13 +424,13 @@ namespace smecy
 			throw 0;
 		}
 	}
-	
+
 	std::vector<IntExpr>& Attribute::getSize(int arg)
 	{
 		int argIndex = this->argIndex(arg);
 		return this->argList[argIndex].argSize;
 	}
-	
+
 	void Attribute::print()
 	{
 		std::cout << "Attribute with " << this->argList.size() << " argument clauses." << std::endl;
@@ -485,7 +485,7 @@ namespace smecy
 					std::cout << "[" << this->argRange[i].first << ":" << this->argRange[i].second << "]";
 			}
 		}
-		
+
 		std::cout << ")" << std::endl;
 	}
 } // namespace smecy

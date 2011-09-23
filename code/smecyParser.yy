@@ -1,13 +1,13 @@
 /* SMECY pragma parser */
 
 %{
-#include "public.h"
-#include "smecyAttribute.h"
+#include "public.hpp"
+#include "smecyAttribute.hpp"
 
 using namespace smecy;
 
 int yylex(void);
-void yyerror(char *); 
+void yyerror(char *);
 int _yyparse();
 %}
 
@@ -24,7 +24,7 @@ int _yyparse();
 %start smecy_directive
 
 %%
-/* a smecy directive is a list of clauses 
+/* a smecy directive is a list of clauses
 the static attribute object that will be used
 to store the result of the parsing is initialized
 a list meant to contain all C expressions contained in
@@ -33,7 +33,7 @@ smecy_directive
 					: SMECY { Attribute::currentExpressionList.clear(); Attribute::currentAttribute = new Attribute(Attribute::currentParent); }
 					  clause_list { Attribute::currentAttribute->setExpressionList(Attribute::currentExpressionList) }
 					;
-					
+
 clause_list
 					: /*empty*/
 					| map_clause clause_list
@@ -47,11 +47,11 @@ clause_list
 (see smecyAttribute.h) to add the information regarding
 the different types of clause
 */
-			
+
 stream_loop_clause
 					: STREAM_LOOP { Attribute::currentAttribute->addStreamLoop(); }
 					;
-					
+
 stream_node_clause
 					: STREAM_NODE '(' INTEGER ')' { Attribute::currentAttribute->addStreamNode($3); }
 					;
@@ -71,26 +71,26 @@ arg_clause
 					: ARG '(' INTEGER ',' { Attribute::argNumber = $3; } arg_parameter_list ')'
 					/* some computation is hidden in arg_parameter_list*/
 					;
-					
+
 map_clause
-					: MAP '(' ID closing_map_clause { 
+					: MAP '(' ID closing_map_clause {
 						Attribute::currentAttribute->addMap($3,Attribute::currentIntExpr);
 						}
 					;
-					
+
 closing_map_clause
 					: ')'
 					| ',' int ')'
 					/* some computation is hidden in int*/
 					;
-					
+
 arg_parameter_list
 					: arg_parameter
 					| arg_parameter ',' arg_parameter_list
 					/* some computation is hidden in arg_parameter*/
 					;
-					
-arg_parameter		
+
+arg_parameter
 					: IN { Attribute::currentAttribute->addArg(Attribute::argNumber,_arg_in); }
 					| OUT { Attribute::currentAttribute->addArg(Attribute::argNumber,_arg_out); }
 					| INOUT { Attribute::currentAttribute->addArg(Attribute::argNumber,_arg_inout); }
@@ -99,7 +99,7 @@ arg_parameter
 					| range
 					/* some computation is hidden in size and range*/
 					;
-					
+
 size
 					: '[' int ']' { Attribute::argSize.clear();
 						Attribute::argSize.push_back(Attribute::currentIntExpr);
@@ -130,21 +130,21 @@ range
 
 range_begin
 					: int { Attribute::currentPair.first = Attribute::currentIntExpr; } range_mid
-					| ']' { 
+					| ']' {
 					  Attribute::argRange.push_back(std::pair<IntExpr,IntExpr>(IntExpr(-1),IntExpr(-1)));
-					  Attribute::isExprMode=0; } 
+					  Attribute::isExprMode=0; }
 					  range_open
 					;
-					
+
 range_mid
 					: ':' int { Attribute::currentPair.second = Attribute::currentIntExpr;
-					  Attribute::argRange.push_back(Attribute::currentPair); } 
+					  Attribute::argRange.push_back(Attribute::currentPair); }
 					  ']' range_open
-					| ']' { Attribute::currentPair.second = IntExpr(-1); 
-					  Attribute::argRange.push_back(Attribute::currentPair); } 
+					| ']' { Attribute::currentPair.second = IntExpr(-1);
+					  Attribute::argRange.push_back(Attribute::currentPair); }
 					  range_open
 					;
-					
+
 range_open
 					: /*empty*/ { Attribute::currentAttribute->addArg(Attribute::argNumber,Attribute::argRange);}
 					| '[' { Attribute::isExprMode=1; } range_begin
@@ -156,15 +156,15 @@ range_open
 //parenthesis are counted so as to make sure the expression does not
 //include parts of the directive
 int
-					: { Attribute::isExprMode=1; Attribute::expr.str(""); } 
-					  int_expr 
+					: { Attribute::isExprMode=1; Attribute::expr.str(""); }
+					  int_expr
 					  { Attribute::isExprMode=0; }
 					;
-					
+
 int_expr
 					: INTEGER { Attribute::currentIntExpr = IntExpr($1); }
-					| INTEGER { Attribute::expr << $1; } EXPR_THING { Attribute::expr << $3; } 
-					  expr { Attribute::currentIntExpr = IntExpr(Attribute::expr.str()); 
+					| INTEGER { Attribute::expr << $1; } EXPR_THING { Attribute::expr << $3; }
+					  expr { Attribute::currentIntExpr = IntExpr(Attribute::expr.str());
 					  Attribute::currentExpressionList.push_back(Attribute::expr.str()); }
 					| EXPR_THING { Attribute::expr << $1; } expr { Attribute::currentIntExpr = IntExpr(Attribute::expr.str());
 					  Attribute::currentExpressionList.push_back(Attribute::expr.str()); }

@@ -1,7 +1,7 @@
 #ifndef SMECY_TRANSLATION_CPP
 #define SMECY_TRANSLATION_CPP
 
-#include "smecyTranslation.h"
+#include "smecyTranslation.hpp"
 
 //===================================================================
 // Implements functions used during the translation of SMECY programs
@@ -19,7 +19,7 @@ namespace smecy
 		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
 		std::vector<SgNode*>::iterator iter;
 		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
-		{	
+		{
 			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
 			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
 			std::string pragmaHead;
@@ -36,7 +36,7 @@ namespace smecy
 		}
 		return ;
 	}
-	
+
 	/*parses expressions contained in pragmas and fills corresponding Attribute
 	objetcs with the corresponding SgExpression object*/
 	void parseExpressions(SgProject *sageFilePtr)
@@ -56,21 +56,21 @@ namespace smecy
 				//we get the list of all expressions contained in the smecy directive
 				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
 				std::vector<std::string> exprList = attribute->getExpressionList();
-				
+
 				// Insert new code into the scope represented by the statement (applies to SgScopeStatements)
 				MiddleLevelRewrite::ScopeIdentifierEnum scope = MidLevelCollectionTypedefs::SurroundingScope;
 				SgStatement* target = pragmaDeclaration; //SageInterface::getScope(pragmaDeclaration);
-				
+
 				//we build a declaration for each of them
 				std::ostringstream declarations("");
 				for (int i=(int)exprList.size()-1; i>=0; i=i-1)
 					declarations << std::endl << "int __smecy__" << i << " = " << exprList[i] << ";" ;
-				
+
 				//then we add the declarations before the current position
 				if (declarations.str()!="")
 					MiddleLevelRewrite::insert(target,declarations.str(),scope,
 							MidLevelCollectionTypedefs::BeforeCurrentPosition);
-					
+
 				//now, we can collect the expression in the variable declarations...
 				for (unsigned int i=0; i<exprList.size(); i++)
 				{
@@ -82,10 +82,10 @@ namespace smecy
 					if (!initializer)
 						std::cerr << debugInfo(target) << "error: Found invalid initializer while parsing expressions." << std::endl;
 					SgExpression* expr = initializer->get_operand();
-				
+
 					//...store it in the attribute...
 					attribute->addParsedExpression(expr);
-				
+
 					//...and remove the declaration
 					SageInterface::removeStatement(decl);
 					//TODO remove the rest of the declaration from memory
@@ -94,7 +94,7 @@ namespace smecy
 		}
 		return ;
 	}
-	
+
 	/* AddSmecyXXX functions :
 	these functions add calls to smecy API to the AST
 	TODO : a little refactoring since they all look alike
@@ -107,7 +107,7 @@ namespace smecy
 		SageInterface::insertHeader("p4a_macros.h", PreprocessingInfo::after, false, scope);
 		SageInterface::insertHeader("smecy.h", PreprocessingInfo::after, false, scope);
 	}
-	
+
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
 	{
 		//building parameters to build the func call (bottom-up building)
@@ -115,12 +115,12 @@ namespace smecy
 		SgName name("SMECY_set");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
-		
+
 		//building the function call
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
 		SageInterface::insertStatement(target, funcCall);
 	}
-	
+
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
 	{
 		//building parameters to build the func call (bottom-up building)
@@ -128,12 +128,12 @@ namespace smecy
 		SgName name("SMECY_launch");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
-		
+
 		//building the function call
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
 		SageInterface::insertStatement(target, funcCall);
 	}
-	
+
 	void addSmecySendArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value)
 	{
@@ -144,12 +144,12 @@ namespace smecy
 		SgName name("SMECY_send_arg");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
-		
+
 		//building the function call
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
 		SageInterface::insertStatement(target, funcCall);
 	}
-	
+
 	void addSmecySendArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size)
 	{
@@ -160,12 +160,12 @@ namespace smecy
 		SgName name("SMECY_send_arg_vector");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
-		
+
 		//building the function call
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
 		SageInterface::insertStatement(target, funcCall);
 	}
-	
+
 	void addSmecyGetArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size)
 	{
@@ -176,12 +176,12 @@ namespace smecy
 		SgName name("SMECY_get_arg_vector");
 		SgType* type = SageBuilder::buildVoidType();
 		SgScopeStatement* scope = SageInterface::getScope(target);
-		
+
 		//building the function call
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
 		SageInterface::insertStatement(target, funcCall, false);
 	}
-	
+
 	SgExpression* smecyReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, SgType* returnType)
 	{
 		//parameters for the builder
@@ -194,7 +194,7 @@ namespace smecy
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, returnType, exprList, scope);
 		return funcCall->get_expression();
 	}
-	
+
 	/* Functions to add calls to p4a macro calls
 	*/
 	SgExprStatement* addP4aMacro(std::string name, int arg1, SgScopeStatement* scope)
@@ -203,22 +203,22 @@ namespace smecy
 		SgExprListExp * exprList = SageBuilder::buildExprListExp(SageBuilder::buildIntVal(arg1));
 		SgName sgName(name);
 		SgType* type = SageBuilder::buildVoidType();
-		
+
 		//building the function call
 		return SageBuilder::buildFunctionCallStmt(sgName, type, exprList, scope);
 	}
-	
+
 	SgExprStatement* addP4aMacro(std::string name, int arg1, int arg2, SgScopeStatement* scope)
 	{
 		//building parameters to build the func call (bottom-up building)
 		SgExprListExp * exprList = SageBuilder::buildExprListExp(SageBuilder::buildIntVal(arg1), SageBuilder::buildIntVal(arg2));
 		SgName sgName(name);
 		SgType* type = SageBuilder::buildVoidType();
-		
+
 		//building the function call
 		return SageBuilder::buildFunctionCallStmt(sgName, type, exprList, scope);
 	}
-	
+
 	/* SgXXX extractors :
 	functions to extract specific informations from the AST
 	TODO : improve error messages
@@ -235,17 +235,17 @@ namespace smecy
 		tempNode = SageInterface::deepCopyNode(tempExp);
 		return isSgExpression(tempNode);
 	}
-	
+
 	SgExprListExp* getArgList(SgStatement* functionCall)
 	{
 		SgFunctionCallExp* functionCallExp = getFunctionCallExp(functionCall);
 		return functionCallExp->get_args();
 	}
-	
+
 	/* get a specific arg reference from arg number argNumber in
 	function call functionCall*/
 	SgExpression* getArgRef(SgStatement* functionCall, int argNumber)
-	{	
+	{
 		SgExprListExp* args = getArgList(functionCall);
 		if ((int)args->get_expressions().size()>=argNumber)
 			return args->get_expressions()[argNumber];
@@ -255,9 +255,9 @@ namespace smecy
 			throw 0;
 		}
 	}
-	
+
 	/* get a specific type descriptor from arg number argNumber in
-	function call functionCall 
+	function call functionCall
 	a type descriptor is actually a fake variable named like the type
 	(like "int" or "unsigned short")*/
 	SgExpression* getArgTypeDescriptor(SgStatement* functionCall, int argNumber)
@@ -265,12 +265,12 @@ namespace smecy
 		SgExpression* argRef = getArgRef(functionCall, argNumber);
 		SgType* argType = argRef->get_type();
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
-		
+
 		return SageBuilder::buildOpaqueVarRefExp(argType->unparseToString(), scope);
 	}
-	
+
 	/* get a specific type descriptor from arg number argNumber in
-	function call functionCall 
+	function call functionCall
 	a type descriptor is actually a fake variable named like the type
 	(like "int" or "unsigned short")
 	here, if argument is a pointer, the type descriptor returned will be the
@@ -279,7 +279,7 @@ namespace smecy
 	{
 		SgExpression* argRef = getArgRef(functionCall, argNumber);
 		SgType* argType = argRef->get_type();
-		
+
 		if (!SageInterface::isPointerType(argType))
 		{
 			std::cerr << debugInfo(functionCall) << "error: Argument is not a pointer." << std::endl;
@@ -288,15 +288,15 @@ namespace smecy
 		while (!SageInterface::isScalarType(argType))
 			argType = SageInterface::getElementType(argType);
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
-		
+
 		return SageBuilder::buildOpaqueVarRefExp(argType->unparseToString(), scope);
 	}
-	
+
 	SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall)
 	{
 		//temp variables for downcasting
 		SgExpression* tempExp;
-	
+
 		//checking the SgStatement in parameter and extracting func name TODO add !=NULL checking
 		SgExprStatement* exprSmt = isSgExprStatement(functionCall);
 		SgVariableDeclaration* varDec = isSgVariableDeclaration(functionCall);
@@ -333,14 +333,14 @@ namespace smecy
 		}
 		else
 			return result;
-		
+
 	}
 
 	std::vector<SgExpression*> getArraySize(SgExpression* expression)
-	{		
+	{
 		//first, get the symbols in expression
 		std::vector<SgVariableSymbol*> symbolList = SageInterface::getSymbolsUsedInExpression(expression);
-		
+
 		//locate the array symbol in expression
 		SgArrayType* type = NULL;
 		int arrayCount = 0;
@@ -356,7 +356,7 @@ namespace smecy
 			std::cerr << "\texpression is: " << expression->unparseToString() << std::endl;
 			throw 0;
 		}
-		
+
 		//extract dimensions
 		std::vector<SgExpression*> result;
 		while (type)
@@ -367,13 +367,13 @@ namespace smecy
 		}
 		return result;
 	}
-	
+
 	SgExpression* copy(SgExpression* param)
 	{
 		SgNode* temp = SageInterface::deepCopyNode(param);
 		return isSgExpression(temp);
 	}
-	
+
 	/* High-level functions for arguments :
 	Checks the correct dimension and layout in memory of all arguments
 	then, creates the corresponding API calls
@@ -387,14 +387,14 @@ namespace smecy
 			//these lines include various verifications
 			ArgType argType = attribute->argType(i);
 			int dimension = attribute->argDimension(i);
-			
+
 			//parameters for the smecyAddXXX methods
 			SgScopeStatement* scope = SageInterface::getScope(functionToMap);
 			SgExpression* mapName = attribute->getMapName(scope);
 			SgExpression* mapNumber = attribute->getMapNumber();
 			SgExpression* funcToMapExp = getFunctionRef(functionToMap);
 			SgExpression* value = getArgRef(functionToMap, i-1);
-			
+
 			if (dimension==0) //scalar arg
 			{
 				SgExpression* typeDescriptor = getArgTypeDescriptor(functionToMap, i-1);
@@ -403,7 +403,7 @@ namespace smecy
 				if (argType==_arg_out or argType==_arg_inout)
 					std::cerr << debugInfo(target) << "warning: argument " << i << " is a scalar with type out or inout." << std::endl;
 			}
-			
+
 			if (dimension>0) //vector arg
 			{
 				SgExpression* typeDescriptor = getArgVectorTypeDescriptor(functionToMap, i-1);
@@ -415,14 +415,14 @@ namespace smecy
 			}
 		}
 	}
-	
+
 	/*this function adds the call to smecyReturn where needed and if needed*/
 	void processReturn(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
 	{
 		SgExpression* tempExp;
 		SgExpression* mapName = attribute->getMapName(SageInterface::getScope(functionToMap));
 		SgExpression* mapNumber = attribute->getMapNumber();
-	
+
 		//check the function call statement
 		SgExprStatement* exprSmt = isSgExprStatement(functionToMap);
 		SgVariableDeclaration* varDec = isSgVariableDeclaration(functionToMap);
@@ -456,7 +456,7 @@ namespace smecy
 			throw 0;
 		}
 	}
-	
+
 	//this functions tries to find the size of arrays in the code if it is not specified in pragma
 	void completeSizeInfo(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
 	{
@@ -484,14 +484,14 @@ namespace smecy
 			}
 		}
 	}
-	
+
 	//this function prevents pragmas from being caught by structures and used without block body instead
 	//of the function they map
 	void correctParentBody(SgProject* sageFilePtr)
 	{
 		//algorithm: go up in the graph until a SgBasicBlock is encountered
 		//then, the next statement is the function call
-		
+
 		//first, go through the pragmas
 		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
 		std::vector<SgNode*>::iterator iter;
@@ -515,7 +515,7 @@ namespace smecy
 						previousNode = currentNode;
 						currentNode = currentNode->get_parent();
 					}
-					
+
 					//then locate next statement
 					SgStatementPtrList statements = isSgBasicBlock(currentNode)->get_statements();
 					SgStatement* functionCall = NULL;
@@ -537,26 +537,26 @@ namespace smecy
 			}
 		}
 	}
-	
+
 	//this function should be used to process the compiler's command line
 	//it makes various modifications to allow an easier use
 	bool processCommandLine(int &argc, char** (&argv))
 	{
 		//getting options in proper form
 		std::vector<std::string> list = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
-		
+
 		//openmp settings
 		CommandlineProcessing::removeArgs(list,"-rose:openmp");
 		if (CommandlineProcessing::isOption(list,"-fopenmp","",false))
 			list.push_back("-rose:openmp:ast_only");
-		
+
 		//astRewrite-related settings
 		if (!CommandlineProcessing::isOption(list,"--edg:","(no_warnings)",false))
 			list.push_back("--edg:no_warnings");
-			
+
 		if (!CommandlineProcessing::isOption(list,"--edg","(:c99|=c99)",false) and CommandlineProcessing::isOption(list,"-std","(=c99)",false))
 			list.push_back("--edg:c99");
-			
+
 		//include and linking smecy lib
 		std::vector<std::string>::iterator it;
 		std::string lib =  "";
@@ -569,7 +569,7 @@ namespace smecy
 			}
 		if (lib=="" and getenv("SMECY_LIB")) //if not in command line, search environment
 			lib=getenv("SMECY_LIB");
-		if (lib!="" ) 
+		if (lib!="" )
 		{
 			std::stringstream concat("");
 			concat << "-I" << lib << "/";
@@ -581,16 +581,16 @@ namespace smecy
 				list.push_back(concat.str());
 			}
 		}
-		
+
 		bool isSmecy = CommandlineProcessing::isOption(list,"-smecy","",true);
-		
+
 		//setting
 		argv=NULL;
 		CommandlineProcessing::generateArgcArgvFromList(list, argc, argv);
-		
+
 		return isSmecy;
 	}
-	
+
 	//is there is a if clause in a pragma, this function reorganizes the code to add the if
 	void processIf(SgStatement*& target, Attribute* attribute, SgStatement*& functionToMap)
 	{
@@ -606,7 +606,7 @@ namespace smecy
 			SageInterface::insertStatement(target,functionToMap,false);
 		}
 	}
-	
+
 	//if the function call to map is a declaration, then the declaration should be moved
 	//before the pragma in case there is an if clause (so that the variable is declared
 	//in the right scope)
@@ -623,16 +623,16 @@ namespace smecy
 				std::cerr << debugInfo(target) << "error: invalid form for variable declaration" << std::endl;
 				throw 0;
 			}
-			
+
 			//building assignment alone
 			SgExpression* operand = assignInit->get_operand_i();
 			SgExpression* varRef = SageBuilder::buildVarRefExp(varDec);
 			SgExpression* assignOp = SageBuilder::buildAssignOp(varRef,operand);
 			SgStatement* assignment = SageBuilder::buildExprStatement(assignOp);
-			
+
 			//now, remove right side of variable declaration
 			initName->set_initptr(NULL);
-			
+
 			//reorganize statements
 			SageInterface::insertStatement(functionToMap, assignment);
 			SageInterface::removeStatement(functionToMap);
@@ -640,10 +640,10 @@ namespace smecy
 			functionToMap = assignment;
 		}
 	}
-	
+
 	/* Helper functions
 	*/
-	
+
 	//creates a variable named struct_buffer of type __buffer_type_n* where n is the stream_loop number
 	void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope, SgStatement* functionCall, std::string varName)
 	{
@@ -655,9 +655,9 @@ namespace smecy
 		SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, scope);
 		SageInterface::appendStatement(varDec, scope);
 	}
-	
+
 	//defines type __buffer_type_n* where n is the stream_loop number
-	//this is a struct containing all the variables forming the stream of data 
+	//this is a struct containing all the variables forming the stream of data
 	//using a struct allows easy recuperation of data in the stream after a cast has been done
 	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope)
 	{
@@ -683,13 +683,13 @@ namespace smecy
 		SgStatement* mainStatement = SageInterface::findMain(SageInterface::getGlobalScope(scope));
 		SageInterface::insertStatement(mainStatement, structDecl);
 	}
-	
+
 	//constructs the content of the while body contained in a stream_loop associated function
 	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, int nLoop, int nNode, SgScopeStatement* scope, bool in, bool out, SgStatement* pragma)
-	{		
+	{
 		//body where statements will be added
 		SgBasicBlock* body = SageBuilder::buildBasicBlock();
-		
+
 		//now, we create a modified function call
 		SgStatement* funcCall = SageInterface::copyStatement(functionToMap);
 		SgExprListExp* argList = getArgList(funcCall);
@@ -704,7 +704,7 @@ namespace smecy
 			SgExpression* dot = SageBuilder::buildArrowExp(varRef, args[i]);
 			args[i] = dot;
 		}
-		
+
 		//adding statements to the body
 		if (in) //not the first node, we need to copy the input buffer to the output
 			SageInterface::appendStatement(addP4aMacro("p4a_stream_get_data", nLoop, nNode-1, scope), body);
@@ -713,7 +713,7 @@ namespace smecy
 		SageInterface::appendStatement(funcCall, body);
 		if (out)
 			SageInterface::appendStatement(addP4aMacro("p4a_stream_put_data", nLoop, nNode, scope), body);
-		
+
 		//if there is a map clause, process it
 		Attribute* attribute = (Attribute*)pragma->getAttribute("smecy");
 		if (attribute->hasMapClause()) //if stream node mapping is handled separately
@@ -724,10 +724,10 @@ namespace smecy
 			newPragma->addNewAttribute("smecy", attribute);
 			//translateMap(newPragma, attribute, funcCall);
 		}
-		
+
 		return body;
 	}
-	
+
 	/* Top-level function
 	this is the function that should be called to translate smecy pragmas
 	into calls to the SMECY API
@@ -738,18 +738,18 @@ namespace smecy
 		attachAttributes(sageFilePtr);
 		parseExpressions(sageFilePtr);
 		addSmecyInclude(sageFilePtr);
-		
+
 		//translating the different kinds of pragmas
 		translateStreaming(sageFilePtr);
 		translateMapping(sageFilePtr);
-		
+
 	}
-	
+
 	void translateStreaming(SgProject *sageFilePtr)
 	{
 		//preprocessing
 		correctParentBody(sageFilePtr);
-		
+
 		//making a list of all pragma nodes in AST and going through it
 		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
 		std::vector<SgNode*>::iterator iter;
@@ -763,24 +763,24 @@ namespace smecy
 			if (pragmaHead == "smecy")
 			{
 				SgStatement* target = isSgStatement(pragmaDeclaration);
-				
+
 				//parameters
 				smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
 				if (!attribute->checkAll()) //verification of pragma content FIXME FIXME add verifications for clause coherency
 					throw 0;
 				SgStatement* subject = SageInterface::getNextStatement(target);
-				
+
 				if (attribute->getStreamLoop()!=-1)
 					translateStreamLoop(target, attribute, subject);
 			}
 		}
 	}
-	
+
 	void translateMapping(SgProject *sageFilePtr)
 	{
 		//preprocessing
 		correctParentBody(sageFilePtr);
-		
+
 		//making a list of all pragma nodes in AST and going through it
 		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
 		std::vector<SgNode*>::iterator iter;
@@ -794,7 +794,7 @@ namespace smecy
 			if (pragmaHead == "smecy")
 			{
 				SgStatement* target = isSgStatement(pragmaDeclaration);
-				
+
 				//parameters
 				smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
 				if (!attribute->checkAll()) //verification of pragma content FIXME FIXME add verifications for clause coherency
@@ -806,7 +806,7 @@ namespace smecy
 			}
 		}
 	}
-	
+
 	//if directive has a map clause, translates it in corresponding calls to smecy api
 	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
 	{
@@ -815,7 +815,7 @@ namespace smecy
 		processVariableDeclaration(target, attribute, functionToMap);
 		completeSizeInfo(target, attribute, functionToMap);
 		processIf(target, attribute, functionToMap);
-		
+
 		//parameters
 		SgScopeStatement* scope = SageInterface::getScope(functionToMap);
 		SgExpression* mapNumber = attribute->getMapNumber();
@@ -830,7 +830,7 @@ namespace smecy
 		//removing pragma declaration TODO free memory
 		SageInterface::removeStatement(target);
 	}
-	
+
 	//if directive has a stream_loop clause, translate it (and its while loop containing nodes) into smecy api
 	void translateStreamLoop(SgStatement* target, Attribute* attribute, SgStatement* whileLoop)
 	{
@@ -852,10 +852,10 @@ namespace smecy
 			}
 			SgStatementPtrList statements = block->get_statements();
 			SgStatement* condition = SageInterface::getLoopCondition(whileStmt);
-			
+
 			std::vector<std::pair<SgStatement*,SgStatement*> > streamNodes;
 			std::vector<SgExpression*> stream;
-			
+
 			//locating the nodes to target
 			for (unsigned int i=0; i<statements.size(); i++)
 				if (isSgPragmaDeclaration(statements[i]) and i+1!=statements.size())
@@ -870,7 +870,7 @@ namespace smecy
 						std::cerr << debugInfo(statements[i+1]) << "error: mapped statement is not a function call" << std::endl;
 						throw 0;
 					}
-					
+
 					//FIXME unparseToString should be replaced by a better comparison
 					SgExpressionPtrList argList = getArgList(statements[i+1])->get_expressions();
 					for (unsigned int j=0; j<argList.size(); j++)
@@ -881,12 +881,12 @@ namespace smecy
 						if (!present)
 							stream.push_back(argList[j]);
 					}
-					
+
 					streamNodes.push_back(std::pair<SgStatement*,SgStatement*>(statements[i],statements[i+1]));
 				}
 			//declaring the type for the buffer
 			addBufferTypedef(attribute, stream, SageInterface::getGlobalScope(target));
-			
+
 			//calling transformation afterwards since stream computation may depend on all the nodes
 			for (unsigned int i=0; i<streamNodes.size(); i++)
 			{
@@ -896,44 +896,44 @@ namespace smecy
 					inout = _arg_out;
 				else if (i == streamNodes.size()-1)
 					inout = _arg_in;
-				
+
 				//calling functions to translate
 				processStreamNode(streamNodes[i].first, streamNodes[i].second, attribute->getStreamLoop(), i, condition, inout);
 			}
-			
+
 			//replacing original function calls with thread launching
 			//buffer declaration
 			//addGlobalBufferDeclaration(target, attribute);
 			SgScopeStatement* scope = SageInterface::getScope(target);
 			SageInterface::insertStatement(target, addP4aMacro("p4a_init_stream", attribute->getStreamLoop(), streamNodes.size()-1, scope));
-			
+
 			//thread launching
 			for (unsigned int i=0; i<streamNodes.size(); i++)
 			{
 				//addThreadCreation(target, attribute, i);
 				SageInterface::insertStatement(target, addP4aMacro("p4a_launch_stream", attribute->getStreamLoop(), i, scope));
 			}
-			
+
 			//pause
 			SgName name("pause");
 			SgType* returnType = SageBuilder::buildVoidType();
 			SgExprListExp * exprList = SageBuilder::buildExprListExp();
 			SgExprStatement* pause = SageBuilder::buildFunctionCallStmt(name, returnType, exprList, scope);
 			SageInterface::insertStatement(target, pause);
-			
+
 			//removing pragma and while
 			SageInterface::removeStatement(target);
 			SageInterface::removeStatement(whileStmt);
 		}
 	}
-	
+
 	//translates a single stream_node into smecy api (creates associated function)
 	void processStreamNode(SgStatement* target, SgStatement* functionToMap, int nLoop,
 			int nNode, SgStatement* condition, ArgType inout)
-	{	
+	{
 		bool argIn = (inout==_arg_in or inout==_arg_inout);
 		bool argOut = (inout==_arg_out or inout==_arg_inout);
-		
+
 		//creating function definition with empty body
 		SgGlobal* scope = SageInterface::getGlobalScope(target);
 		SgType* returnType = SageBuilder::buildVoidType();
@@ -941,31 +941,31 @@ namespace smecy
 		std::stringstream uniqueName("");
 		uniqueName << "__Node_" << nLoop << "_" << nNode;
 		SgFunctionDeclaration* declaration = SageBuilder::buildDefiningFunctionDeclaration(uniqueName.str(), returnType, paramList, scope);
-		
+
 		//inserting the __Node* declarations just before the main
 		SgStatement* mainStatement = SageInterface::findMain(scope);
 		SageInterface::insertStatement(mainStatement, declaration);
-		
+
 		//filling the body
 		SgFunctionDefinition* definition = declaration->get_definition();
 		SgBasicBlock* defBody = SageBuilder::buildBasicBlock(); //FIXME FIXME understand why definition can't handle several statements
 		SageInterface::appendStatement(defBody, definition);
-		
+
 		if (argIn)
 			addBufferVariablesDeclarations(nLoop, defBody, functionToMap, "struct_buffer_in");
-		
+
 		if (argOut) //not the first node
 		{
 			addBufferVariablesDeclarations(nLoop, defBody, functionToMap, "struct_buffer_out");
 			SageInterface::appendStatement(addP4aMacro("p4a_stream_get_init_buf", nLoop, nNode, defBody), defBody);
 		}
-		
+
 		SgStatement* whileBody = buildNodeWhileBody(functionToMap, nLoop, nNode, defBody, argIn, argOut, target);
 		SgStatement* whileLoop = SageBuilder::buildWhileStmt(SageInterface::copyStatement(condition), whileBody);
 		SageInterface::appendStatement(whileLoop, defBody);
 	}
-	
-	/* Other 
+
+	/* Other
 	FIXME move to public.cpp
 	*/
 	std::string debugInfo(SgNode* context)

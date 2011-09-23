@@ -1,9 +1,9 @@
 /* SMECY pragma lexer */
 
 %{
-#include "public.h"
+#include "public.hpp"
 #include "smecyParser.tab.hh"
-#include "smecyAttribute.h"
+#include "smecyAttribute.hpp"
 
 void yyerror(char *);
 int _yyparse();
@@ -72,15 +72,15 @@ smecy::Attribute *smecy::parseDirective(std::string directive, SgNode* parent)
 {
 	Attribute::currentParent = parent; //initializing static attribute (see smecyAttribute.h)
 	YY_FLUSH_BUFFER; //to recover from a preceding syntax error
-	
+
 	//preparing a FILE object to be read by yyparse
 	char *stream = new char[directive.size()];
 	directive.copy(stream, directive.size());
 	yyin = fmemopen(stream, directive.size(), "r");
-	
+
 	//actual parsing
-	_yyparse(); 
-	
+	_yyparse();
+
 	fclose(yyin);
 	return smecy::Attribute::currentAttribute;
 }
