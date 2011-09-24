@@ -3,9 +3,10 @@ http://www.rosecompiler.org/ROSE_InstallationInstructions.pdf
 
 Use gcc-4.4 and g++-4.4
 
+On Debiam/unstable:
 aptitude install libboost-all-dev libhpdf-dev libgcrypt11-dev
 
-export LD_LIBRARY_PATH=/usr/lib/jvm/java-6-sun-1.6.0.25/jre/lib/amd64/server
+export LD_LIBRARY_PATH=/usr/lib/jvm/java-6-sun-1.6.0.26/jre/lib/amd64/server:$LD_LIBRARY_PATH
 
 cd ROSE
 tar zxvf rose-0.9.5a-without-EDG-14690.tar.gz
@@ -30,16 +31,18 @@ we reached here for some reason (cannot identify back-end C++ compiler "g++-4.4"
 
 13/09/2011 :
 
-../rose-0.9.5a-14690/configure --with-boost=/usr --disable-binary-analysis-tests --enable-only-c
+Cannot have Java compilation running:
 
-LD_LIBRARY_PATH=/usr/lib/jvm/java-6-sun-1.6.0.26/jre/lib/amd64/server:$LD_LIBRARY_PATH
+mkdir /usr/local/rose
+# Adapt: :-)
+chown keryell.keryell /usr/local/rose
+
+mkdir compileTree
+cd compileTree
+../rose-0.9.5a-14690/configure --prefix=/usr/local/rose --with-boost=/usr --disable-binary-analysis-tests --enable-only-c --without-java
 make -j4
 
-
-
-
-
-
+make install
 
 
 
@@ -75,3 +78,9 @@ This manual does not talk about libhpdf that is needed to generate PDF
 files (issue appears when doing a make install in ROSE). libhpdf-dev is
 the packet to install on Debian.
 
+
+# Some Emacs stuff:
+### Local Variables:
+### mode: flyspell
+### ispell-local-dictionary: "american"
+### End:
