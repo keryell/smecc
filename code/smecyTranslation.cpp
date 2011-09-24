@@ -542,7 +542,7 @@ namespace smecy
 	//it makes various modifications to allow an easier use
 	bool processCommandLine(int &argc, char** (&argv))
 	{
-		//getting options in proper form
+		// Getting options in a string vector instead of argc/argv fo easier later processing:
 		std::vector<std::string> list = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
 
 		//openmp settings
@@ -582,10 +582,12 @@ namespace smecy
 			}
 		}
 
+		// Test if the -smecy option is here and removed it from the list:
 		bool isSmecy = CommandlineProcessing::isOption(list,"-smecy","",true);
 
 		//setting
 		argv=NULL;
+		// Generate back an updated arc/argv argument list:
 		CommandlineProcessing::generateArgcArgvFromList(list, argc, argv);
 
 		return isSmecy;

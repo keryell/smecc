@@ -14,6 +14,8 @@ TESTFLAGS			= -smecy -fopenmp
 
 allFiles = smecc
 
+# The compilation of the compiler:
+
 all: $(allFiles)
 
 smecc: main.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
@@ -44,6 +46,8 @@ lex.yy.c : smecyLexer.ll public.hpp
 	@echo [Lexer $<]
 	@$(LEX) $(LEXFLAGS) $<
 
+# Running some examples:
+
 test: smecc input.C
 	@echo [Testing $<]
 	@./smecc $(TESTFLAGS) -c input.C
@@ -62,8 +66,11 @@ dot: test
 dotFortran: testFortran
 	@$(SMECY_DIR)/apps/zgrviewer/run.sh ./input.f.dot
 
+
 clean:
 	@rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.* compiledTest input.f.* *~
+
+
 
 backup: clean
 	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`smecy/

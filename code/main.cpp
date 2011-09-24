@@ -17,9 +17,9 @@ int main(int argc, char *argv[])
 	if (isSmecy)
 		smecy::translateSmecy(project);
 
-	//generatePDF(*project);
+	generatePDF(*project);
 	std::cerr << "Generating DOT" << std::endl;
-
+	generateDOT(*project);
 
 	//TEST
 	//std::vector<SgFile*> files = project->get_fileList();
