@@ -37,6 +37,5 @@ void* DbLinkGetInitBuf(DbLink outputLink) { return NULL; }
 void* DbLinkGetData(DbLink inputLink) { return NULL; }
 void* DbLinkPutData(DbLink inputLink) { return NULL; }
 int pth_CreateProcess(int (*f)(), ...) {return 0;}
-void pause() {}
 
 #endif //SMECY_LIB_H

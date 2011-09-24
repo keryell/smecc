@@ -49,8 +49,7 @@ namespace smecy
 	SgExprListExp* getArgList(SgStatement* functionCall);
 	SgExpression* getArgRef(SgStatement* functionCall, int argNumber);
 	SgExpression* getArgTypeDescriptor(SgStatement* functionCall, int argNumber);
-	SgExpression* getArgVectorTypeDescriptor(SgStatement* functionCall, int argNumber);
-	SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall);
+		SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall);
 	std::vector<SgExpression*> getArraySize(SgExpression* expression);
 	SgExpression* copy(SgExpression* param);
 
@@ -60,7 +59,8 @@ namespace smecy
 	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, int nLoop, int nNode, SgScopeStatement* scope, bool in, bool out, SgStatement* pragma);
 
 	//top-level translating functions
-	void translateSmecy(SgProject* sageFilePtr);
+	SgExpression* getArgVectorTypeDescriptor(SgStatement* functionCall, int argNumber);
+void translateSmecy(SgProject* sageFilePtr);
 	void translateStreaming(SgProject *sageFilePtr);
 	void translateMapping(SgProject *sageFilePtr);
 	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
