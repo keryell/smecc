@@ -280,8 +280,9 @@ namespace smecy
 		SgExpression* argRef = getArgRef(functionCall, argNumber);
 		SgType* argType = argRef->get_type();
 
-		if (!SageInterface::isPointerType(argType))
+		if (SageInterface::isScalarType(argType))
 		{
+			//std::cerr << "DEBUG: " << argType->unparseToString() << std::endl;
 			std::cerr << debugInfo(functionCall) << "error: Argument is not a pointer." << std::endl;
 			throw 0;
 		}
