@@ -17,5 +17,5 @@ clean:
 #	@mkdir ~/stage/codeBackup/`date +"%m%d%H%M"`documents/
 #	@cp -r * ~/stage/codeBackup/`date +"%m%d%H%M"`documents/
 
-#doc: doc.pdf
-#	@cp doc.pdf $(SMECY_DIR)/doc/smecc_doc.pdf
+doc: doc.pdf
+	@cp doc.pdf $(SMECY_DIR)/doc/smecc_doc.pdf
