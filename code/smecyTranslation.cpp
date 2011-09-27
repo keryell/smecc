@@ -283,7 +283,7 @@ namespace smecy
 		if (SageInterface::isScalarType(argType))
 		{
 			//std::cerr << "DEBUG: " << argType->unparseToString() << std::endl;
-			std::cerr << debugInfo(functionCall) << "error: Argument is not a pointer." << std::endl;
+			std::cerr << debugInfo(functionCall) << "error: Argument is a scalar and the cannot be used to pass information between pipeline stages (args are passed by copy in C...)." << std::endl;
 			throw 0;
 		}
 		while (!SageInterface::isScalarType(argType))
