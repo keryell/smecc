@@ -34,12 +34,14 @@ void Consume(data_buff data_buffer) {
 
 int main() {
   data_buff data_buffer;
-  /**/
+  /* This while-loop is indeed to be executed in a pipelined way according
+     to the following pragma: */
 #pragma smecy stream_loop
   while(1) {
-#pragma smecy stream_node(1)
+    // This pragma is optional indeed:
+#pragma smecy stage
     Produce(data_buffer);
-#pragma smecy stream_node(2)
+#pragma smecy stage
     Consume(data_buffer);
   }
   return 0;

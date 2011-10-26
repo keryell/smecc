@@ -1,3 +1,6 @@
+% Deal with strides ?
+
+
 \documentclass[a4paper]{article}
 \usepackage[latin9]{inputenc}
 \usepackage{a4wide}
@@ -25,7 +28,7 @@
 
 \begin{document}
 
-\title{SME-C\\
+\title{SME-C v0.3\\
   ---\\
   C99 with pragma and API for parallel execution, streaming, processor
   mapping and
@@ -400,18 +403,11 @@ communication step, a full array of 128 integers is passed from
 the 'Producer' to the 'Consumer'. The streaming compiler finds
 out the sizes of the communication buffers from the program.
 
-The two pragmas used here are:
-\begin{description}
-\item[\texttt{\#pragma smecy stream\_loop}:] this indicated the loop
-  that must be turned into a stream of processes;
-
-\item[\texttt{\#pragma smecy stream\_node(n)}:] this acts as a separator
-  between groups of statements. It decides the node boundaries. Only data
-  passing over these separators is turned into communication.
-\end{description}
-
-
-\lstinputlisting{examples/pipeline_example.c}
+\begin{figure}
+  \lstinputlisting{examples/pipeline_example.c}
+  \caption{Example of pipelined streamed loop.}
+\label{fig:pipelined_example}
+\end{figure}
 
 
 \subsection{Remapping example}
@@ -423,6 +419,14 @@ be used by a specific hardware accelerator.
 \lstinputlisting{examples/remapping_example.c}
 
 
+\section{Description of high level process structure}
+\label{sec:descr-high-level}
+
+Here should be described the metadata on the process organization.
+
+It should be able to describe process instance, interconnection...
+\marginpar{TODO}
+
 \section{SMECY embedded C language}
 \label{sec:embedded-c}
 
@@ -430,6 +434,52 @@ We take as input C99 (ISO/IEC 9899:2007) language with extensions for
 embedded systems (TR 18037).
 
 Refer to these documents for more information.
+
+\marginpar{TODO: comment the following}
+\begin{verbatim}
+__thread
+Thread-Local Storage
+_Thread_local
+Doc. No.:   WG14/N1364
+Date:   2008-11-11
+Reply to:   Clark Nelson
+
+http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1364.htm
+
+C++
+ISO/IEC JTC1 SC22 WG21 N2659 = 08-0169 - 2008-06-11 proposal
+http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2659.htm
+
+
+
+http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1351.pdf
+WG14 N1351
+C Language support for multiprocessor application
+environments.
+Walter Banks
+Byte Craft Limited
+Canada
+February 2009
+
+
+ISO/IEC JTC1 SC22 WG14 N1275
+Date: 2007-10-20
+Reference number of document:
+ISO/IEC TR 18037
+Committee identification: ISO/IEC JTC1 SC22 WG14
+SC22 Secretariat: ANSI
+http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1275.pdf
+
+WG14 N1386
+Additions to ISO/IEC TR 18037 to support named execution
+space.
+Walter Banks
+Byte Craft Limited
+Canada
+April 2009
+Named execution addition to IEC/ISO 18037
+http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1386.pdf
+\end{verbatim}
 
 
 \section{Description of the SMECY directives}
@@ -485,7 +535,7 @@ The mapping of a function call on a specific piece of hardware can be
 specified with
 \begin{alltt}
 #pragma smecy map(\emph{hardware[}, \emph{unit]})
-some_function_call(...);
+  some_function_call(...);
 \end{alltt}
 
 \begin{itemize}
@@ -510,9 +560,19 @@ automatically inlined (so no recursion allowed in them either). If a
 function is mapped to a more programmable hardware (GPP), recursions in
 these called functions should be allowed.
 
+By default, call to hardware accelerators are synchronous, so you may
+launch the call into an OpenMP thread or into another MCA API process.
+But simpler way is to use the \texttt{async} keyword to launch in an
+asynchronous way, such as:
+\begin{alltt}
+#pragma smecy map(...) async
+\end{alltt}
 
-\subsection{Stream programming}
-\label{sec:stream-programming}
+But the it may be useful to way later for the production of an accelerator
+to be ready. This is done with the \texttt{wait} pragma such as in:
+\begin{alltt}
+#pragma smecy wait(PE,2)
+\end{alltt}
 
 
 \subsection{Producer/consumer information}
@@ -531,7 +591,7 @@ these information, copy-in and copy-out operations can be generates.
 
 \begin{alltt}
 #pragma smecy arg(\emph{arg_id}, \emph{arg_clause[, arg_clause]...})
-some_function_call(...);
+  some_function_call(...);
 \end{alltt}
 
 
@@ -547,13 +607,13 @@ some_function_call(...);
   \end{itemize}
 
 \item[Argument layout] specifies how the argument is used in the
-  function.
+  function with:
   \begin{itemize}
-  \item An optional \texttt{\emph{array\_size\_descriptor}} such as
+  \item an optional \texttt{\emph{array\_size\_descriptor}} such as
     \verb|[n][m]| expressing that the data is used from the callee point
     of view as such an array starting at the address given in
     parameter. If not specified, all the caller argument is used;
-  \item An optional \texttt{/\emph{array\_range\_descriptor}}restriction
+  \item an optional \texttt{/\emph{array\_range\_descriptor}}restriction
     such as \verb|/[n:m][2][3:7]| expressing that the data is used from the
     callee point of view as an array with only this element ranges
     used. If not specified, all the array is used according to its size
@@ -563,6 +623,10 @@ some_function_call(...);
   \end{itemize}
   The more precise this description is and the less data transfers occur.
 \end{description}
+
+If the argument usage is independent from the call site they can be
+specified only at the function definition level instead of at each call
+site..
 
 
 \subsubsection{Global variables}
@@ -576,6 +640,46 @@ are used to exchange information.
 But we can imagine to map global variables with this clause:
 \begin{alltt}
 #pragma smecy global_var(var, \emph{arg_clause[, arg_clause]...})
+  some_function_call(...);
+\end{alltt}
+
+
+\subsection{Stream programming}
+\label{sec:stream-programming}
+
+It is possible to stream a \texttt{while} loop in several pipeline stages
+that execute in parallel and pass information between stages/
+
+The two pragmas used here are:
+\begin{description}
+\item[\texttt{\#pragma smecy stream\_loop}:] this indicated the following
+  \texttt{while} loop must be turned into a stream of processes;
+
+\item[\texttt{\#pragma smecy stage}:] this acts as a separator between
+  groups of statements and define the boundary of pipeline stages. Only
+  data passing over these separators is turned into
+  communication.\footnote{It used to be \texttt{\#pragma smecy
+      stream\_node($n$)} as an instruction to define both a stage node and
+    a way to name it for another later use by \textsc{ace}. But after
+    København meeting, it appears it is better to use another way to label
+    things only when needed. See \S~\ref{sec:labelling-statement}.} Note
+  that the first stage pragma can be eluded since the begin of the loop
+  body define a stage up to the next stage pragma.
+\end{description}
+
+You can refere to example shown on figure~\ref{fig:pipelined_example}.
+
+
+\subsection{Labelling statement}
+\label{sec:labelling-statement}
+
+Since ACE mentioned an interest to name part of a program from other
+external tools, such as to do some fine mapping, a labeling pragma has
+been added to name\footnote{Should it be an atom, a string, a number?}
+statements:
+\begin{alltt}
+#pragma smecy label(\emph{name})
+  \emph{any_statement};
 \end{alltt}
 
 
@@ -617,15 +721,72 @@ example:
 \subsection{MultiCore Association API}
 \label{sec:mult-assoc-api}
 
-We rely on the MCAPI, MTAPI and MRAPI for low memory footprint
-light-weight communications, threading and synchronization. Refer to their
-documentations for more information.
-
 There is a reference implementation based on Linux \emph{pthreads} that
 can be used as an example to port to the various available hardware.
 
 This can be used to express communicating process, asynchronous
 communications, synchronization, etc.
+
+
+\section{MultiCore Association APIs}
+\label{sec:mult-assoc-apis}
+
+Since in this project we deal with communicating processes, asynchronous
+communications, synchronization, etc.{} we need an API to be able to
+express them from inside the processes. We rely on a standard API instead
+of reinventing on again. The MultiCore Association designed some APIs
+specially targeted at low resource embedded systems, so We rely on the
+MCAPI, MTAPI and MRAPI for low memory footprint light-weight
+communications, threading and synchronization.
+
+There is a free implementation based on POSIX so we can have a working
+version on any decent operating system for testing the SME-C programs.
+Since this is a reference implementation based on Linux \emph{pthreads},
+it can also be used as an example to port to the various available
+hardware.
+
+Right now there is 3 different specification we can use in the project.
+
+
+\subsection{Multicore Communication API (MCAPI)}
+\label{sec:mult-comm-api}
+
+This is the main and first produced API by the MCA\footnote{Note that
+  this MCAPI should not be confused with the MCA APIs, that are the APIs
+  in general designed by the MultiCore Association, even if the WWW site
+  and the documents of this association are not always very clear... This
+  was confusing during the København meeting.} dealing with communications
+between processes.
+
+This standard define basically 3 kinds of communication channels:
+\begin{itemize}
+\item messages: connection-less datagrams, similar to UDP datagrams in
+  IP networking;
+\item packet channels: connection-oriented, unidirectional,
+  FIFO packet streams;
+\item scalar channel: connection-oriented, single-word, unidirectional,
+  FIFO scalar streams.
+\end{itemize}
+
+A communication entity in MCAPI is a node, that can be gathered in
+some domains to add hierarchy, and can represent a process on a processor
+or a hardware accelerator for example.
+
+
+\marginpar{TODO}
+
+Please refer to the ``Multicore Communications API (MCAPI) Specification
+V2.015'' document for more information.
+
+
+\subsubsection{MTAPI}
+\label{sec:mtapi}
+
+
+\subsubsection{MRAPI}
+\label{sec:mrapi}
+
+
 
 
 \subsection{NPL API}
@@ -637,7 +798,8 @@ implement one above the other. Since the MCA APIs are standard, we thing
 that it is commercially interesting to provide a MCA APIs over NPL or
 other to widen P2012 usage.
 
-\marginpar{Define here NPL}
+Indeed, in 10/2011 this API seems to have been phased out by ST. So this
+part should be removed soon... To be kept in the history part.
 
 
 \subsection{EdkDSP API}
@@ -761,6 +923,31 @@ There is also a macro for an asynchronous call and to wait for completion.
 
 \section{Compilation}
 \label{sec:compilation}
+
+\subsection{Example of OpenCL mapping}
+\label{sec:example-opencl-mapp}
+
+A typical mapping of the SMECY low level hardware API shown on
+\S~\ref{sec:low-level-hardware} would be organized as follows:
+\begin{itemize}
+\item \verb|SMECY_set(PE, proc & 7, invert_vector)|:\\
+  \texttt{clCreateProgramFromSource()} +
+  \texttt{clBuildProgramExecutable()} + \texttt{clCreateKernel()}
+\item \verb|SMECY_send_arg(PE, proc & 7, invert_vector, 1, int, LINE_SIZE)|:\\
+  \texttt{clSetKernelArg()}
+\item \verb|SMECY_send_arg_vector(PE, proc & 7, invert_vector, 2, int,...)|:\\
+  \texttt{clCreateBuffer()} + \texttt{clSetKernelArg()} (+
+  \texttt{clEnqueueWriteBuffer()})
+\item \verb|SMECY_launch(PE, 0, invert_vector)|:\\
+  \texttt{clExecuteKernel()}
+\item \verb|SMECY_get_arg_vector(PE, proc & 7, invert_vector, 3, ...)|:\\
+  \texttt{clEnqueueReadBuffer()}
+\end{itemize}
+
+
+\subsection{Example of EdkDSP mapping}
+\label{sec:example-edkdsp-mapp}
+
 
 \subsection{OpenMP support}
 \label{sec:openmp-support-1}
