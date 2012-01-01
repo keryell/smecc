@@ -1,10 +1,6 @@
 http://www.rosecompiler.org/ROSE_InstallationInstructions.pdf
 
 
-Use gcc-4.4 and g++-4.4
-
-On Debiam/unstable:
-aptitude install libboost-all-dev libhpdf-dev libgcrypt11-dev
 
 export LD_LIBRARY_PATH=/usr/lib/jvm/java-6-sun-1.6.0.26/jre/lib/amd64/server:$LD_LIBRARY_PATH
 
@@ -33,10 +29,25 @@ we reached here for some reason (cannot identify back-end C++ compiler "g++-4.4"
 
 Cannot have Java compilation running:
 
-mkdir /usr/local/rose
-# Adapt: :-)
-chown keryell.keryell /usr/local/rose
+Install gcc-4.4 and g++-4.4
 
+On Debian/unstable:
+aptitude install libboost-all-dev libhpdf-dev libgcrypt11-dev
+
+
+sudo mkdir /usr/local/rose
+# Adapt here: :-)
+sudo chown keryell.keryell /usr/local/rose
+
+Work around:
+sudo rm /usr/bin/gcc
+sudo ln -s gcc-4.4 /usr/bin/gcc
+sudo rm /usr/bin/g++
+sudo ln -s g++-4.4 /usr/bin/g++
+
+tar zxvf rose-0.9.5a-without-EDG-14690.tar.gz
+mkdir compileTree
+cd compileTree
 mkdir compileTree
 cd compileTree
 ../rose-0.9.5a-14690/configure --prefix=/usr/local/rose --with-boost=/usr --disable-binary-analysis-tests --enable-only-c --without-java
@@ -46,7 +57,7 @@ make install
 
 
 
-Bug report:
+Bug report & RFE:
 On Debian/unstable x86_64
 
 This should work:
