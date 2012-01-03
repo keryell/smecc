@@ -1,5 +1,13 @@
-ROSE_DIR			= /hpc/projects/smecy/libs/roseInstall
+# Where ROSE is installed.
+# Vincent Lanore experiments:
+#ROSE_DIR			= /hpc/projects/smecy/libs/roseInstall
+# Default location:
+ROSE_DIR			= /usr/local/rose
+
+# Where the runtime is to test examples:
 SMECY_DIR			= /hpc/projects/smecy/code
+
+
 BOOST_CPPFLAGS		= -pthread -I/hpc/projects/smecy/libs/boostInstall/include
 ROSE_LIBS			= $(ROSE_DIR)/lib/librose.la
 CXX					= g++
@@ -12,7 +20,7 @@ YACCFLAGS			= -d
 RMFLAGS				= -f
 TESTFLAGS			= -smecy -fopenmp
 
-allFiles = smecc
+allFiles = smecc smecc_identity
 
 # The compilation of the compiler:
 
@@ -20,7 +28,12 @@ all: $(allFiles)
 
 smecc: main.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
 	@echo [Linking]
-	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CXXLDFLAGS) -I$(ROSE_DIR)/include $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS) >/dev/null
+	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CXXLDFLAGS) -I$(ROSE_DIR)/include $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS)
+
+
+smecc_identity: main_identity.o
+	@echo [Linking]
+	libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CXXLDFLAGS) -I$(ROSE_DIR)/include $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS)
 
 %.o : %.cpp %.hpp public.hpp
 	@echo [Compiling $<]
