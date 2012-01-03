@@ -543,6 +543,12 @@ namespace smecy
 	//it makes various modifications to allow an easier use
 	bool processCommandLine(int &argc, char** (&argv))
 	{
+	  std::cerr << "Options before processing:";
+	  for(int i = 0; i < argc; i++)
+	    std::cerr << " " << argv[i];
+	  std::cerr << std::endl;
+
+
 		// Getting options in a string vector instead of argc/argv fo easier later processing:
 		std::vector<std::string> list = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
 
@@ -583,8 +589,10 @@ namespace smecy
 			}
 		}
 
-		// Test if the -smecy option is here and removed it from the list:
+		// Test if the -smecy option is here and remove it from the list:
 		bool isSmecy = CommandlineProcessing::isOption(list,"-smecy","",true);
+
+		std::cerr << "Options after processing:" << list << std::endl;
 
 		//setting
 		argv=NULL;
