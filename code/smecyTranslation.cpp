@@ -9,33 +9,39 @@
 
 namespace smecy
 {
-	/* First steps :
-	attaching attributes and parsing expressions from pragmas.
-	TODO : merge so as to go through the pragmas only once ?
-	*/
-	void attachAttributes(SgProject *sageFilePtr)
-	{
-		//making a list of all pragma nodes in AST and going through it
-		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
-		std::vector<SgNode*>::iterator iter;
-		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
-		{
-			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
-			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-			std::string pragmaHead;
-			std::istringstream stream(pragmaString);
-			stream >> pragmaHead;
-			if (pragmaHead == "smecy")
-			{
-				//std::cout << "Found pragma string : " << pragmaString << std::endl ;
-				//smecy::parseDirective(pragmaString, pragmaDeclaration)->print();
-				//TODO handle merging with existing smecy attribute
-				//TODO handle syntax errors and print nice error message
-				pragmaDeclaration->addNewAttribute("smecy", smecy::parseDirective(pragmaString, pragmaDeclaration));
-			}
-		}
-		return ;
-	}
+  /* First steps :
+     attaching attributes and parsing expressions from pragmas.
+     TODO : merge so as to go through the pragmas only once ?
+  */
+  void attachAttributes(SgProject *p) {
+    for (auto * f : p->get_fileList()) {
+      //making a list of all pragma nodes in AST and going through it
+      std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(f, V_SgPragmaDeclaration);
+      for(auto iter : allPragmas) {
+        SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(iter);
+	// Estract the real pragma stringL
+        std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+	// Get the first word of it by reading from an ad-hoc string
+	// stream initialized with the full pragma:
+        std::string pragmaHead;
+        std::istringstream stream(pragmaString);
+        stream >> pragmaHead;
+
+        if (pragmaHead == "smecy") {
+	  // This is a "#pragma smecy", then dig further...
+
+          //std::cout << "Found pragma string : " << pragmaString << std::endl ;
+          //smecy::parseDirective(pragmaString, pragmaDeclaration)->print();
+          //TODO handle merging with existing smecy attribute
+          //TODO handle syntax errors and print nice error message
+
+	  // Attach a parsed version of the pragma to the AST through
+	  // flex/bison:
+          pragmaDeclaration->addNewAttribute("smecy", smecy::parseDirective(pragmaString, pragmaDeclaration));
+        }
+      }
+    }
+  }
 
 	/*parses expressions contained in pragmas and fills corresponding Attribute
 	objetcs with the corresponding SgExpression object*/
@@ -743,16 +749,16 @@ namespace smecy
 	this is the function that should be called to translate smecy pragmas
 	into calls to the SMECY API
 	*/
-	void translateSmecy(SgProject *sageFilePtr)
+	void translateSmecy(SgProject *p)
 	{
-		//preprocessing
-		attachAttributes(sageFilePtr);
-		parseExpressions(sageFilePtr);
-		addSmecyInclude(sageFilePtr);
+		//preprocessing of the project. Have each phase working on all the files, so that the phases advance lock-step
+		attachAttributes(p);
+		parseExpressions(p);
+		addSmecyInclude(p);
 
 		//translating the different kinds of pragmas
-		translateStreaming(sageFilePtr);
-		translateMapping(sageFilePtr);
+		translateStreaming(p);
+		translateMapping(p);
 
 	}
 

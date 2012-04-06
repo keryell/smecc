@@ -3,31 +3,40 @@
 #include "public.hpp"
 #include "smecyTranslation.hpp"
 
-int main(int argc, char *argv[])
-{
-	//command line processing
-	bool isSmecy = smecy::processCommandLine(argc, argv);
-	//std::string test = CommandlineProcessing::generateStringFromArgList( CommandlineProcessing::generateArgListFromArgcArgv(argc, argv) );
-	//std::cout << "command line :" << test << std::endl;
+int main(int argc, char *argv[]) {
+  // Command line processing specific to SME-C:
+  bool isSmecy = smecy::processCommandLine(argc, argv);
+  //std::string test = CommandlineProcessing::generateStringFromArgList( CommandlineProcessing::generateArgListFromArgcArgv(argc, argv) );
+  //std::cout << "command line :" << test << std::endl;
 
-	SgProject* project=frontend(argc,argv);
+  // Call the ROSE front end, mainly the parser:
+  SgProject* project = frontend(argc,argv);
 
-	//TEST
-	std::vector<SgFile*> files = project->get_fileList();
-	for (SgFile * f : files)
-		std::cerr << "File " << f->getFileName() << std::endl;
-		//if (isSgSourceFile(files[i]))
-			//OmpSupport::lower_omp(isSgSourceFile(files[i]));
+  // Display the list of files to deal with:
+  std::vector<SgFile*> files = project->get_fileList();
+  for (SgFile * f : files)
+    std::cerr << "File " << f->getFileName() << std::endl;
+  //if (isSgSourceFile(files[i]))
+  //OmpSupport::lower_omp(isSgSourceFile(files[i]));
 
-	//translating smecy
-	std::cerr << "Translating smecy" << std::endl;
-	if (isSmecy)
-		smecy::translateSmecy(project);
+  // Translating smecy #pragma if the -smecy option has been given
+  std::cerr << "Translating smecy" << std::endl;
+  if (isSmecy)
+    smecy::translateSmecy(project);
 
-	generatePDF(*project);
-	std::cerr << "Generating DOT" << std::endl;
-	generateDOT(*project);
+  // There is a limitation of ROSE on the AST beautifier that cannot
+  // handle more than 1 file:
+  if (files.size() > 1)
+    std::cerr << "PDF and DOT generation of the AST" << std::endl;
+  else {
+    generatePDF(*project);
+    std::cerr << "Generating DOT" << std::endl;
+    generateDOT(*project);
+  }
 
-	//AstTests::runAllTests(project);
-	return backend(project);
+  // If we want to run ROSE unit tests:
+  //AstTests::runAllTests(project);
+
+  // Finish by calling the backend: compiler, linker...
+  return backend(project);
 }
