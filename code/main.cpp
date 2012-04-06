@@ -12,6 +12,13 @@ int main(int argc, char *argv[])
 
 	SgProject* project=frontend(argc,argv);
 
+	//TEST
+	std::vector<SgFile*> files = project->get_fileList();
+	for (SgFile * f : files)
+		std::cerr << "File " << f->getFileName() << std::endl;
+		//if (isSgSourceFile(files[i]))
+			//OmpSupport::lower_omp(isSgSourceFile(files[i]));
+
 	//translating smecy
 	std::cerr << "Translating smecy" << std::endl;
 	if (isSmecy)
@@ -20,12 +27,6 @@ int main(int argc, char *argv[])
 	generatePDF(*project);
 	std::cerr << "Generating DOT" << std::endl;
 	generateDOT(*project);
-
-	//TEST
-	//std::vector<SgFile*> files = project->get_fileList();
-	//for (unsigned int i=0; i<files.size(); i++)
-		//if (isSgSourceFile(files[i]))
-			//OmpSupport::lower_omp(isSgSourceFile(files[i]));
 
 	//AstTests::runAllTests(project);
 	return backend(project);

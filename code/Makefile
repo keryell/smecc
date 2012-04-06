@@ -14,7 +14,7 @@ CXX					= g++
 LEX					= flex
 YACC				= bison
 CPPFLAGS			=
-CXXFLAGS			= -g -Wall -Wno-write-strings
+CXXFLAGS			= -g -Wall -Wno-write-strings -std=c++0x
 LEXFLAGS			=
 YACCFLAGS			= -d
 RMFLAGS				= -f
@@ -81,7 +81,7 @@ dotFortran: testFortran
 
 
 clean:
-	@rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.* compiledTest input.f.* *~
+	rm $(RMFLAGS) *.o smecyParser.tab.cc smecyParser.tab.hh lex.yy.c rose_* input.C.* compiledTest input.f.* *~
 
 
 
