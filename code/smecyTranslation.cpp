@@ -123,18 +123,29 @@ namespace smecy {
     }
   }
 
-	/* AddSmecyXXX functions :
-	these functions add calls to smecy API to the AST
-	TODO : a little refactoring since they all look alike
-	*/
-	void addSmecyInclude(SgProject *sageFilePtr)
-	{
-		//FIXME compatible with multi-file projects ?
-		//TODO check if the include is already present
-		SgScopeStatement* scope = SageInterface::getFirstGlobalScope(sageFilePtr);
-		SageInterface::insertHeader("p4a_macros.h", PreprocessingInfo::after, false, scope);
-		SageInterface::insertHeader("smecy.h", PreprocessingInfo::after, false, scope);
-	}
+
+  /* AddSmecyXXX functions :
+     these functions add calls to smecy API to the AST
+     TODO : a little refactoring since they all look alike
+  */
+
+  /* \brief Add the SME-C specific includes at the beginning of each
+     processed source file
+
+     TODO check if the include is already present
+  */
+  void addSmecyInclude(SgProject *p) {
+    // For all files of the project:
+    for (auto * f : p->get_fileList()) {
+      // Get the beginning of the IR:
+      // Mimmic the implementation of:
+      // SgGlobal * SageInterface::getFirstGlobalScope(SgProject *project)
+      SgScopeStatement* scope = isSgSourceFile(f)->get_globalScope();
+      SageInterface::insertHeader("p4a_macros.h", PreprocessingInfo::after, false, scope);
+      SageInterface::insertHeader("smecy.h", PreprocessingInfo::after, false, scope);
+    }
+  }
+
 
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
 	{
