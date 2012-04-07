@@ -7,99 +7,121 @@
 // Implements functions used during the translation of SMECY programs
 //===================================================================
 
-namespace smecy
-{
-  /* First steps :
-     attaching attributes and parsing expressions from pragmas.
+namespace smecy {
+/* \brief Test if the string can describe a #pragma smecy
+ */
+  bool smecyPragmaString_p(std::string s) {
+    // Get the first word of it by reading from an ad-hoc string stream
+    // initialized with the full pragma:
+    std::string pragmaHead;
+    std::istringstream stream(s);
+    stream >> pragmaHead;
+    return pragmaHead == "smecy";
+  }
+
+  /* \brief First steps : attaching attributes and parsing expressions
+     from pragmas.
+
      TODO : merge so as to go through the pragmas only once ?
   */
   void attachAttributes(SgProject *p) {
+    // For all files of the project:
     for (auto * f : p->get_fileList()) {
-      //making a list of all pragma nodes in AST and going through it
-      std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(f, V_SgPragmaDeclaration);
-      for(auto iter : allPragmas) {
-        SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(iter);
-	// Estract the real pragma stringL
+      // Making a list of all pragma nodes in AST and going through it
+      std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(f,
+                                                                V_SgPragmaDeclaration);
+      for (auto pragma : allPragmas) {
+        SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(pragma);
+        // Estract the real pragma string:
         std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-	// Get the first word of it by reading from an ad-hoc string
-	// stream initialized with the full pragma:
-        std::string pragmaHead;
-        std::istringstream stream(pragmaString);
-        stream >> pragmaHead;
-
-        if (pragmaHead == "smecy") {
-	  // This is a "#pragma smecy", then dig further...
+        if (smecyPragmaString_p(pragmaString)) {
+          // This is a "#pragma smecy", then dig further...
 
           //std::cout << "Found pragma string : " << pragmaString << std::endl ;
           //smecy::parseDirective(pragmaString, pragmaDeclaration)->print();
           //TODO handle merging with existing smecy attribute
           //TODO handle syntax errors and print nice error message
 
-	  // Attach a parsed version of the pragma to the AST through
-	  // flex/bison:
-          pragmaDeclaration->addNewAttribute("smecy", smecy::parseDirective(pragmaString, pragmaDeclaration));
+          // Attach a parsed version of the pragma to the AST through
+          // flex/bison:
+          pragmaDeclaration->addNewAttribute("smecy",
+                                             smecy::parseDirective(pragmaString, pragmaDeclaration));
         }
       }
     }
   }
 
-	/*parses expressions contained in pragmas and fills corresponding Attribute
-	objetcs with the corresponding SgExpression object*/
-	void parseExpressions(SgProject *sageFilePtr)
-	{
-		//making a list of all pragma nodes in AST and going through it
-		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
-		std::vector<SgNode*>::iterator iter;
-		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
-		{
-			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
-			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-			std::string pragmaHead;
-			std::istringstream stream(pragmaString);
-			stream >> pragmaHead;
-			if (pragmaHead == "smecy")
-			{
-				//we get the list of all expressions contained in the smecy directive
-				smecy::Attribute* attribute = (smecy::Attribute*)pragmaDeclaration->getAttribute("smecy");
-				std::vector<std::string> exprList = attribute->getExpressionList();
 
-				// Insert new code into the scope represented by the statement (applies to SgScopeStatements)
-				MiddleLevelRewrite::ScopeIdentifierEnum scope = MidLevelCollectionTypedefs::SurroundingScope;
-				SgStatement* target = pragmaDeclaration; //SageInterface::getScope(pragmaDeclaration);
+  /* \brief parses expressions contained in pragmas and fills
+     corresponding Attribute objects with the corresponding
+     SgExpression object
+  */
+  void parseExpressions(SgProject *p) {
+    // For all files of the project:
+    for (auto * f : p->get_fileList()) {
+      // Making a list of all pragma nodes in AST and going through it
+      std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(f,
+                                                                V_SgPragmaDeclaration);
+      for (auto pragma : allPragmas) {
+        SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(pragma);
+        std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+        if (smecyPragmaString_p(pragmaString)) {
+          // We get the list of all expressions contained in the smecy directive
+          auto attribute = (smecy::Attribute*) pragmaDeclaration->getAttribute(
+                                                                               "smecy");
+          std::vector<std::string> exprList = attribute->getExpressionList();
 
-				//we build a declaration for each of them
-				std::ostringstream declarations("");
-				for (int i=(int)exprList.size()-1; i>=0; i=i-1)
-					declarations << std::endl << "int __smecy__" << i << " = " << exprList[i] << ";" ;
+          // Insert new code into the scope represented by the statement (applies to SgScopeStatements)
+          MiddleLevelRewrite::ScopeIdentifierEnum scope =
+            MidLevelCollectionTypedefs::SurroundingScope;
+          SgStatement* target = pragmaDeclaration; //SageInterface::getScope(pragmaDeclaration);
 
-				//then we add the declarations before the current position
-				if (declarations.str()!="")
-					MiddleLevelRewrite::insert(target,declarations.str(),scope,
-							MidLevelCollectionTypedefs::BeforeCurrentPosition);
+          // Big hack to be able to evaluate expressions in pragma in local context: we create some dummy variable declarations initialized with the expressions found in the pragma. :-)
+          // Then we extract the expression from the declarations and remove the declarations.
 
-				//now, we can collect the expression in the variable declarations...
-				for (unsigned int i=0; i<exprList.size(); i++)
-				{
-					SgVariableDeclaration* decl = isSgVariableDeclaration(SageInterface::getPreviousStatement(pragmaDeclaration));
-					if (!decl)
-						std::cerr << debugInfo(target) << "error: Found invalid variable declaration while parsing expressions." << std::endl;
-					SgInitializedName* initName = SageInterface::getFirstInitializedName(decl);
-					SgAssignInitializer* initializer = isSgAssignInitializer(initName->get_initializer());
-					if (!initializer)
-						std::cerr << debugInfo(target) << "error: Found invalid initializer while parsing expressions." << std::endl;
-					SgExpression* expr = initializer->get_operand();
+          // We build a declaration for each of them
+          std::ostringstream declarations { "" };
+          for (int i = (int) exprList.size() - 1; i >= 0; i--)
+            declarations << std::endl << "int __smecy__" << i << " = "
+                         << exprList[i] << ";";
 
-					//...store it in the attribute...
-					attribute->addParsedExpression(expr);
+          // Then we add the declarations before the current position if there is something to insert
+          if (declarations.str() != "")
+            MiddleLevelRewrite::insert(target, declarations.str(), scope,
+                                       MidLevelCollectionTypedefs::BeforeCurrentPosition);
 
-					//...and remove the declaration
-					SageInterface::removeStatement(decl);
-					//TODO remove the rest of the declaration from memory
-				}
-			}
-		}
-		return ;
-	}
+          // Now, we can collect the expression in each variable declaration...
+          for (unsigned int i = 0; i < exprList.size(); i++) {
+            SgVariableDeclaration* decl = isSgVariableDeclaration(
+                                                                  SageInterface::getPreviousStatement(pragmaDeclaration));
+            if (!decl)
+              std::cerr << debugInfo(target)
+                        << "error: Found invalid variable declaration while parsing expressions."
+                        << " #pragma " << pragmaString << " may be wrong in file "
+                        << f->getFileName() << std::endl;
+
+            SgInitializedName* initName = SageInterface::getFirstInitializedName(
+                                                                                 decl);
+            SgAssignInitializer* initializer = isSgAssignInitializer(
+                                                                     initName->get_initializer());
+            if (!initializer)
+              std::cerr << debugInfo(target)
+                        << "error: Found invalid initializer while parsing expressions from"
+                        << " #pragma " << pragmaString << " may be wrong in file "
+                        << f->getFileName() << std::endl;
+            SgExpression* expr = initializer->get_operand();
+
+            // ...store it in the attribute...
+            attribute->addParsedExpression(expr);
+
+            // ...and remove the declaration
+            SageInterface::removeStatement(decl);
+            //TODO remove the rest of the declaration from memory
+          }
+        }
+      }
+    }
+  }
 
 	/* AddSmecyXXX functions :
 	these functions add calls to smecy API to the AST
@@ -126,6 +148,7 @@ namespace smecy
 		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
 		SageInterface::insertStatement(target, funcCall);
 	}
+
 
 	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
 	{
