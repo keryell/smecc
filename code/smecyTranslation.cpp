@@ -2,6 +2,7 @@
 #define SMECY_TRANSLATION_CPP
 
 #include "smecyTranslation.hpp"
+#include <boost/iterator/filter_iterator.hpp>
 
 //===================================================================
 // Implements functions used during the translation of SMECY programs
@@ -10,7 +11,7 @@
 namespace smecy {
 /* \brief Test if the string can describe a #pragma smecy
  */
-  bool smecyPragmaString_p(std::string s) {
+  bool smecyPragmaString(std::string s) {
     // Get the first word of it by reading from an ad-hoc string stream
     // initialized with the full pragma:
     std::string pragmaHead;
@@ -18,6 +19,32 @@ namespace smecy {
     stream >> pragmaHead;
     return pragmaHead == "smecy";
   }
+
+  struct is_SMECY_pragma {
+    bool operator()(SgNode * n) {
+      SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(n);
+      // Extract the real pragma string:
+      std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+      return smecyPragmaString(pragmaString);
+    }
+  };
+
+  typedef boost::filter_iterator < is_SMECY_pragma, std::vector<SgNode*>::iterator >
+      FilterSmecyPragma;
+
+  std::vector<SgNode*> allFilePragma(SgFile *f) {
+    // Making a list of all pragma nodes in AST and going through it
+    return NodeQuery::querySubTree(f, V_SgPragmaDeclaration);
+  }
+
+  FilterSmecyPragma smecyPragma(std::vector<SgNode*> pragmas) {
+    return boost::make_filter_iterator<is_SMECY_pragma>(pragmas.begin(), pragmas.end());
+  }
+
+  FilterSmecyPragma smecyPragmaEnd(std::vector<SgNode*> pragmas) {
+    return boost::make_filter_iterator<is_SMECY_pragma>(pragmas.end(), pragmas.end());
+  }
+
 
   /* \brief First steps : attaching attributes and parsing expressions
      from pragmas.
@@ -32,9 +59,9 @@ namespace smecy {
                                                                 V_SgPragmaDeclaration);
       for (auto pragma : allPragmas) {
         SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(pragma);
-        // Estract the real pragma string:
+        // Extract the real pragma string:
         std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-        if (smecyPragmaString_p(pragmaString)) {
+        if (smecyPragmaString(pragmaString)) {
           // This is a "#pragma smecy", then dig further...
 
           //std::cout << "Found pragma string : " << pragmaString << std::endl ;
@@ -65,7 +92,7 @@ namespace smecy {
       for (auto pragma : allPragmas) {
         SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(pragma);
         std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-        if (smecyPragmaString_p(pragmaString)) {
+        if (smecyPragmaString(pragmaString)) {
           // We get the list of all expressions contained in the smecy directive
           auto attribute = (smecy::Attribute*) pragmaDeclaration->getAttribute(
                                                                                "smecy");
@@ -138,7 +165,7 @@ namespace smecy {
     // For all files of the project:
     for (auto * f : p->get_fileList()) {
       // Get the beginning of the IR:
-      // Mimmic the implementation of:
+      // Mimic the implementation of:
       // SgGlobal * SageInterface::getFirstGlobalScope(SgProject *project)
       SgScopeStatement* scope = isSgSourceFile(f)->get_globalScope();
       SageInterface::insertHeader("p4a_macros.h", PreprocessingInfo::after, false, scope);
@@ -528,13 +555,13 @@ namespace smecy {
 
 	//this function prevents pragmas from being caught by structures and used without block body instead
 	//of the function they map
-	void correctParentBody(SgProject* sageFilePtr)
+	void correctParentBody(SgFile* f)
 	{
 		//algorithm: go up in the graph until a SgBasicBlock is encountered
 		//then, the next statement is the function call
 
 		//first, go through the pragmas
-		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
+		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(f, V_SgPragmaDeclaration);
 		std::vector<SgNode*>::iterator iter;
 		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
 		{
@@ -779,61 +806,61 @@ namespace smecy {
 		return body;
 	}
 
-	/* Top-level function
-	this is the function that should be called to translate smecy pragmas
-	into calls to the SMECY API
-	*/
-	void translateSmecy(SgProject *p)
-	{
-		//preprocessing of the project. Have each phase working on all the files, so that the phases advance lock-step
-		attachAttributes(p);
-		parseExpressions(p);
-		addSmecyInclude(p);
+  /* \brief Top-level function this is the function that should be called
+     to translate smecy pragmas into calls to the SMECY API
+  */
+  void translateSmecy(SgProject *p) {
+    /* Preprocessing of the project.
 
-		//translating the different kinds of pragmas
-		translateStreaming(p);
-		translateMapping(p);
+       Have each phase working on all the files, so that the phases
+       advance lock-step */
+    attachAttributes(p);
+    parseExpressions(p);
+    addSmecyInclude(p);
 
-	}
+    // Translating the different kinds of pragmas
+    translateStreaming(p);
+    translateMapping(p);
+  }
 
-	void translateStreaming(SgProject *sageFilePtr)
-	{
-		//preprocessing
-		correctParentBody(sageFilePtr);
+
+  /* \brief
+
+   */
+  void translateStreaming(SgProject *p) {
+    // For all files of the project:
+    for (auto * f : p->get_fileList()) {
+    //preprocessing
+    correctParentBody(f);
+    auto pragmas = allFilePragma(f);
+    // Hideous... :(
+    auto pragmasEnd = smecyPragmaEnd(pragmas);
+    for(auto pragma = smecyPragma(pragmas); pragma != pragmasEnd; ++pragma) {
+      //for(auto pragma : SmecyPragma(f)) {
+      SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*pragma);
+      std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+      std::string pragmaHead;
+      SgStatement* target = isSgStatement(pragmaDeclaration);
+      //parameters
+      smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
+      if (!attribute->checkAll()) //verification of pragma content FIXME FIXME add verifications for clause coherency
+        throw 0;
+      SgStatement* subject = SageInterface::getNextStatement(target);
+
+      if (attribute->getStreamLoop()!=-1)
+        translateStreamLoop(target, attribute, subject);
+	  }
+    }
+  }
+
+  void translateMapping(SgProject *p) {
+    // For all files of the project:
+    for (auto * f : p->get_fileList()) {
+      //preprocessing
+      correctParentBody(f);
 
 		//making a list of all pragma nodes in AST and going through it
-		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
-		std::vector<SgNode*>::iterator iter;
-		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
-		{
-			SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
-			std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-			std::string pragmaHead;
-			std::istringstream stream(pragmaString);
-			stream >> pragmaHead;
-			if (pragmaHead == "smecy")
-			{
-				SgStatement* target = isSgStatement(pragmaDeclaration);
-
-				//parameters
-				smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
-				if (!attribute->checkAll()) //verification of pragma content FIXME FIXME add verifications for clause coherency
-					throw 0;
-				SgStatement* subject = SageInterface::getNextStatement(target);
-
-				if (attribute->getStreamLoop()!=-1)
-					translateStreamLoop(target, attribute, subject);
-			}
-		}
-	}
-
-	void translateMapping(SgProject *sageFilePtr)
-	{
-		//preprocessing
-		correctParentBody(sageFilePtr);
-
-		//making a list of all pragma nodes in AST and going through it
-		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(sageFilePtr, V_SgPragmaDeclaration);
+		std::vector<SgNode*> allPragmas = NodeQuery::querySubTree(p, V_SgPragmaDeclaration);
 		std::vector<SgNode*>::iterator iter;
 		for(iter=allPragmas.begin(); iter!=allPragmas.end(); iter++)
 		{
@@ -857,6 +884,7 @@ namespace smecy {
 			}
 		}
 	}
+  }
 
 	//if directive has a map clause, translates it in corresponding calls to smecy api
 	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
