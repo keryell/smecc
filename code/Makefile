@@ -26,7 +26,7 @@ allFiles = smecc smecc_identity
 
 all: $(allFiles)
 
-smecc: main.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
+smecc: main.o public.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
 	@echo [Linking]
 	@libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CXXLDFLAGS) -I$(ROSE_DIR)/include $(BOOST_CPPFLAGS) -o $@ $^ $(ROSE_LIBS)
 

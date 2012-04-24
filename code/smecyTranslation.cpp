@@ -850,6 +850,7 @@ namespace smecy {
       SgStatement* subject = SageInterface::getNextStatement(target);
 
       if (attribute->getStreamLoop()!=-1)
+        // There is a #pragma smecy stream_loop on this loop, translate it:
         translateStreamLoop(target, attribute, subject);
 	  }
     }
@@ -1040,20 +1041,6 @@ namespace smecy {
 		SageInterface::appendStatement(whileLoop, defBody);
 	}
 
-	/* Other
-	FIXME move to public.cpp
-	*/
-	std::string debugInfo(SgNode* context)
-	{
-		if (context)
-		{
-			std::stringstream ss("");
-			ss << context->get_file_info()->get_filenameString() << ":" << context->get_file_info()->get_line() << ": ";
-			return ss.str();
-		}
-		else
-			return "";
-	}
 } //namespace smecy
 
 #endif //SMECY_TRANSLATION_CPP
