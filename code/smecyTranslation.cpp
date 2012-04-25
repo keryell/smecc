@@ -738,33 +738,49 @@ namespace smecy {
 		SageInterface::appendStatement(varDec, scope);
 	}
 
-	//defines type p4a_buffer_type_n* where n is the stream_loop number
-	//this is a struct containing all the variables forming the stream of data
-	//using a struct allows easy recuperation of data in the stream after a cast has been done
-	void addBufferTypedef(Attribute* attribute, std::vector<SgExpression*> stream, SgScopeStatement* scope)
-	{
-		std::stringstream ss("");
-		ss << "p4a_buffer_type_" << attribute->getStreamLoop();
-		SgClassDeclaration* structDecl = SageBuilder::buildStructDeclaration(ss.str(), scope);
-		SgClassDefinition* structDef = SageBuilder::buildClassDefinition(structDecl);
-		for (unsigned int i=0; i<stream.size(); i++) //TODO refactor with addBufferVariablesDeclarations
-		{
-			SgVarRefExp* varRef = isSgVarRefExp(stream[i]);
-			if (varRef)
-			{
-				SgType* type = isSgType(SageInterface::deepCopyNode(varRef->get_type()));
-				SgName name = varRef->get_symbol()->get_name();
-				SgAssignInitializer* initializer = NULL;//SageBuilder::buildAssignInitializer(SageBuilder::buildIntVal(1), type);
-				SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, structDef);
-				SageInterface::appendStatement(varDec, structDef);
-			}
-			else
-				std::cerr << "warning: stream function parameter is not a variable reference" << std::endl;
-		}
-		structDecl->set_definition(structDef);
-		SgStatement* mainStatement = SageInterface::findMain(SageInterface::getGlobalScope(scope));
-		SageInterface::insertStatement(mainStatement, structDecl);
-	}
+
+  /* \brief define type p4a_buffer_type_<n>* where n is the stream_loop number
+
+	   this is a struct containing all the variables forming the stream of data
+	   using a struct allows easy recuperation of data in the stream after a cast has been done
+	 */
+  void addBufferTypedef(Attribute* attribute,
+                        std::vector<SgExpression*> stream,
+                        SgScopeStatement* scope) {
+    // Build the struct name:
+    std::stringstream ss { "" };
+    ss << "p4a_buffer_type_" << attribute->getStreamLoop();
+    // Add the struct declaration and definition:
+    SgClassDeclaration* structDecl = SageBuilder::buildStructDeclaration(ss.str(), scope);
+    SgClassDefinition* structDef = SageBuilder::buildClassDefinition(structDecl);
+    // Add to the type all the members to pass data between pipeline stages:
+    for (size_t i = 0; i < stream.size(); i++) {
+      //TODO refactor with addBufferVariablesDeclarations
+      SgVarRefExp* varRef = isSgVarRefExp(stream[i]);
+      // TODO there is currently a restriction on the arguments to be only variable references:
+      if (varRef) {
+        // Same type as the argument:
+        SgType* type = isSgType(SageInterface::deepCopyNode(varRef->get_type()));
+        // Same member name as the argument:
+        SgName name = varRef->get_symbol()->get_name();
+        // No initializer:
+        SgAssignInitializer* initializer = nullptr;
+        //SageBuilder::buildAssignInitializer(SageBuilder::buildIntVal(1), type);
+        // Create the member declaration and add it to the structure:
+        SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, structDef);
+        SageInterface::appendStatement(varDec, structDef);
+      }
+      else
+        std::cerr << "warning: stream function parameter '"
+                  << stream[i]->unparseToString()
+                  << "' is not a variable reference" << std::endl;
+    }
+    // Instert the declaration at the top level:
+    structDecl->set_definition(structDef);
+    SgStatement* mainStatement = SageInterface::findMain(SageInterface::getGlobalScope(scope));
+    SageInterface::insertStatement(mainStatement, structDecl);
+  }
+
 
 	//constructs the content of the while body contained in a stream_loop associated function
 	SgStatement* buildNodeWhileBody(SgStatement* functionToMap, int nLoop, int nNode, SgScopeStatement* scope, bool in, bool out, SgStatement* pragma)
@@ -927,35 +943,51 @@ namespace smecy {
 	    SgStatementPtrList statements = block->get_statements();
 	    SgStatement* condition = SageInterface::getLoopCondition(whileStmt);
 
+	    // Store the boundaries of all the pipeline stages, as couple of (previous,next) statements:
 	    std::vector<std::pair<SgStatement*,SgStatement*> > streamNodes;
+	    // The arguments to move through the pipeline:
+	    // FIXME: this should be a set
 	    std::vector<SgExpression*> stream;
 
-	    //locating the nodes to target
-	    for (size_t i = 0; i< statements.size(); i++)
+	    // Locate and split each stage of the loop to be pipelined
+	    for (size_t i = 0; i< statements.size(); i++) {
+          std::cerr << "DEBUG: " << statements[i]->unparseToString() << std::endl;
 	      if (isSgPragmaDeclaration(statements[i]) and i+1!=statements.size()) {
-	        //isolating func call and pragma
-	        //std::cerr << "DEBUG: " << statements[i]->unparseToString() << std::endl;
-	        SgFunctionCallExp* funcCall = NULL;
+	        /* There is a pragma here.
+	           Isolate the pragma and the matching function call */
+
+	        SgFunctionCallExp* funcCall = nullptr;
 	        if (isSgExprStatement(statements[i+1]))
 	          funcCall = getFunctionCallExp(statements[i+1]);
 	        if (!funcCall) {
-	          std::cerr << debugInfo(statements[i+1]) << "error: mapped statement is not a function call" << std::endl;
+	          std::cerr << debugInfo(statements[i+1]) << "error: the statement after the #pragma is not a function call" << std::endl;
 	          throw 0;
 	        }
-
-	        // FIXME unparseToString should be replaced by a better comparison
+	        // Get the arguments of the function call:
 	        SgExpressionPtrList argList = getArgList(statements[i+1])->get_expressions();
+	        // Add the arguments variables to stream if not already in:
 	        for (size_t j = 0; j < argList.size(); j++) {
 	          bool present = false;
-	          for (size_t ii = 0; ii < stream.size(); ii++)
-	            present = present or (stream[ii]->unparseToString() == argList[j]->unparseToString());
+	          for (size_t ii = 0; ii < stream.size(); ii++) {
+	            std::cerr << stream[ii]->unparseToString() << '(' << stream[ii] << ')'
+	                      << argList[j]->unparseToString() << '(' << argList[j] << ')'
+	                      << std::endl;
+	            /* FIXME unparseToString should be replaced by a better comparison.
+	               We have to compare 2 reference expressions to have the same semantics.
+	               The same argument used in 2 different functions is indeed a different SgExpression.
+	               Right now, use their string representation as a comparison.
+	               But this do not work for example to prove that b[0] and *b are the same, for example.
+	             */
+	            present |= stream[ii]->unparseToString() == argList[j]->unparseToString();
+	          }
 	          if (!present)
 	            stream.push_back(argList[j]);
 	        }
-
+	        // Append the current pipeline stage:
 	        streamNodes.push_back(std::pair<SgStatement*,SgStatement*> {
 	          statements[i], statements[i+1] });
 	      }
+	    }
 	    // Declaring the type for the buffer
 	    addBufferTypedef(attribute, stream, SageInterface::getGlobalScope(target));
 
