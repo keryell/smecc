@@ -1,6 +1,3 @@
-#ifndef SMECY_TRANSLATION_CPP
-#define SMECY_TRANSLATION_CPP
-
 #include "smecyTranslation.hpp"
 #include <boost/iterator/filter_iterator.hpp>
 
@@ -837,25 +834,25 @@ namespace smecy {
   void translateStreaming(SgProject *p) {
     // For all files of the project:
     for (auto * f : p->get_fileList()) {
-    // Preprocessing
-    correctParentBody(f);
-    for(auto pragma : SmecyPragma(f)) {
-      //for(auto pragma : SmecyPragma(f)) {
-      SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(pragma);
-      SgStatement* target = isSgStatement(pragmaDeclaration);
-      //parameters
-      smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
-      if (!attribute->checkAll()) //verification of pragma content FIXME FIXME add verifications for clause coherency
-        throw 0;
-      SgStatement* subject = SageInterface::getNextStatement(target);
-
-      if (attribute->getStreamLoop()!=-1)
-        // There is a #pragma smecy stream_loop on this loop, translate it:
-        translateStreamLoop(target, attribute, subject);
-	  }
+      // Preprocessing
+      correctParentBody(f);
+      for(auto pragma : SmecyPragma(f)) {
+        //for(auto pragma : SmecyPragma(f)) {
+        SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(pragma);
+        SgStatement* target = isSgStatement(pragmaDeclaration);
+        //parameters
+        smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
+        if (!attribute->checkAll()) //verification of pragma content FIXME FIXME add verifications for clause coherency
+          throw 0;
+        if (attribute->getStreamLoop()!=-1) {
+          // There is a #pragma smecy stream_loop on this loop...
+          SgStatement* subject = SageInterface::getNextStatement(target);
+          // ... so translate it:
+          translateStreamLoop(target, attribute, subject);
+        }
+      }
     }
   }
-
 
   /* \brief Generate code for the mapping #pragma
    *
@@ -867,12 +864,12 @@ namespace smecy {
       correctParentBody(f);
 
       for(auto pragma : SmecyPragma(f)) {
-        //for(auto pragma : SmecyPragma(f)) {
         SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(pragma);
         SgStatement* target = isSgStatement(pragmaDeclaration);
-        //parameters
+        // Get the pragma parameters:
         smecy::Attribute* attribute = (smecy::Attribute*)target->getAttribute("smecy");
-        if (!attribute->checkAll()) // Verification of pragma content FIXME FIXME add verifications for clause coherency
+        // Verification of pragma content FIXME FIXME add verifications for clause coherency:
+        if (!attribute->checkAll())
           throw 0;
         SgStatement* subject = SageInterface::getNextStatement(target);
 
@@ -907,100 +904,97 @@ namespace smecy {
 		SageInterface::removeStatement(target);
 	}
 
-	//if directive has a stream_loop clause, translate it (and its while loop containing nodes) into smecy api
-	void translateStreamLoop(SgStatement* target, Attribute* attribute, SgStatement* whileLoop)
-	{
-		if (!isSgWhileStmt(whileLoop))
-		{
-			std::cerr << debugInfo(target) << "error: target of stream_loop is not a while loop" << std::endl;
-			throw 0;
-		}
-		else
-		{
-			//getting loop's body and condition
-			SgWhileStmt* whileStmt = isSgWhileStmt(whileLoop);
-			SgStatement* body = whileStmt->get_body();
-			SgBasicBlock* block = isSgBasicBlock(body);
-			if (!block)
-			{
-				std::cerr << debugInfo(target) << "error: while body is a single statement" << std::endl;
-				throw 0;
-			}
-			SgStatementPtrList statements = block->get_statements();
-			SgStatement* condition = SageInterface::getLoopCondition(whileStmt);
+	/* Try translation of a #pragma stream_loop clause if any along with its loop body
+	   its while loop containing nodes) into SMECY API
+	*/
+	void translateStreamLoop(SgStatement* target, Attribute* attribute, SgStatement* whileLoop)	{
+	  // At least verify we have the correct loop statement that can be translated:
+	  if (!isSgWhileStmt(whileLoop)) {
+	    std::cerr << debugInfo(target) << "error: target of stream_loop is not a while loop" << std::endl;
+	    throw 0;
+	  }
+	  else {
+	    // Getting loop's body and condition
+	    SgWhileStmt* whileStmt = isSgWhileStmt(whileLoop);
+	    SgStatement* body = whileStmt->get_body();
+	    SgBasicBlock* block = isSgBasicBlock(body);
 
-			std::vector<std::pair<SgStatement*,SgStatement*> > streamNodes;
-			std::vector<SgExpression*> stream;
+	    // Verify we have a basic block as loop body:
+	    if (!block) {
+	      std::cerr << debugInfo(target) << "error: while body is a single statement instead of a block" << std::endl;
+	      throw 0;
+	    }
+	    SgStatementPtrList statements = block->get_statements();
+	    SgStatement* condition = SageInterface::getLoopCondition(whileStmt);
 
-			//locating the nodes to target
-			for (unsigned int i=0; i<statements.size(); i++)
-				if (isSgPragmaDeclaration(statements[i]) and i+1!=statements.size())
-				{
-					//isolating func call and pragma
-					//std::cerr << "DEBUG: " << statements[i]->unparseToString() << std::endl;
-					SgFunctionCallExp* funcCall = NULL;
-					if (isSgExprStatement(statements[i+1]))
-						funcCall = getFunctionCallExp(statements[i+1]);
-					if (!funcCall)
-					{
-						std::cerr << debugInfo(statements[i+1]) << "error: mapped statement is not a function call" << std::endl;
-						throw 0;
-					}
+	    std::vector<std::pair<SgStatement*,SgStatement*> > streamNodes;
+	    std::vector<SgExpression*> stream;
 
-					//FIXME unparseToString should be replaced by a better comparison
-					SgExpressionPtrList argList = getArgList(statements[i+1])->get_expressions();
-					for (unsigned int j=0; j<argList.size(); j++)
-					{
-						bool present = false;
-						for (unsigned int ii=0; ii<stream.size(); ii++)
-							present = present or (stream[ii]->unparseToString() == argList[j]->unparseToString());
-						if (!present)
-							stream.push_back(argList[j]);
-					}
+	    //locating the nodes to target
+	    for (size_t i = 0; i< statements.size(); i++)
+	      if (isSgPragmaDeclaration(statements[i]) and i+1!=statements.size()) {
+	        //isolating func call and pragma
+	        //std::cerr << "DEBUG: " << statements[i]->unparseToString() << std::endl;
+	        SgFunctionCallExp* funcCall = NULL;
+	        if (isSgExprStatement(statements[i+1]))
+	          funcCall = getFunctionCallExp(statements[i+1]);
+	        if (!funcCall) {
+	          std::cerr << debugInfo(statements[i+1]) << "error: mapped statement is not a function call" << std::endl;
+	          throw 0;
+	        }
 
-					streamNodes.push_back(std::pair<SgStatement*,SgStatement*>(statements[i],statements[i+1]));
-				}
-			//declaring the type for the buffer
-			addBufferTypedef(attribute, stream, SageInterface::getGlobalScope(target));
+	        // FIXME unparseToString should be replaced by a better comparison
+	        SgExpressionPtrList argList = getArgList(statements[i+1])->get_expressions();
+	        for (size_t j = 0; j < argList.size(); j++) {
+	          bool present = false;
+	          for (size_t ii = 0; ii < stream.size(); ii++)
+	            present = present or (stream[ii]->unparseToString() == argList[j]->unparseToString());
+	          if (!present)
+	            stream.push_back(argList[j]);
+	        }
 
-			//calling transformation afterwards since stream computation may depend on all the nodes
-			for (unsigned int i=0; i<streamNodes.size(); i++)
-			{
-				//deciding which nodes receives and sends info
-				ArgType inout = _arg_inout;
-				if (i == 0)
-					inout = _arg_out;
-				else if (i == streamNodes.size()-1)
-					inout = _arg_in;
+	        streamNodes.push_back(std::pair<SgStatement*,SgStatement*> {
+	          statements[i], statements[i+1] });
+	      }
+	    // Declaring the type for the buffer
+	    addBufferTypedef(attribute, stream, SageInterface::getGlobalScope(target));
 
-				//calling functions to translate
-				processStreamNode(streamNodes[i].first, streamNodes[i].second, attribute->getStreamLoop(), i, condition, inout);
-			}
+	    //calling transformation afterwards since stream computation may depend on all the nodes
+	    for (size_t i = 0; i < streamNodes.size(); i++) {
+	      //deciding which nodes receives and sends info
+	      ArgType inout = _arg_inout;
+	      if (i == 0)
+	        inout = _arg_out;
+	      else if (i == streamNodes.size()-1)
+	        inout = _arg_in;
 
-			//replacing original function calls with thread launching
-			//buffer declaration
-			//addGlobalBufferDeclaration(target, attribute);
-			SgScopeStatement* scope = SageInterface::getScope(target);
-			SageInterface::insertStatement(target, addP4aMacro("P4A_init_stream", attribute->getStreamLoop(), streamNodes.size()-1, scope));
+	      //calling functions to translate
+	      processStreamNode(streamNodes[i].first,
+	          streamNodes[i].second, attribute->getStreamLoop(), i, condition, inout);
+	    }
 
-			//thread launching
-			for (unsigned int i=0; i<streamNodes.size(); i++)
-			{
-				//addThreadCreation(target, attribute, i);
-				SageInterface::insertStatement(target, addP4aMacro("P4A_launch_stream", attribute->getStreamLoop(), i, scope));
-			}
+	    //replacing original function calls with thread launching
+	    //buffer declaration
+	    //addGlobalBufferDeclaration(target, attribute);
+	    SgScopeStatement* scope = SageInterface::getScope(target);
+	    SageInterface::insertStatement(target, addP4aMacro("P4A_init_stream", attribute->getStreamLoop(), streamNodes.size()-1, scope));
 
-			// Insert the function to wait the end of application:
-			SgName name("P4A_wait_for_the_end");
-			SgType* returnType = SageBuilder::buildVoidType();
-			SgExprListExp * exprList = SageBuilder::buildExprListExp();
-			SgExprStatement* pause = SageBuilder::buildFunctionCallStmt(name, returnType, exprList, scope);
-			SageInterface::insertStatement(target, pause);
+	    //thread launching
+	    for (size_t i = 0; i < streamNodes.size(); i++)
+	      //addThreadCreation(target, attribute, i);
+	      SageInterface::insertStatement(target, addP4aMacro("P4A_launch_stream", attribute->getStreamLoop(), i, scope));
 
-			//removing pragma and while
-			SageInterface::removeStatement(target);
-			SageInterface::removeStatement(whileStmt);
-		}
+	    // Insert the function to wait the end of application:
+	    SgName name { "P4A_wait_for_the_end" };
+	    SgType* returnType = SageBuilder::buildVoidType();
+	    SgExprListExp * exprList = SageBuilder::buildExprListExp();
+	    SgExprStatement* pause = SageBuilder::buildFunctionCallStmt(name, returnType, exprList, scope);
+	    SageInterface::insertStatement(target, pause);
+
+	    //removing pragma and while
+	    SageInterface::removeStatement(target);
+	    SageInterface::removeStatement(whileStmt);
+	  }
 	}
 
 	//translates a single stream_node into smecy api (creates associated function)
@@ -1042,5 +1036,3 @@ namespace smecy {
 	}
 
 } //namespace smecy
-
-#endif //SMECY_TRANSLATION_CPP
