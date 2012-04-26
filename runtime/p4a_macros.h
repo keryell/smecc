@@ -15,7 +15,7 @@ DbLink p4a_streaming_buffers[P4A_MAX_STREAMING_LOOPS][P4A_MAX_STREAMING_NODES];
 {\
 	for (int p4a_iter_##stream=0; p4a_iter_##stream<(nbstreams); p4a_iter_##stream++)\
 	{\
-		p4a_streaming_buffers[p4a_next_stream][p4a_iter_##stream] = pth_CreateDbLink(sizeof(p4a_buffer_type_##stream)); \
+		p4a_streaming_buffers[p4a_next_stream][p4a_iter_##stream] = pth_CreateDbLink(sizeof(struct p4a_buffer_type_##stream)); \
 	}\
 	p4a_next_stream++; \
 }
@@ -24,13 +24,13 @@ DbLink p4a_streaming_buffers[P4A_MAX_STREAMING_LOOPS][P4A_MAX_STREAMING_NODES];
 	pth_CreateProcess(((int (*)())p4a_node_##stream##_##node))
 
 #define P4A_stream_get_init_buf(stream, node)\
-    p4a_struct_buffer_out = ((p4a_buffer_type_##stream *)(DbLinkGetInitBuf(p4a_streaming_buffers[stream][node])))
+    p4a_struct_buffer_out = ((struct p4a_buffer_type_##stream *)(DbLinkGetInitBuf(p4a_streaming_buffers[stream][node])))
 
 #define P4A_stream_put_data(stream, node)\
-    p4a_struct_buffer_out = ((p4a_buffer_type_##stream *)(DbLinkPutData(p4a_streaming_buffers[stream][node])))
+    p4a_struct_buffer_out = ((struct p4a_buffer_type_##stream *)(DbLinkPutData(p4a_streaming_buffers[stream][node])))
 
 #define P4A_stream_get_data(stream, node)\
-	p4a_struct_buffer_in = ((p4a_buffer_type_##stream *)(DbLinkPutData(p4a_streaming_buffers[stream][node])));
+	p4a_struct_buffer_in = ((struct p4a_buffer_type_##stream *)(DbLinkPutData(p4a_streaming_buffers[stream][node])));
 
 #define P4A_stream_copy_data(stream, node)\
 	p4a_struct_buffer_out = p4a_struct_buffer_in;

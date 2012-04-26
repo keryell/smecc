@@ -726,17 +726,23 @@ namespace smecy {
 	/* Helper functions
 	*/
 
-	//creates a variable named p4a_struct_buffer of type p4a_buffer_type_n* where n is the stream_loop number
-	void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope, SgStatement* functionCall, std::string varName)
-	{
-		std::stringstream ss("");
-		ss << "p4a_buffer_type_" << nLoop;
-		SgType* type = SageBuilder::buildPointerType(SageBuilder::buildOpaqueType(ss.str(), scope));
-		SgName name(varName);
-		SgAssignInitializer* initializer = NULL;
-		SgVariableDeclaration* varDec = SageBuilder::buildVariableDeclaration(name, type, initializer, scope);
-		SageInterface::appendStatement(varDec, scope);
-	}
+  /* Create a variable named p4a_struct_buffer of type struct p4a_buffer_type_<n>
+   * where n is the stream_loop number
+   */
+  void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope,
+                                      SgStatement* functionCall,
+                                      std::string varName) {
+    // Construct the type including the loop number:
+    std::stringstream ss("");
+    ss << "struct p4a_buffer_type_" << nLoop;
+    SgType* type = SageBuilder::buildPointerType(SageBuilder::buildOpaqueType(ss.str(), scope));
+    SgVariableDeclaration* varDec =
+        SageBuilder::buildVariableDeclaration(SgName { varName },
+                                              type,
+                                              (SgAssignInitializer *) nullptr,
+                                              scope);
+    SageInterface::appendStatement(varDec, scope);
+  }
 
 
   /* \brief define type p4a_buffer_type_<n>* where n is the stream_loop number
@@ -1047,7 +1053,9 @@ namespace smecy {
   }
 
 
-  //translates a single stream_node into smecy api (creates associated function)
+  /* Translate a single stream_node into low-level SMECY API
+     by outlining the pipeline-stage to a new associated function)
+   */
   void processStreamNode(SgStatement* target, SgStatement* functionToMap, int nLoop,
                          int nNode, SgStatement* condition, ArgType inout) {
     bool argIn = (inout==_arg_in or inout==_arg_inout);
