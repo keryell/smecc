@@ -14,7 +14,9 @@ namespace smecy {
     std::string pragmaHead;
     std::istringstream stream(s);
     stream >> pragmaHead;
-    return pragmaHead == "smecy";
+    bool is_smecy_pragma = pragmaHead == "smecy";
+    //std::cout << "Pragma:" << pragmaHead << "is SMECY:" << is_smecy_pragma << std::endl;
+    return is_smecy_pragma;
   }
 
   struct is_SMECY_pragma {
@@ -47,10 +49,15 @@ namespace smecy {
     SmecyPragma(SgFile *f) : std::vector<SgNode*> {
       /* The vector constructor value is initialized
          with the pragmas à la C++11 mode */
-      NodeQuery::querySubTree(f, V_SgPragmaDeclaration)
+      //NodeQuery::querySubTree(f, V_SgPragmaDeclaration)
     } {
-      // And then filtered to keep only the SMECY pragmas
-      std::remove_if(this->begin(), this->end(), is_SMECY_pragma_p);
+      // This solution does not seems to work. May be SgNode* are not "Move Assignable"? Not clear...
+      //      std::remove_if(this->begin(), this->end(), is_SMECY_pragma_p);
+      for (auto p: NodeQuery::querySubTree(f, V_SgPragmaDeclaration)) {
+	// Only keep SMECY pragmas:
+	if (is_SMECY_pragma_p(p))
+	  this->push_back(p);
+      }
     }
   };
 
@@ -78,10 +85,11 @@ namespace smecy {
         SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(pragma);
         // Extract the real pragma string:
         std::string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+        //std::cout << "Found pragma string : " << pragmaString << std::endl ;
         if (smecyPragmaString(pragmaString)) {
           // This is a "#pragma smecy", then dig further...
 
-          //std::cout << "Found pragma string : " << pragmaString << std::endl ;
+          //std::cout << "Found smecy pragma string : " << pragmaString << std::endl ;
           //smecy::parseDirective(pragmaString, pragmaDeclaration)->print();
           //TODO handle merging with existing smecy attribute
           //TODO handle syntax errors and print nice error message
