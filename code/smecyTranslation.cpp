@@ -610,7 +610,8 @@ namespace smecy {
           // std::cout << "DEBUG: " << functionCall->unparseToString() << std::endl;
           // Reorganizes statements correctly
           SgStatement* newFunctionCall = isSgStatement(SageInterface::copyStatement(functionCall));
-          SageInterface::ensureBasicBlockAsParent(pragmaDeclaration);
+          // This does no longer exist in recent ROSE Compiler:
+	  //SageInterface::ensureBasicBlockAsParent(pragmaDeclaration);
           SageInterface::insertStatement(pragmaDeclaration, newFunctionCall, false);
           SageInterface::removeStatement(functionCall);
         }
@@ -914,7 +915,8 @@ namespace smecy {
 	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
 	{
 		//various preprocessing steps
-		SageInterface::ensureBasicBlockAsParent(target);
+	        // This does no longer exist in recent ROSE Compiler:
+		//SageInterface::ensureBasicBlockAsParent(target);
 		processVariableDeclaration(target, attribute, functionToMap);
 		completeSizeInfo(target, attribute, functionToMap);
 		processIf(target, attribute, functionToMap);

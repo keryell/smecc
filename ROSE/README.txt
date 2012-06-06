@@ -44,16 +44,24 @@ sudo rm /usr/bin/gcc
 sudo ln -s gcc-4.4 /usr/bin/gcc
 sudo rm /usr/bin/g++
 sudo ln -s g++-4.4 /usr/bin/g++
+sudo rm /usr/bin/cpp
+sudo ln -s cpp-4.4 /usr/bin/cpp
 
 tar zxvf rose-0.9.5a-without-EDG-14690.tar.gz
 mkdir compileTree
 cd compileTree
-mkdir compileTree
-cd compileTree
-../rose-0.9.5a-14690/configure --prefix=/usr/local/rose --with-boost=/usr --disable-binary-analysis-tests --enable-only-c --without-java
+../rose-0.9.5a-19065/configure --prefix=/usr/local/rose --with-boost=/usr --disable-binary-analysis-tests --enable-only-c --without-java
 make -j4
 
 make install
+
+Then, to have C++11 support and a compiler still working with CUDA 4.2 :
+sudo rm /usr/bin/gcc
+sudo ln -s gcc-4.6 /usr/bin/gcc
+sudo rm /usr/bin/g++
+sudo ln -s g++-4.6 /usr/bin/g++
+sudo rm /usr/bin/cpp
+sudo ln -s cpp-4.6 /usr/bin/cpp
 
 
 
