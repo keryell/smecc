@@ -2,12 +2,28 @@
 #define SMECY_LIB_H
 
 #include <stdio.h>
+#ifdef SMECY_VERBOSE
+#define SMECY_PRINT_VERBOSE(format, ...) \
+  fprintf(stderr, format, __VA_ARGS__);
+#else
+#define SMECY_PRINT_VERBOSE(format, ...)
+#endif
 
 //prototypes for the smecy library
 //note that it can only work if the code maps only the square_symmetry function
-#define SMECY_set(pe, instance, func)										printf("Preparing to launch %s on %s n°%d\n",#func,#pe,instance)
-#define SMECY_send_arg(pe, instance, func, arg, type, value)				type pe##_##func##_##arg = value
-#define SMECY_send_arg_vector(pe, instance, func, arg, type, value, size)	type* pe##_##func##_##arg = (int*)value
+#define SMECY_set(pe, instance, func) \
+  SMECY_PRINT_VERBOSE("Preparing to launch function \"%s\" on processor %s n° %d\n", \
+		      #func, #pe, instance);
+
+#define SMECY_send_arg(pe, instance, func, arg, type, value) \
+  SMECY_PRINT_VERBOSE("Sending %s to function \"%s\" on processor %s n° %d\n", \
+		      #type, #func, #pe, instance) \
+  type pe##_##instance##_##func##_##arg = value
+
+#define SMECY_send_arg_vector(pe, instance, func, arg, type, value, size) \
+  SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s to function \"%s\" on processor %s n° %d\n", \
+		      #size, #type, #func, #pe, instance)		\
+	type* pe##_##instance##_##func##_##arg = (int*)value
 #if 0
 	#define SMECY_launch(pe, instance, func)								{ if (#func == "square_symmetry")\
 																			   square_symmetry_smecy( pe##_square_symmetry_1, \
@@ -18,10 +34,19 @@
 																			   pe##_square_symmetry_6); \
 																			}
 #else
-	#define SMECY_launch(pe, instance, func)
+	#define SMECY_launch(pe, instance, func) \
+	  SMECY_PRINT_VERBOSE("Running function \"%s\" on processor %s n° %d\n", \
+			      #func, #pe, instance);
 #endif
-#define SMECY_get_arg_vector(pe, instance, func, arg, type, value, size)	printf("arg\n");
-#define SMECY_get_return(pe, instance, func, type)							printf("Getting return of function %s on %s n°%d\n",#func,#pe,instance)
+
+#define SMECY_get_arg_vector(pe, instance, func, arg, type, value, size) \
+	SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s from function \"%s\" on processor %s n° %d\n", \
+			    #size, #type, #func, #pe, instance)
+
+#define SMECY_get_return(pe, instance, func, type) \
+	SMECY_PRINT_VERBOSE("Returning %s from function \"%s\" on processor %s n° %d\n", \
+		      #type, #func, #pe, instance)
+
 
 void square_symmetry_smecy(int width, int height, int* image,
 		     int square_size, int x_offset, int y_offset) ;
