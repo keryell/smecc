@@ -26,7 +26,7 @@ namespace smecy
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size);
 	void addSmecyGetArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size);
-	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
+	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgStatement* functionToMap);
 	SgExpression* smecyReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, SgType* returnType);
 
 	//functions that add p4a macro calls

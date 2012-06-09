@@ -212,19 +212,26 @@ namespace smecy {
 		SageInterface::insertStatement(target, funcCall);
   }
 
-
-	void addSmecyLaunch(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap)
-	{
-		//building parameters to build the func call (bottom-up building)
-		SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(functionToMap));
-		SgName name("SMECY_launch");
-		SgType* type = SageBuilder::buildVoidType();
-		SgScopeStatement* scope = SageInterface::getScope(target);
-
-		//building the function call
-		SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
-		SageInterface::insertStatement(target, funcCall);
-	}
+/** \brief Generate the call to SMECY_launch(pe, instance, func, n_args)
+ *  in the generated code
+ *  */
+  void addSmecyLaunch(SgStatement* target,
+                      SgExpression* mapName,
+                      SgExpression* mapNumber,
+                      SgStatement* functionToMap) {
+    SgExpression* f = getFunctionRef(functionToMap);
+    // Build the expression to the number or arguments given to the function to call:
+    SgUnsignedLongVal* nb_args =
+        SageBuilder::buildUnsignedLongVal(getArgList(functionToMap)->get_expressions().size());
+    //building parameters to build the func call (bottom-up building)
+    SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(f), copy(nb_args));
+    SgName name("SMECY_launch");
+    SgType* type = SageBuilder::buildVoidType();
+    SgScopeStatement* scope = SageInterface::getScope(target);
+    //building the function call
+    SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name, type, exprList, scope);
+    SageInterface::insertStatement(target, funcCall);
+}
 
 	void addSmecySendArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value)
@@ -631,7 +638,7 @@ namespace smecy {
 
 		// Getting options in a string vector instead of argc/argv fo easier later processing:
 		std::vector<std::string> list = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
-
+#if 0
 		//openmp settings
 		CommandlineProcessing::removeArgs(list,"-rose:openmp");
 		if (CommandlineProcessing::isOption(list,"-fopenmp","",false))
@@ -643,7 +650,7 @@ namespace smecy {
 
 		if (!CommandlineProcessing::isOption(list,"--edg","(:c99|=c99)",false) and CommandlineProcessing::isOption(list,"-std","(=c99)",false))
 			list.push_back("--edg:c99");
-
+#endif
 		//include and linking smecy lib
 		std::vector<std::string>::iterator it;
 		std::string lib =  "";
@@ -929,7 +936,7 @@ namespace smecy {
 		//adding calls to SMECY API
 		addSmecySet(target, mapName, mapNumber, getFunctionRef(functionToMap));
 		processArgs(target, attribute, functionToMap);
-		addSmecyLaunch(target, mapName, mapNumber, getFunctionRef(functionToMap));
+		addSmecyLaunch(target, mapName, mapNumber, functionToMap);
 		processReturn(target, attribute, functionToMap);
 
 		//removing pragma declaration TODO free memory
