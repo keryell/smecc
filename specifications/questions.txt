@@ -1,0 +1,41 @@
+If a function return a pointer, can we have it also writing in the pointed
+zone ?
+
+  No.
+
+SMECY directive syntax:
+
+  In C/C++:
+
+    #pragma smecy ...
+
+	Use \ at the end of line for continuation information
+
+  In Fortran:
+
+    !$smecy ...
+
+	Use & at the end of line for continuation information
+
+  In other languages: use #pragma equivalent, if not available, use
+  comments à la Fortran. For example in Python:
+
+    #$smecy ...
+
+	Use & at the end of line for continuation information
+
+Use if() to predicate hardware launching
+
+If only partial elements of an out argument are written, argument should
+be declared inout
+
+arg(arg_number,<attribute_list>) :
+
+  arg_number: order of the argument we specify
+
+  in, out, inout, unused
+
+  [][] declaration size/[][]restriction size
+
+Communication model : use a virtual dash-board view for arrays. Use
+geometrical properties or #pragma to avoid communications.
