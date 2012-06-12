@@ -845,6 +845,9 @@ Few macros are necessary:
    @param pe is the symbol of a processing element, such as GPP, DSP, PE...
    @param[in] instance is the instance number of the processor element to use
    @param func is the function to load on the processor element
+
+   pe is not a string because it is easy to make a string from it but not
+   the opposite. The same for func
 */
 #define SMECY_set(pe, instance, func) ...
 
@@ -852,7 +855,7 @@ Few macros are necessary:
 
    @param pe is the symbol of a processing element, such as GPP, DSP, PE...
    @param[in] instance is the instance number of the processor element to use
-   @param func is the function to load on the processor element
+   @param func is the function running on the processor element
    @param[in] arg is the argument instance to set
    @param type is the type of the scalar argument to send
    @param[in] val is the value of the argument to send
