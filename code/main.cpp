@@ -40,3 +40,11 @@ int main(int argc, char *argv[]) {
   // Finish by calling the backend: compiler, linker...
   return backend(project);
 }
+
+
+/* A helper function to display ROSE sequence of strings from the debugger */
+void display_string_argv(Rose_STL_Container<std::string> fileList) {
+  printf("In display_string_argv: %s\n",
+         StringUtility::listToString(fileList).c_str());
+
+}

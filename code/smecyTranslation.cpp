@@ -974,7 +974,7 @@ namespace smecy {
 
       // Locate and split each stage of the loop to be pipelined
       for (size_t i = 0; i< statements.size(); i++) {
-        std::cerr << "DEBUG: " << statements[i]->unparseToString() << std::endl;
+        //std::cerr << "DEBUG: " << statements[i]->unparseToString() << std::endl;
         if (isSgPragmaDeclaration(statements[i]) and i+1!=statements.size()) {
           /* There is a pragma here.
 	           Isolate the pragma and the matching function call */
