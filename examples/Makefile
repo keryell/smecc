@@ -1,3 +1,7 @@
+# To run smecc with ROSE in verbose mode, try:
+# make ROSE_FLAGS="-rose:verbose 3"
+
+
 # -fopenmp
 
 CFLAGS=--std=c99 -DSMECY_VERBOSE -g
@@ -10,10 +14,10 @@ LOCAL_TARGET= rose_hello_world.c rose_input.c rose_input.C rose_map-tab.C \
 all: $(LOCAL_TARGET)
 
 rose_%.C: %.C
-	smecc -smecy -c $<
+	smecc -smecy -c $(ROSE_FLAGS) $<
 
 rose_%.c: %.c
-	smecc -c -smecy --std=c99 -rose:C99_only -rose:C_output_language $<
+	smecc -c -smecy --std=c99 -rose:C99_only -rose:C_output_language $(ROSE_FLAGS)$<
 
 rose_%: rose_%.C
 
