@@ -1,45 +1,30 @@
+Some information about how we get ROSE Compiler running on Debian/unstable
+for the smecc compiler from the SMECY project.
+
+Ronan.Keryell@wild-systems.com
+
+
+
 http://www.rosecompiler.org/ROSE_InstallationInstructions.pdf
 
 
-
-export LD_LIBRARY_PATH=/usr/lib/jvm/java-6-sun-1.6.0.26/jre/lib/amd64/server:$LD_LIBRARY_PATH
-
-cd ROSE
-tar zxvf rose-0.9.5a-without-EDG-14690.tar.gz
-mkdir compileTree
-cd compileTree
-../rose-0.9.5a-14690/configure --help
-../rose-0.9.5a-14690/configure
-
-
-To compile in parallel (but be carefull each g++ process takes)
-checking whether g++-4.4 accepts -g... (cached) yes
-checking dependency style of g++-4.4... (cached) none
-In configure.in ... CXX = g++-4.4
-Using back-end C++ compiler = "g++-4.4" compiler name = "g++-4.4" for processing of unparsed source files from ROSE preprocessors.
-we reached here for some reason (cannot identify back-end C++ compiler "g++-4.4")
-
-
-
-
-
-
-
-13/09/2011 :
-
 Cannot have Java compilation running:
+#export LD_LIBRARY_PATH=/usr/lib/jvm/java-6-sun-1.6.0.26/jre/lib/amd64/server:$LD_LIBRARY_PATH
 
-Install gcc-4.4 and g++-4.4
+
+Install old gcc-4.4 and g++-4.4 to be able to use precompiled version of EDG.
 
 On Debian/unstable:
 aptitude install libboost-all-dev libhpdf-dev libgcrypt11-dev
 
 
+# Create the default installation directory:
 sudo mkdir /usr/local/rose
 # Adapt here: :-)
 sudo chown keryell.keryell /usr/local/rose
 
-Work around:
+
+Make the old compiler current to be used during ROSE compilation:
 sudo rm /usr/bin/gcc
 sudo ln -s gcc-4.4 /usr/bin/gcc
 sudo rm /usr/bin/g++
@@ -47,13 +32,37 @@ sudo ln -s g++-4.4 /usr/bin/g++
 sudo rm /usr/bin/cpp
 sudo ln -s cpp-4.4 /usr/bin/cpp
 
-tar zxvf rose-0.9.5a-without-EDG-14690.tar.gz
+With a distribution, this is simple :
+tar zxvf rose-0.9.5a-without-EDG-19065.tar.gz
+
+With git :
+git clone http://www.rosecompiler.org/rose.git
+cd rose
+./build
+
+
+
+# Then begin the compilation somewhere:
 mkdir compileTree
 cd compileTree
-../rose-0.9.5a-19065/configure --prefix=/usr/local/rose --with-boost=/usr --disable-binary-analysis-tests --enable-only-c --without-java
+#../rose-0.9.5a-19065/configure --prefix=/usr/local/rose --with-boost=/usr
+# --disable-binary-analysis-tests --enable-only-c --without-java
+
+
+# Compile with --disable-projects-directory --disable-tests-directory
+# --disable-tutorial-directory because it is too slow
+../rose/configure --prefix=/usr/local/rose --with-boost=/usr --disable-binary-analysis-tests --disable-projects-directory --disable-tests-directory --disable-tutorial-directory --without-java --disable-cuda --disable-fortran --disable-opencl --disable-php --disable-ppl --disable-cloog --disable-scoplib --disable-candle --disable-python --disable-xmltest
+
 make -j4
 
 make install
+
+To avoid recompiling everything when debugging ROSE core, use
+make -C src
+and
+make install-core
+
+
 
 Then, to have C++11 support and a compiler still working with CUDA 4.2 :
 sudo rm /usr/bin/gcc
@@ -65,7 +74,12 @@ sudo ln -s cpp-4.6 /usr/bin/cpp
 
 
 
+
+
+
+
 Bug report & RFE:
+
 On Debian/unstable x86_64
 
 This should work:
