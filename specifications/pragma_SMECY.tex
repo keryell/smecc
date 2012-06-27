@@ -909,6 +909,23 @@ Few macros are necessary:
 */
 #define SMECY_get_arg_vector(pe, instance, func, arg, type, addr, size) ...
 
+/* Prepare the retrieving of a vector value that will be computed by a
+   function on a processing element.
+
+   Typically, it can be used to allocate software or hardware resources
+   for the later SMECY_get_arg_vector().
+
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function to load on the processor element
+   @param[in] arg is the argument instance to retrieve
+   @param type is the type of the vector element
+   @param[out] addr is the starting address of the vector to write in
+               caller memory
+   @param[in] size is the length of the vector
+*/
+#define SMECY_future_get_arg_vector(pe, instance, func, arg, type, addr, size) ...
+
 /* Reset a processing element to execute a function
 
    @param pe is the symbol of a processing element, such as GPP, DSP, PE...

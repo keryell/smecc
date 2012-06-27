@@ -1,3 +1,8 @@
+/* SMECY low-level runtime implementation
+
+   Ronan.Keryell@silkan.com
+*/
+
 #ifndef SMECY_LIB_H
 #define SMECY_LIB_H
 
@@ -9,23 +14,26 @@
 #define SMECY_PRINT_VERBOSE(format, ...)
 #endif
 
-//prototypes for the smecy library
-//note that it can only work if the code maps only the square_symmetry function
+
+// Prototypes for the smecy library
 #define SMECY_set(pe, instance, func) \
   SMECY_PRINT_VERBOSE("Preparing to launch function \"%s\" on processor \"%s\" n° %d\n", \
 		      #func, #pe, instance);
 
 #define SMECY_send_arg(pe, instance, func, arg, type, value) \
   SMECY_PRINT_VERBOSE("Sending %s to function \"%s\" on processor \"%s\" n° %d\n", \
-		      #type, #func, #pe, instance) \
+		      #type, #func, #pe, instance)			\
   type pe##_##instance##_##func##_##arg = value
 
 #define SMECY_send_arg_vector(pe, instance, func, arg, type, value, size) \
   SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s to function \"%s\" on processor \"%s\" n° %d\n", \
-		      (size_t) #size, #type, #func, #pe, instance)		\
-	type* pe##_##instance##_##func##_##arg = (int*)value
+		      (size_t) #size, #type, #func, #pe, instance)	\
+  type* pe##_##instance##_##func##_##arg = (int*)value
 
+// Old stuff to clean...
 #if 0
+// Note that it can only work if the code maps only the square_symmetry
+// function
 #define SMECY_launch(pe, instance, func, n_args)			\
   { if (#func == "square_symmetry")					\
       square_symmetry_smecy( pe##_square_symmetry_1,			\
@@ -43,6 +51,10 @@
 
 #define SMECY_get_arg_vector(pe, instance, func, arg, type, addr, size) \
 	SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address %p from argument %zd of function \"%s\" on processor \"%s\" n° %d\n", \
+			    (size_t) size, #type, addr, arg, #func, #pe, instance)
+
+#define SMECY_future_get_arg_vector(pe, instance, func, arg, type, addr, size) \
+	SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements of %s at address %p from argument %zd of function \"%s\" on processor \"%s\" n° %d\n", \
 			    (size_t) size, #type, addr, arg, #func, #pe, instance)
 
 #define SMECY_get_return(pe, instance, func, type) \

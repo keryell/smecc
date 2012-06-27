@@ -326,6 +326,20 @@ namespace smecy {
     SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name,
         type, exprList, scope);
     SageInterface::insertStatement(target, funcCall, false);
+
+    /* Add also insert a function to prepare this reception before
+       the function call, for example to allocate some buffers
+        or open some channels */
+    argNumberExpr = SageBuilder::buildIntVal(argNumber);
+    exprList = SageBuilder::buildExprListExp(copy(mapName),
+        copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
+        copy(typeDescriptor), copy(value), copy(size));
+    SgName name_future("SMECY_future_get_arg_vector");
+    type = SageBuilder::buildVoidType();
+    // Building the function call
+    funcCall = SageBuilder::buildFunctionCallStmt(name_future,
+        type, exprList, scope);
+    SageInterface::insertStatement(target, funcCall);
   }
 
 
