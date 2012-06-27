@@ -8,6 +8,8 @@ CXX					= g++
 LEX					= flex
 YACC				= bison
 CPPFLAGS			=
+# -Wno-write-strings to avoid messages such as:
+# smecyParser.tab.cc:1935:35: warning: deprecated conversion from string constant to ‘char*’ [-Wwrite-strings]
 CXXFLAGS			= -g -Wall -Wno-write-strings -std=c++0x
 LEXFLAGS			=
 YACCFLAGS			= -d
@@ -20,7 +22,9 @@ allFiles = smecc smecc_identity
 
 all: $(allFiles)
 
-smecc: main.o public.o smecyAttribute.o smecyTranslation.o lex.yy.o smecyParser.tab.o
+# Put "lex.yy.o smecyParser.tab.o" first to speed up compilation through
+# make -jx since it is the longer path:
+smecc: lex.yy.o smecyParser.tab.o main.o public.o smecyAttribute.o smecyTranslation.o
 	@echo [Linking]
 	libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CXXLDFLAGS) -I$(ROSE_DIR)/include $(BOOST_CPPFLAGS) -L$(ROSE_DIR)/lib -o $@ $^ -lrose
 
