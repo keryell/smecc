@@ -221,8 +221,8 @@ namespace smecy {
                       SgStatement* functionToMap) {
     SgExpression* f = getFunctionRef(functionToMap);
     // Build the expression to the number or arguments given to the function to call:
-    SgUnsignedLongVal* nb_args =
-        SageBuilder::buildUnsignedLongVal(getArgList(functionToMap)->get_expressions().size());
+    SgIntVal* nb_args =
+        SageBuilder::buildIntVal(getArgList(functionToMap)->get_expressions().size());
     //building parameters to build the func call (bottom-up building)
     SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName), copy(mapNumber), copy(f), copy(nb_args));
     SgName name("SMECY_launch");
