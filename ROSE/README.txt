@@ -96,10 +96,12 @@ we reached here for some reason (cannot identify back-end C++ compiler "g++-4.4"
 I suggest testing only that $CC and $CXX start with their respective basic names...
 
 Work around:
-rm /usr/bin/gcc
-ln -s gcc-4.4 /usr/bin/gcc
-rm /usr/bin/g++
-ln -s g++-4.4 /usr/bin/g++
+sudo rm /usr/bin/gcc
+sudo ln -s gcc-4.4 /usr/bin/gcc
+sudo rm /usr/bin/g++
+sudo ln -s g++-4.4 /usr/bin/g++
+sudo rm /usr/bin/cpp
+sudo ln -s cpp-4.4 /usr/bin/cpp
 
 By comparison F77=gfortran-4.4 works fine, but using gfortran 4.6 by default works too...
 
