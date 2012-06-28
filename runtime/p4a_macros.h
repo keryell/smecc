@@ -8,7 +8,7 @@
 #define P4A_MAX_STREAMING_NODES 32
 
 static int p4a_next_stream = 0;
-DbLink p4a_streaming_buffers[P4A_MAX_STREAMING_LOOPS][P4A_MAX_STREAMING_NODES];
+//DbLink p4a_streaming_buffers[P4A_MAX_STREAMING_LOOPS][P4A_MAX_STREAMING_NODES];
 
 //TODO for loop and nbNodes param
 #define P4A_init_stream(stream, nbstreams)\

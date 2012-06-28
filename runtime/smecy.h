@@ -15,20 +15,38 @@
 #endif
 
 
-// Prototypes for the smecy library
-#define SMECY_set(pe, instance, func) \
-  SMECY_PRINT_VERBOSE("Preparing to launch function \"%s\" on processor \"%s\" n° %d\n", \
-		      #func, #pe, instance);
+/* Load the implementations */
+//#ifdef SMECY_OPENMP
+#include <smecy_openmp.h>
+//#endif
 
-#define SMECY_send_arg(pe, instance, func, arg, type, value) \
-  SMECY_PRINT_VERBOSE("Sending %s to function \"%s\" on processor \"%s\" n° %d\n", \
-		      #type, #func, #pe, instance)			\
-  type pe##_##instance##_##func##_##arg = value
+
+/* SMECY_IMP_ are the real implementations doing the real work, to be
+   defined somewhere else. */
+
+// Prototypes for the smecy library
+#define SMECY_set(pe, instance, func)					\
+  do {									\
+    SMECY_PRINT_VERBOSE("Preparing to launch function \"%s\" on processor \"%s\" n° %d\n", \
+			#func, #pe, instance);				\
+    SMECY_IMP_set(pe, instance, func);					\
+  } while(0)
+
+#define SMECY_send_arg(pe, instance, func, arg, type, value)		\
+  do {									\
+    SMECY_PRINT_VERBOSE("Sending %s to function \"%s\" on processor \"%s\" n° %d\n", \
+			#type, #func, #pe, instance)			\
+      type pe##_##instance##_##func##_##arg = value			\
+      SMECY_IMP_send_arg(pe, instance, func, arg, type, value);		\
+  } while(0)
 
 #define SMECY_send_arg_vector(pe, instance, func, arg, type, value, size) \
-  SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s to function \"%s\" on processor \"%s\" n° %d\n", \
-		      (size_t) #size, #type, #func, #pe, instance)	\
-  type* pe##_##instance##_##func##_##arg = (int*)value
+  do {									\
+    SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s to function \"%s\" on processor \"%s\" n° %d\n", \
+			(size_t) #size, #type, #func, #pe, instance)	\
+      type* pe##_##instance##_##func##_##arg = (int*)value		\
+      SMECY_IMP_send_arg_vector(pe, instance, func, arg, type, value, size); \
+  } while(0)
 
 // Old stuff to clean...
 #if 0
@@ -45,21 +63,33 @@
   }
 #else
 #define SMECY_launch(pe, instance, func, n_args)			\
-  SMECY_PRINT_VERBOSE("Running function \"%s\" with %zd arguments on processor \"%s\" n° %d\n", \
-		      #func, (size_t) n_args, #pe, instance);
+  do {									\
+    SMECY_PRINT_VERBOSE("Running function \"%s\" with %zd arguments on processor \"%s\" n° %d\n", \
+			#func, (size_t) n_args, #pe, instance);		\
+    SMECY_IMP_launch(pe, instance, func, n_args);			\
+  } while(0)
 #endif
 
 #define SMECY_get_arg_vector(pe, instance, func, arg, type, addr, size) \
-	SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address %p from argument %zd of function \"%s\" on processor \"%s\" n° %d\n", \
-			    (size_t) size, #type, addr, arg, #func, #pe, instance)
+  do {									\
+    SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address %p from argument %zd of function \"%s\" on processor \"%s\" n° %d\n", \
+			(size_t) size, #type, addr, arg, #func, #pe, instance); \
+    SMECY_IMP_get_arg_vector(pe, instance, func, arg, type, addr, size); \
+  } while(0)
 
 #define SMECY_future_get_arg_vector(pe, instance, func, arg, type, addr, size) \
-	SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements of %s at address %p from argument %zd of function \"%s\" on processor \"%s\" n° %d\n", \
-			    (size_t) size, #type, addr, arg, #func, #pe, instance)
+  do {									\
+    SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements of %s at address %p from argument %zd of function \"%s\" on processor \"%s\" n° %d\n", \
+			(size_t) size, #type, addr, arg, #func, #pe, instance); \
+    SMECY_IMP_future_get_arg_vector(pe, instance, func, arg, type, addr, size);	\
+  } while(0)
 
-#define SMECY_get_return(pe, instance, func, type) \
-	SMECY_PRINT_VERBOSE("Returning %s from function \"%s\" on processor \"%s\" n° %d\n", \
-		      #type, #func, #pe, instance)
+#define SMECY_get_return(pe, instance, func, type)			\
+  do {									\
+    SMECY_PRINT_VERBOSE("Returning %s from function \"%s\" on processor \"%s\" n° %d\n", \
+			#type, #func, #pe, instance);			\
+    SMECY_IMP_get_return(pe, instance, func, type);			\
+  } while(0)
 
 
 void square_symmetry_smecy(int width, int height, int* image,
@@ -68,6 +98,7 @@ void square_symmetry_smecy(int width, int height, int* image,
 // RK: je ne suis pas sûr que cette histoire de DbLink devrait apparaître
 // Pourquoi int ?
 
+#if 0
 //prototypes for the stream library
 typedef int DbLink;
 
@@ -76,5 +107,7 @@ void* DbLinkGetInitBuf(DbLink outputLink) { return NULL; }
 void* DbLinkGetData(DbLink inputLink) { return NULL; }
 void* DbLinkPutData(DbLink inputLink) { return NULL; }
 int pth_CreateProcess(int (*f)(), ...) {return 0;}
+
+#endif
 
 #endif //SMECY_LIB_H
