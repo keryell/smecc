@@ -274,71 +274,55 @@ namespace smecy {
   }
 
 
-  /** \brief Generate the call to SMECY_send_arg_vector(pe, instance, func, arg, type, value, size)
-   *  in the generated code
-   *  */
-  void addSmecySendArgVector(SgStatement* target,
-                             SgExpression* mapName,
-                             SgExpression* mapNumber,
-                             SgExpression* functionToMap,
-                             int argNumber,
-                             SgExpression* typeDescriptor,
-                             SgExpression* value,
-                             SgExpression* size) {
+  /** \brief Generate a call to a runtime function to transfer a vector
+      argument before or after the function call.
+
+      Generate a call to
+      SMECY_send_arg_vector()/SMECY_cleanup_send_arg_vector(),
+      SMECY_update_arg_vector()/SMECY_cleanup_update_arg_vector(),
+      SMECY_prepare_get_arg_vector()/SMECY_get_arg_vector()
+      with parameters (pe, instance, func, arg, type, addr, size)
+      according to argType and before
+  */
+  void addSmecyTransferVector(SgStatement* target,
+			      SgExpression* mapName,
+			      SgExpression* mapNumber,
+			      SgExpression* functionToMap,
+			      int argNumber,
+			      SgExpression* typeDescriptor,
+			      SgExpression* value,
+			      SgExpression* size,
+			      ArgType argType,
+			      bool before) {
+    // Select the right runtime function to add:
+    std::string name;
+    switch (argType) {
+    case _arg_in:
+      name = before ? "SMECY_send_arg_vector" : "SMECY_cleanup_send_arg_vector";
+      break;
+    case _arg_out:
+      name = before ? "SMECY_prepare_get_arg_vector" : "SMECY_get_arg_vector";
+      break;
+    case _arg_inout:
+      name = before ? "SMECY_update_arg_vector" : "SMECY_cleanup_update_arg_vector";
+      break;
+    default:
+      // The argument is not used, useless to deal insert any transfer
+      ;
+    };
     // Building parameters to build the func call (bottom-up building)
     SgExpression* argNumberExpr = SageBuilder::buildIntVal(argNumber);
     SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName),
         copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
         copy(typeDescriptor), copy(value), copy(size));
-    SgName name("SMECY_send_arg_vector");
     SgType* type = SageBuilder::buildVoidType();
     SgScopeStatement* scope = SageInterface::getScope(target);
 
     // Building the function call
-    SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name,
-        type, exprList, scope);
-    SageInterface::insertStatement(target, funcCall);
-  }
-
-
-  /** \brief Generate the call to SMECY_get_arg_vector(pe, instance, func, arg, type, addr, size)
-   *  in the generated code
-   *  */
-  void addSmecyGetArgVector(SgStatement* target,
-                            SgExpression* mapName,
-                            SgExpression* mapNumber,
-                            SgExpression* functionToMap,
-                            int argNumber,
-                            SgExpression* typeDescriptor,
-                            SgExpression* value,
-                            SgExpression* size) {
-    // Building parameters to build the func call (bottom-up building)
-    SgExpression* argNumberExpr = SageBuilder::buildIntVal(argNumber);
-    SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName),
-        copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
-        copy(typeDescriptor), copy(value), copy(size));
-    SgName name("SMECY_get_arg_vector");
-    SgType* type = SageBuilder::buildVoidType();
-    SgScopeStatement* scope = SageInterface::getScope(target);
-
-    // Building the function call
-    SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name,
-        type, exprList, scope);
-    SageInterface::insertStatement(target, funcCall, false);
-
-    /* Add also insert a function to prepare this reception before
-       the function call, for example to allocate some buffers
-        or open some channels */
-    argNumberExpr = SageBuilder::buildIntVal(argNumber);
-    exprList = SageBuilder::buildExprListExp(copy(mapName),
-        copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
-        copy(typeDescriptor), copy(value), copy(size));
-    SgName name_future("SMECY_future_get_arg_vector");
-    type = SageBuilder::buildVoidType();
-    // Building the function call
-    funcCall = SageBuilder::buildFunctionCallStmt(name_future,
-        type, exprList, scope);
-    SageInterface::insertStatement(target, funcCall);
+    SgExprStatement* funcCall =
+      SageBuilder::buildFunctionCallStmt(SgName { name },
+                                         type, exprList, scope);
+    SageInterface::insertStatement(target, funcCall, before);
   }
 
 
@@ -587,10 +571,8 @@ namespace smecy {
         // Vector arg
         SgExpression* typeDescriptor = getArgVectorTypeDescriptor(functionToMap, i-1);
         SgExpression* argSize = attribute->argSizeExp(i);
-        if (argType == _arg_in or argType == _arg_inout)
-          addSmecySendArgVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize);
-        if (argType == _arg_out or argType == _arg_inout)
-          addSmecyGetArgVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize);
+        addSmecyTransferVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize, argType, true);
+        addSmecyTransferVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize, argType, false);
       }
     }
   }
@@ -969,8 +951,8 @@ namespace smecy {
   }
 
 
-  /* \brief
-
+  /* \brief Compile a loop with a streaming pragma into a new loop with
+     the pipeline stages, calling the runtime
    */
   void translateStreaming(SgProject *p) {
     // For all files of the project:

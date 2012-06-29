@@ -42,11 +42,37 @@
                       "\"%s\" n° %d\n", #type, #func, #pe, instance)    \
   SMECY_IMP_send_arg(pe, instance, func, arg, type, value)
 
+#define SMECY_cleanup_send_arg(pe, instance, func, arg, type, value)	\
+  SMECY_PRINT_VERBOSE("Deal with post-sending %s to function"		\
+		      " \"%s\" on processor "				\
+                      "\"%s\" n° %d\n", #type, #func, #pe, instance)    \
+  SMECY_IMP_cleanup_send_arg(pe, instance, func, arg, type, value)
+
 #define SMECY_send_arg_vector(pe, instance, func, arg, type, value, size) \
   SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s to "        \
                       "function  \"%s\" on processor \"%s\" n° %d\n",   \
                       (size_t) #size, #type, #func, #pe, instance)      \
   SMECY_IMP_send_arg_vector(pe, instance, func, arg, type, value, size)
+
+#define SMECY_cleanup_send_arg_vector(pe, instance, func, arg, type, value, size) \
+  SMECY_PRINT_VERBOSE("Deal with post-sending vector of"		\
+		      " %zd elements of %s to "				\
+                      "function  \"%s\" on processor \"%s\" n° %d\n",   \
+                      (size_t) #size, #type, #func, #pe, instance)      \
+  SMECY_IMP_cleanup_send_arg_vector(pe, instance, func, arg, type, value, size)
+
+#define SMECY_update_arg_vector(pe, instance, func, arg, type, value, size) \
+  SMECY_PRINT_VERBOSE("Update by sending vector of %zd elements of %s to " \
+                      "function  \"%s\" on processor \"%s\" n° %d\n",   \
+                      (size_t) #size, #type, #func, #pe, instance)      \
+  SMECY_IMP_update_arg_vector(pe, instance, func, arg, type, value, size)
+
+#define SMECY_cleanup_update_arg_vector(pe, instance, func, arg, type, value, size) \
+  SMECY_PRINT_VERBOSE("Udate by receiving-sending vector of"		\
+		      " %zd elements of %s to "				\
+                      "function  \"%s\" on processor \"%s\" n° %d\n",   \
+                      (size_t) #size, #type, #func, #pe, instance)      \
+  SMECY_IMP_cleanup_update_arg_vector(pe, instance, func, arg, type, value, size)
 
 // Old stuff to clean...
 #if 0
@@ -69,19 +95,19 @@
   SMECY_IMP_launch(pe, instance, func, n_args)
 #endif
 
+#define SMECY_prepare_get_arg_vector(pe, instance, func, arg, type, addr, size) \
+  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
+                      "of %s at address %p from argument %zd of "       \
+                      "function \"%s\" on processor \"%s\" n° %d\n",    \
+                      (size_t) size, #type, addr, arg, #func, #pe, instance) \
+  SMECY_IMP_prepare_get_arg_vector(pe, instance, func, arg, type, addr, size)
+
 #define SMECY_get_arg_vector(pe, instance, func, arg, type, addr, size) \
   SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address" \
                       " %p from argument %zd of function \"%s\" on "    \
                       "processor \"%s\" n° %d\n",                       \
                       (size_t) size, #type, addr, arg, #func, #pe, instance) \
   SMECY_IMP_get_arg_vector(pe, instance, func, arg, type, addr, size)
-
-#define SMECY_future_get_arg_vector(pe, instance, func, arg, type, addr, size) \
-  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
-                      "of %s at address %p from argument %zd of "       \
-                      "function \"%s\" on processor \"%s\" n° %d\n",    \
-                      (size_t) size, #type, addr, arg, #func, #pe, instance) \
-  SMECY_IMP_future_get_arg_vector(pe, instance, func, arg, type, addr, size)
 
 #define SMECY_get_return(pe, instance, func, type)                      \
   SMECY_PRINT_VERBOSE("Returning %s from function \"%s\" on processor"  \
