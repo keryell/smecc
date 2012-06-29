@@ -43,6 +43,13 @@ rose_%: rose_%.o smecy.o
 run_%: %
 	./$<
 
+multiple_compilation_unit_a: multiple_compilation_unit_b.o
+rose_multiple_compilation_unit_a: rose_multiple_compilation_unit_b.o
+
+multiple_compilation_unit_a_cpp: multiple_compilation_unit_b_cpp.o
+rose_multiple_compilation_unit_a_cpp: rose_multiple_compilation_unit_b_cpp.o
+
+
 #rose_multiple_compilation_unit_a.c + rose_multiple_compilation_unit_b.c: multiple_compilation_unit_a.c multiple_compilation_unit_b.c multiple_compilation_unit.h
 #	smecc -c -smecy --std=c99 multiple_compilation_unit_a.c multiple_compilation_unit_b.c
 
