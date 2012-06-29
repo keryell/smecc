@@ -30,8 +30,8 @@ namespace smecy
 	SgExpression* smecyReturn(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, SgType* returnType);
 
 	//functions that add p4a macro calls
-	SgExprStatement* addP4aMacro(std::string name, int arg1, SgScopeStatement* scope);
-	SgExprStatement* addP4aMacro(std::string name, int arg1, int arg2, SgScopeStatement* scope);
+	SgExprStatement* addSmecyMacro(std::string name, int arg1, SgScopeStatement* scope);
+	SgExprStatement* addSmecyMacro(std::string name, int arg1, int arg2, SgScopeStatement* scope);
 
 	//high-level functions
 	void processArgs(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);

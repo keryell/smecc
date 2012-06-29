@@ -6,12 +6,12 @@
 #ifndef SMECY_LIB_H
 #define SMECY_LIB_H
 
-#include <stdio.h>
 #ifdef SMECY_VERBOSE
-#define SMECY_PRINT_VERBOSE(format, ...) \
-  fprintf(stderr, format, __VA_ARGS__);
+#include <stdio.h>
+#define SMECY_PRINT_VERBOSE(...) \
+  fprintf(stderr, __VA_ARGS__);
 #else
-#define SMECY_PRINT_VERBOSE(format, ...)
+#define SMECY_PRINT_VERBOSE(...)
 #endif
 
 
@@ -28,19 +28,23 @@
    anywhere as an instruction since it create a new scope that prevent C99
    declarations of variables to be used later. */
 
-// Prototypes for the smecy library
+
+/* Interface macros to deal with mapping and function executions */
+
+
 #define SMECY_set(pe, instance, func)                                   \
-  SMECY_PRINT_VERBOSE("Preparing to launch function \"%s\" on processor \"%s\" n° %d\n", \
-                      #func, #pe, instance)                             \
+  SMECY_PRINT_VERBOSE("Preparing to launch function \"%s\" on "         \
+                      "processor \"%s\" n° %d\n", #func, #pe, instance) \
   SMECY_IMP_set(pe, instance, func)
 
 #define SMECY_send_arg(pe, instance, func, arg, type, value)            \
-  SMECY_PRINT_VERBOSE("Sending %s to function \"%s\" on processor \"%s\" n° %d\n", \
-                      #type, #func, #pe, instance)                      \
+  SMECY_PRINT_VERBOSE("Sending %s to function \"%s\" on processor "     \
+                      "\"%s\" n° %d\n", #type, #func, #pe, instance)    \
   SMECY_IMP_send_arg(pe, instance, func, arg, type, value)
 
 #define SMECY_send_arg_vector(pe, instance, func, arg, type, value, size) \
-  SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s to function \"%s\" on processor \"%s\" n° %d\n", \
+  SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s to "        \
+                      "function  \"%s\" on processor \"%s\" n° %d\n",   \
                       (size_t) #size, #type, #func, #pe, instance)      \
   SMECY_IMP_send_arg_vector(pe, instance, func, arg, type, value, size)
 
@@ -59,43 +63,69 @@
   }
 #else
 #define SMECY_launch(pe, instance, func, n_args)                        \
-  SMECY_PRINT_VERBOSE("Running function \"%s\" with %zd arguments on processor \"%s\" n° %d\n", \
+  SMECY_PRINT_VERBOSE("Running function \"%s\" with %zd arguments on "  \
+                      "processor \"%s\" n° %d\n",                       \
                       #func, (size_t) n_args, #pe, instance)            \
   SMECY_IMP_launch(pe, instance, func, n_args)
 #endif
 
 #define SMECY_get_arg_vector(pe, instance, func, arg, type, addr, size) \
-  SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address %p from argument %zd of function \"%s\" on processor \"%s\" n° %d\n", \
+  SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address" \
+                      " %p from argument %zd of function \"%s\" on "    \
+                      "processor \"%s\" n° %d\n",                       \
                       (size_t) size, #type, addr, arg, #func, #pe, instance) \
   SMECY_IMP_get_arg_vector(pe, instance, func, arg, type, addr, size)
 
 #define SMECY_future_get_arg_vector(pe, instance, func, arg, type, addr, size) \
-  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements of %s at address %p from argument %zd of function \"%s\" on processor \"%s\" n° %d\n", \
+  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
+                      "of %s at address %p from argument %zd of "       \
+                      "function \"%s\" on processor \"%s\" n° %d\n",    \
                       (size_t) size, #type, addr, arg, #func, #pe, instance) \
   SMECY_IMP_future_get_arg_vector(pe, instance, func, arg, type, addr, size)
 
 #define SMECY_get_return(pe, instance, func, type)                      \
-  SMECY_PRINT_VERBOSE("Returning %s from function \"%s\" on processor \"%s\" n° %d\n", \
-                      #type, #func, #pe, instance)                      \
+  SMECY_PRINT_VERBOSE("Returning %s from function \"%s\" on processor"  \
+                      " \"%s\" n° %d\n", #type, #func, #pe, instance)   \
   SMECY_IMP_get_return(pe, instance, func, type)
 
 
-void square_symmetry_smecy(int width, int height, int* image,
-                     int square_size, int x_offset, int y_offset) ;
+//void square_symmetry_smecy(int width, int height, int* image,
+//                     int square_size, int x_offset, int y_offset) ;
 
-// RK: je ne suis pas sûr que cette histoire de DbLink devrait apparaître
-// Pourquoi int ?
 
-#if 0
-//prototypes for the stream library
-typedef int DbLink;
+/* Interface macros to deal with streaming */
 
-DbLink pth_CreateDbLink(int size) { return (DbLink)0; }
-void* DbLinkGetInitBuf(DbLink outputLink) { return NULL; }
-void* DbLinkGetData(DbLink inputLink) { return NULL; }
-void* DbLinkPutData(DbLink inputLink) { return NULL; }
-int pth_CreateProcess(int (*f)(), ...) {return 0;}
+#define SMECY_init_stream(stream, nbstreams)                            \
+  SMECY_PRINT_VERBOSE("Init stream %d among 0..%d\n", stream, nbstreams) \
+  SMECY_IMP_init_stream(stream, nbstreams)
 
-#endif
+#define SMECY_launch_stream(stream, node)                               \
+  SMECY_PRINT_VERBOSE("Launch node %d from stream %d\n", node, stream)  \
+  SMECY_IMP_launch_stream(stream, node)
+
+#define SMECY_stream_get_init_buf(stream, node)                         \
+  SMECY_PRINT_VERBOSE("Init get buffer on node %d from stream %d\n",    \
+                      node, stream)                                     \
+  SMECY_IMP_stream_get_init_buf(stream, node)
+
+#define SMECY_stream_put_data(stream, node)                             \
+  SMECY_PRINT_VERBOSE("Post data for next stage on node %d from stream %d\n", \
+                      node, stream)                                     \
+  SMECY_IMP_stream_put_data(stream, node)
+
+#define SMECY_stream_get_data(stream, node)                     \
+  SMECY_PRINT_VERBOSE("Get data from previous stage on node %d" \
+                      " from stream %d\n", node, stream)        \
+  SMECY_IMP_stream_get_data(stream, node)
+
+#define SMECY_stream_copy_data(stream, node)                            \
+  SMECY_PRINT_VERBOSE("Copy data from previous stage to next stage"     \
+                      " unchanged on node %d from stream %d\n", node, stream) \
+  SMECY_IMP_stream_copy_data(stream, node)
+
+/* Wait to the end of the application with Unix system-call: */
+#define SMECY_wait_for_the_end()                                \
+  SMECY_PRINT_VERBOSE("Waiting the end of the program\n")       \
+  SMECY_IMP_wait_for_the_end()
 
 #endif //SMECY_LIB_H
