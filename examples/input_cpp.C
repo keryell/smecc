@@ -1,31 +1,31 @@
-#include <stdio.h>
+#include <iostream>
 
-void stuff(int thing)
-{
-	
+void produce(double* v) {
+  static int seed = 0;
+  *v = seed++;
 }
 
-void stuff2(int thing, int other_thing)
-{
-	
+void scale(double* v, int factor) {
+  *v *= factor;
 }
 
-int main()
-{
-	unsigned int tab[10][100];
-		
-	int b=sizeof(int);
-	int c=3;
-	#pragma smecy stream_loop
-	while (1)
-	{
-		#pragma smecy stream_node(1) arg(1,out) map(PE,1)
-			stuff(b);
-		#pragma smecy stream_node(2) arg(1,inout)
-			stuff2(b,c);
-		#pragma smecy stream_node(2) arg(1,in)
-			stuff(b);
+void display(double* v) {
+  std::cout << *v << " ";
+}
+
+
+int main() {
+  double value[1];
+  int c = 3;
+#pragma smecy stream_loop
+  while (1) {
+#pragma smecy stream_node(1) arg(1,out) map(PE,1)
+      produce(value);
+#pragma smecy stream_node(2) arg(1,inout) map(CPU, 5)
+      scale(value, c);
+#pragma smecy stream_node(2) arg(1,in) map(GPU, 46)
+      display(value);
 	}
-	
-	return 0;
+
+  return 0;
 }
