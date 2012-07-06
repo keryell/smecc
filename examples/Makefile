@@ -9,7 +9,9 @@ SMECY_INC=../runtime
 CFLAGS=--std=c99 -DSMECY_VERBOSE -g -I$(SMECY_INC)
 CXXFLAGS=--std=c++0x -DSMECY_VERBOSE -g -I$(SMECY_INC)
 
-LOCAL_SRC= hello_world.c input.c input_cpp.C map-tab.C \
+# All the sources to compile:
+# Skip map-tab_cpp.C.bug
+LOCAL_SRC= hello_world.c input.c input_cpp.C map-tab.c \
 	multiple_compilation_unit_a.c multiple_compilation_unit_b.c \
 	multiple_compilation_unit_a_cpp.C multiple_compilation_unit_b_cpp.C \
 	simple_map.C smecy.c
@@ -36,13 +38,12 @@ rose_%.c: %.c
 	smecc -c -smecy --std=c99 -rose:C99_only -rose:C_output_language \
 		$(ROSE_FLAGS) -I$(SMECY_INC) $<
 
-rose_%: rose_%.C
+rose_%: rose_%.c smecy.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 # Specific C++ compiler for C++ linking:
-rose_%_cpp: rose_%_cpp.o smecy.o
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
-
-rose_%: rose_%.o smecy.o
+rose_%: rose_%.C smecy.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 run_%: %
 	./$<
