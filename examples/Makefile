@@ -38,6 +38,10 @@ rose_%.c: %.c
 
 rose_%: rose_%.C
 
+# Specific C++ compiler for C++ linking:
+rose_%_cpp: rose_%_cpp.o smecy.o
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+
 rose_%: rose_%.o smecy.o
 
 run_%: %
