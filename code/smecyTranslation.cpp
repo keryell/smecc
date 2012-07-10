@@ -805,14 +805,14 @@ namespace smecy {
    */
 
   /* Create a variable named smecy_stream_buffer of type struct
-   * smecy_buffer_type_<n> where n is the stream_loop number
+   * smecy_stream_buffer_type_<n> where n is the stream_loop number
    */
   void addBufferVariablesDeclarations(int nLoop, SgScopeStatement* scope,
                                       SgStatement* functionCall,
                                       std::string varName) {
     // Construct the type including the loop number:
     std::stringstream ss { "" };
-    ss << "struct smecy_buffer_type_" << nLoop;
+    ss << "struct smecy_stream_buffer_type_" << nLoop;
     SgType* type =
       SageBuilder::buildPointerType(SageBuilder::buildOpaqueType(ss.str(),
                                                                  scope));
@@ -825,7 +825,7 @@ namespace smecy {
   }
 
 
-  /* \brief define type smecy_buffer_type_<n>* where n is the stream_loop
+  /* \brief define type smecy_stream_buffer_type_<n>* where n is the stream_loop
      number
 
      this is a struct containing all the variables forming the
@@ -837,7 +837,7 @@ namespace smecy {
                         SgScopeStatement* scope) {
     // Build the struct name:
     std::stringstream ss { "" };
-    ss << "smecy_buffer_type_" << attribute->getStreamLoop();
+    ss << "smecy_stream_buffer_type_" << attribute->getStreamLoop();
     // Add the struct declaration and definition:
     SgClassDeclaration* structDecl =
       SageBuilder::buildStructDeclaration(ss.str(), scope);
