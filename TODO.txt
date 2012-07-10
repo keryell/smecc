@@ -1,0 +1,5 @@
+2012/06/29 :
+
+Parameter of a function in a streamed loop should be given to
+smecy_stream_node_*_*()
+
