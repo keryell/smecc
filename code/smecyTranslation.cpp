@@ -1127,7 +1127,7 @@ namespace smecy {
       SageInterface::insertStatement(target,
                                      addSmecyMacro("SMECY_init_stream",
                                                  attribute->getStreamLoop(),
-                                                 streamNodes.size()-1,
+                                                 streamNodes.size(),
                                                  scope));
 
       // Add the thread launching for each pipeline stage with the loop number
