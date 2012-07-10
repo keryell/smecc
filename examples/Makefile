@@ -6,8 +6,8 @@ SMECY_INC=../runtime
 
 # -fopenmp
 
-CFLAGS=--std=c99 -DSMECY_VERBOSE -g -I$(SMECY_INC)
-CXXFLAGS=--std=c++0x -DSMECY_VERBOSE -g -I$(SMECY_INC)
+CFLAGS=--std=c99 -fopenmp -DSMECY_VERBOSE -g -I$(SMECY_INC)
+CXXFLAGS=--std=c++0x -fopenmp -DSMECY_VERBOSE -g -I$(SMECY_INC)
 
 # All the sources to compile:
 # Skip map-tab_cpp.C.bug

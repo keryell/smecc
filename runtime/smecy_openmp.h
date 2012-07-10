@@ -34,10 +34,10 @@
 
 #define  SMECY_IMP_cleanup_send_arg_vector(pe, instance, func, arg, type, addr, size)
 
-#define  SMECY_IMP_update_arg_vector(pe, instance, func, arg, type, value, size) \
+#define  SMECY_IMP_update_arg_vector(pe, instance, func, arg, type, addr, size) \
   type* SMECY_IMP_VAR_ARG(pe, instance, func, arg) = addr
 
-#define  SMECY_IMP_cleanup_update_arg_vector(pe, instance, func, arg, type, value, size)
+#define  SMECY_IMP_cleanup_update_arg_vector(pe, instance, func, arg, type, addr, size)
 
 #define SMECY_IMP_launch(pe, instance, func, n_args)    \
   SMECY_IMP_launch_##n_args(pe, instance, func)
@@ -45,9 +45,9 @@
 #define SMECY_IMP_prepare_get_arg_vector(pe, instance, func, arg, type, addr, size) \
   type* SMECY_IMP_VAR_ARG(pe, instance, func, arg) = addr
 
-#define SMECY_IMP_get_arg_vector(pe, instance, func, arg, type, addr, size) \
-  SMECY_IMP_VAR_ARG(pe, instance, func, arg)
+#define SMECY_IMP_get_arg_vector(pe, instance, func, arg, type, addr, size)
 
+/* TODO: To be implemented... */
 #define SMECY_IMP_get_return(pe, instance, func, type)
 
 /* Implementation of the function calls themselves */
