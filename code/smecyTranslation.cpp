@@ -882,7 +882,7 @@ namespace smecy {
   */
   SgStatement* buildNodeWhileBody(SgStatement* functionToMap,
                                   int nLoop,
-                                  int nNode,
+                                  int nStage,
                                   SgScopeStatement* scope,
                                   bool in,
                                   bool out,
@@ -908,15 +908,15 @@ namespace smecy {
     if (in)
       // Not the first node, we need to copy the input buffer to the output
       SageInterface::appendStatement(addSmecyMacro("SMECY_stream_get_data",
-                                                   nLoop, nNode-1, scope),
+                                                   nLoop, nStage-1, scope),
                                      body);
     if (in and out)
       SageInterface::appendStatement(addSmecyMacro("SMECY_stream_copy_data",
-                                                   nLoop, nNode, scope), body);
+                                                   nLoop, nStage, scope), body);
     SageInterface::appendStatement(funcCall, body);
     if (out)
       SageInterface::appendStatement(addSmecyMacro("SMECY_stream_put_data",
-                                                   nLoop, nNode, scope), body);
+                                                   nLoop, nStage, scope), body);
 
     // If there is a map clause, process it
     Attribute* attribute = (Attribute*)pragma->getAttribute("smecy");
@@ -1052,7 +1052,7 @@ namespace smecy {
       SgStatement* condition = SageInterface::getLoopCondition(whileStmt);
 
       // Store the boundaries of all the pipeline stages, as couple of (previous,next) statements:
-      std::vector<std::pair<SgStatement*,SgStatement*> > streamNodes;
+      std::vector<std::pair<SgStatement*,SgStatement*> > streamStages;
       // The arguments to move through the pipeline:
       // TODO: this should be a set
       std::vector<SgExpression*> stream;
@@ -1092,7 +1092,7 @@ namespace smecy {
               stream.push_back(argList[j]);
           }
           // Append the current pipeline stage:
-          streamNodes.push_back(std::pair<SgStatement*,SgStatement*> {
+          streamStages.push_back(std::pair<SgStatement*,SgStatement*> {
             statements[i], statements[i+1] });
         }
       }
@@ -1100,21 +1100,21 @@ namespace smecy {
       // between the pipeline stages:
       addBufferTypedef(attribute, stream, SageInterface::getGlobalScope(target));
 
-      //calling transformation afterwards since stream computation may depend on all the nodes
-      for (size_t i = 0; i < streamNodes.size(); i++) {
+      // Calling transformation afterwards since stream computation may depend on all the stages
+      for (size_t i = 0; i < streamStages.size(); i++) {
         // Use some heuristic to guess the information flow:
         // By default a stage can both consume and produce data
         ArgType inout = _arg_inout;
         if (i == 0)
           // But the first stage of the pipeline can only produce data:
           inout = _arg_out;
-        else if (i == streamNodes.size()-1)
+        else if (i == streamStages.size()-1)
           // And the last stage of the pipeline can only consume data:
           inout = _arg_in;
 
         // Outline the each function in the stream as a pipeline stage:
-        processStreamNode(streamNodes[i].first,
-                          streamNodes[i].second,
+        processStreamStage(streamStages[i].first,
+                          streamStages[i].second,
                           attribute->getStreamLoop(),
                           i, condition, inout);
       }
@@ -1125,17 +1125,17 @@ namespace smecy {
       // Insert the macro to start a pipeline computation with the loop number
       // and the number of stages as parameters:
       SageInterface::insertStatement(target,
-                                     addSmecyMacro("SMECY_init_stream",
+                                     addSmecyMacro("SMECY_stream_init",
                                                  attribute->getStreamLoop(),
-                                                 streamNodes.size(),
+                                                 streamStages.size(),
                                                  scope));
 
       // Add the thread launching for each pipeline stage with the loop number
       // and the number of stages as parameter:
-      for (size_t i = 0; i < streamNodes.size(); i++)
+      for (size_t i = 0; i < streamStages.size(); i++)
         //addThreadCreation(target, attribute, i);
         SageInterface::insertStatement(target,
-                                       addSmecyMacro("SMECY_launch_stream",
+                                       addSmecyMacro("SMECY_stream_launch",
                                                    attribute->getStreamLoop(),
                                                    i,
                                                    scope));
@@ -1155,11 +1155,11 @@ namespace smecy {
   }
 
 
-  /* Translate a single stream_node into low-level SMECY API
+  /* Translate a single stream_stage into low-level SMECY API
      by outlining the pipeline-stage to a new associated function)
    */
-  void processStreamNode(SgStatement* target, SgStatement* functionToMap, int nLoop,
-                         int nNode, SgStatement* condition, ArgType inout) {
+  void processStreamStage(SgStatement* target, SgStatement* functionToMap, int nLoop,
+                         int nStage, SgStatement* condition, ArgType inout) {
     bool argIn = (inout == _arg_in or inout == _arg_inout);
     bool argOut = (inout == _arg_out or inout == _arg_inout);
 
@@ -1169,13 +1169,13 @@ namespace smecy {
     SgFunctionParameterList* paramList = SageBuilder::buildFunctionParameterList();
     // Name the new function from the loop id and its order in the pipeline"
     std::stringstream uniqueName{ "" };
-    uniqueName << "smecy_stream_node_" << nLoop << "_" << nNode;
+    uniqueName << "smecy_stream_stage_" << nLoop << "_" << nStage;
     SgFunctionDeclaration* declaration =
         SageBuilder::buildDefiningFunctionDeclaration(uniqueName.str(),
                                                       returnType,
                                                       paramList, scope);
 
-    // Inserting the smecy_node* function declaration just before the
+    // Inserting the smecy_stage* function declaration just before the
     // main:
     SgStatement* mainStatement = SageInterface::findMain(scope);
     SageInterface::insertStatement(mainStatement, declaration);
@@ -1196,12 +1196,12 @@ namespace smecy {
       addBufferVariablesDeclarations(nLoop, defBody, functionToMap,
                                      "smecy_stream_buffer_out");
       SageInterface::appendStatement(addSmecyMacro("SMECY_stream_get_init_buf",
-                                     nLoop, nNode, defBody),
+                                     nLoop, nStage, defBody),
                                      defBody);
     }
 
     // And finish by adding the infinite while loop around the task:
-    SgStatement* whileBody = buildNodeWhileBody(functionToMap, nLoop, nNode,
+    SgStatement* whileBody = buildNodeWhileBody(functionToMap, nLoop, nStage,
                                                 defBody, argIn, argOut, target);
     SgStatement* whileLoop =
         SageBuilder::buildWhileStmt(SageInterface::copyStatement(condition),

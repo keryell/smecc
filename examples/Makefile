@@ -1,13 +1,17 @@
 # To run smecc with ROSE in verbose mode, try:
 # make ROSE_FLAGS="-rose:verbose 3"
 
+# Think to use a make xyz.E to produce a preprocessed output to understand
+# what is really compiled
+
 # Where is smecy.h:
 SMECY_INC=../runtime
 
 # -fopenmp
 
-CFLAGS=--std=c99 -fopenmp -DSMECY_VERBOSE -g -I$(SMECY_INC)
-CXXFLAGS=--std=c++0x -fopenmp -DSMECY_VERBOSE -g -I$(SMECY_INC)
+SMECY_FLAGS=-DSMECY_VERBOSE -I$(SMECY_INC)
+CFLAGS=--std=c99 -fopenmp -g $(SMECY_FLAGS)
+CXXFLAGS=--std=c++0x -fopenmp -g $(SMECY_FLAGS)
 
 # All the sources to compile:
 # Skip map-tab_cpp.C.bug
@@ -32,11 +36,11 @@ LOCAL_ROSE_BIN:=$(LOCAL_ROSE_BIN:.C=)
 all: $(LOCAL_ROSE)
 
 rose_%.C: %.C
-	smecc -smecy -c $(ROSE_FLAGS) -I$(SMECY_INC) $<
+	smecc -smecy -c $(ROSE_FLAGS) $(SMECY_FLAGS) $<
 
 rose_%.c: %.c
 	smecc -c -smecy --std=c99 -rose:C99_only -rose:C_output_language \
-		$(ROSE_FLAGS) -I$(SMECY_INC) $<
+		$(ROSE_FLAGS) $(SMECY_FLAGS) $<
 
 rose_%: rose_%.c smecy.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
@@ -47,6 +51,15 @@ rose_%: rose_%.C smecy.o
 
 run_%: %
 	./$<
+
+# Produce a CPP output to help debugging
+%.E: %.[cC]
+	# Keep comments in the output
+	$(CPP) -CC $(SMECY_FLAGS) $< > $@
+
+%.E: %.x
+	$(CPP) -C $(SMECY_FLAGS) $< > $@
+
 
 multiple_compilation_unit_a: multiple_compilation_unit_b.o
 rose_multiple_compilation_unit_a: rose_multiple_compilation_unit_b.o
@@ -60,4 +73,5 @@ rose_multiple_compilation_unit_a_cpp: rose_multiple_compilation_unit_b_cpp.o
 
 clean:
 	rm -f $(LOCAL_ROSE) $(LOCAL_BIN) $(LOCAL_ROSE_BIN) \
-		$(LOCAL_ROSE_DOT) $(LOCAL_ROSE_PDF) rose_transformation_* *.o
+		$(LOCAL_ROSE_DOT) $(LOCAL_ROSE_PDF) rose_transformation_* \
+		*.o *.E

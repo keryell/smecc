@@ -3,3 +3,9 @@
 Parameter of a function in a streamed loop should be given to
 smecy_stream_node_*_*()
 
+2012/07/10 :
+
+Loop streaming should work in C++.
+Right now they are some lacking cast in the generated code and C warning
+are C++ errors instead.
+

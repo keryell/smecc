@@ -8,10 +8,19 @@
 
 #ifdef SMECY_VERBOSE
 #include <stdio.h>
-#define SMECY_PRINT_VERBOSE(...) \
-  fprintf(stderr, __VA_ARGS__);
+#define SMECY_PRINT_VERBOSE_RAW(...)					\
+  fprintf(stderr, __VA_ARGS__)
+/* With a ; to allow a statement or a declaration afterards */
+#define SMECY_PRINT_VERBOSE(...) SMECY_PRINT_VERBOSE_RAW(__VA_ARGS__);
+#define SMECY_PRINT_VERBOSE_COMMA(...)					\
+  /* The , instead of ; is to have a single statement with the statement \
+     following this macro. It allows for example to have this verbose	\
+     macro between a #pragma omp section and the real statement. Do not	\
+     work before a declaration... */					\
+  SMECY_PRINT_VERBOSE_RAW(__VA_ARGS__),
 #else
 #define SMECY_PRINT_VERBOSE(...)
+#define SMECY_PRINT_VERBOSE_COMMA(...)
 #endif
 
 
@@ -79,26 +88,11 @@
                       (size_t) size, #type, addr, arg, #func, #pe, instance) \
   SMECY_IMP_cleanup_update_arg_vector(pe, instance, func, arg, type, addr, size)
 
-// Old stuff to clean...
-#if 0
-// Note that it can only work if the code maps only the square_symmetry
-// function
-#define SMECY_launch(pe, instance, func, n_args)                        \
-  { if (#func == "square_symmetry")                                     \
-      square_symmetry_smecy( pe##_square_symmetry_1,                    \
-                             pe##_square_symmetry_2,                    \
-                             (int*)pe##_square_symmetry_3,              \
-                             pe##_square_symmetry_4,                    \
-                             pe##_square_symmetry_5,                    \
-                             pe##_square_symmetry_6);                   \
-  }
-#else
 #define SMECY_launch(pe, instance, func, n_args)                        \
   SMECY_PRINT_VERBOSE("Running function \"%s\" with %zd arguments on "  \
                       "processor \"%s\" n° %d\n",                       \
                       #func, (size_t) n_args, #pe, instance)            \
   SMECY_IMP_launch(pe, instance, func, n_args)
-#endif
 
 #define SMECY_prepare_get_arg_vector(pe, instance, func, arg, type, addr, size) \
   SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
@@ -120,43 +114,42 @@
   SMECY_IMP_get_return(pe, instance, func, type)
 
 
-//void square_symmetry_smecy(int width, int height, int* image,
-//                     int square_size, int x_offset, int y_offset) ;
-
 
 /* Interface macros to deal with streaming */
 
-#define SMECY_init_stream(stream, nbstreams)                            \
+#define SMECY_stream_init(stream, nbstreams)                            \
   SMECY_PRINT_VERBOSE("Init stream %d among 0..%d\n", stream, nbstreams) \
-  SMECY_IMP_init_stream(stream, nbstreams)
+  SMECY_IMP_stream_init(stream, nbstreams)
 
-#define SMECY_launch_stream(stream, node)                               \
-  SMECY_PRINT_VERBOSE("Launch node %d from stream %d\n", node, stream)  \
-  SMECY_IMP_launch_stream(stream, node)
+#define SMECY_stream_launch(stream, stage)                               \
+  /* Put the verbose information afterwards inside the implementation	\
+     to cope with OpenMP constraints */					\
+  SMECY_IMP_stream_launch(stream, stage)
 
-#define SMECY_stream_get_init_buf(stream, node)                         \
-  SMECY_PRINT_VERBOSE("Init get buffer on node %d from stream %d\n",    \
-                      node, stream)                                     \
-  SMECY_IMP_stream_get_init_buf(stream, node)
+#define SMECY_stream_get_init_buf(stream, stage)                         \
+  SMECY_PRINT_VERBOSE("Init get buffer on stage %d from stream %d\n",    \
+                      stage, stream)                                     \
+  SMECY_IMP_stream_get_init_buf(stream, stage)
 
-#define SMECY_stream_put_data(stream, node)                             \
-  SMECY_PRINT_VERBOSE("Post data for next stage on node %d from stream %d\n", \
-                      node, stream)                                     \
-  SMECY_IMP_stream_put_data(stream, node)
+#define SMECY_stream_put_data(stream, stage)                             \
+  SMECY_PRINT_VERBOSE("Post data for next stage on stage %d from stream %d\n", \
+                      stage, stream)                                     \
+  SMECY_IMP_stream_put_data(stream, stage)
 
-#define SMECY_stream_get_data(stream, node)                     \
-  SMECY_PRINT_VERBOSE("Get data from previous stage on node %d" \
-                      " from stream %d\n", node, stream)        \
-  SMECY_IMP_stream_get_data(stream, node)
+#define SMECY_stream_get_data(stream, stage)                     \
+  SMECY_PRINT_VERBOSE("Get data from previous stage on stage %d" \
+                      " from stream %d\n", stage, stream)        \
+  SMECY_IMP_stream_get_data(stream, stage)
 
-#define SMECY_stream_copy_data(stream, node)                            \
-  SMECY_PRINT_VERBOSE("Copy data from previous stage to next stage"     \
-                      " unchanged on node %d from stream %d\n", node, stream) \
-  SMECY_IMP_stream_copy_data(stream, node)
+#define SMECY_stream_copy_data(stream, stage)                            \
+  SMECY_PRINT_VERBOSE("Copy data from previous stage to next stage unchanged" \
+                      " on stage %d from stream %d\n", stage, stream)	\
+  SMECY_IMP_stream_copy_data(stream, stage)
 
-/* Wait to the end of the application with Unix system-call: */
-#define SMECY_wait_for_the_end()                                \
-  SMECY_PRINT_VERBOSE("Waiting the end of the program\n")       \
+/* Wait for the end of the application with Unix system-call: */
+#define SMECY_wait_for_the_end()					\
+  /* Put the verbose information afterwards inside the implementation	\
+     to cope with OpenMP constraints */					\
   SMECY_IMP_wait_for_the_end()
 
 #endif //SMECY_LIB_H

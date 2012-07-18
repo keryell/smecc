@@ -15,10 +15,10 @@ static int v = 0;
 void producer(conditional_variable_t* nw) {
   for(;;) {
     COND_VAR_NOTIFY_WITH_OP(nw, {
-	// Increment a global variable inside the critical section
-	v++;
-	// Make sure the value is globally visible
-	_Pragma("omp flush(v)");
+  // Increment a global variable inside the critical section
+  v++;
+  // Make sure the value is globally visible
+  _Pragma("omp flush(v)");
       });
   }
 }
@@ -27,11 +27,11 @@ void producer(conditional_variable_t* nw) {
 void consumer(conditional_variable_t* nw) {
   for(;;) {
     COND_VAR_WAIT_WITH_OP(nw, {
-	// Make sure we can get the last version of this global variable
-	_Pragma("omp flush(v)");
-	// Increment a global variable inside the critical section
-	printf("%d ", v);
-	fflush(stdout);
+  // Make sure we can get the last version of this global variable
+  _Pragma("omp flush(v)");
+  // Increment a global variable inside the critical section
+  printf("%d ", v);
+  fflush(stdout);
       });
   }
 }

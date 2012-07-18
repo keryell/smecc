@@ -27,21 +27,23 @@ static inline void conditional_variable_init(conditional_variable_t* nw) {
   omp_set_lock(&nw->notify_lock);
 }
 
-#define COND_VAR_NOTIFY_WITH_OP(nw, ...)                \
-do {                                                    \
-  /* Wait for the consumption of the previous notify */ \
-  omp_set_lock(&nw->ready_for_notify_lock);             \
-  __VA_ARGS__;                                          \
-  /* Release the waiting thread */                      \
-  omp_unset_lock(&nw->notify_lock);                     \
- } while(0)
+#define COND_VAR_NOTIFY_WITH_OP(nw, ...)                                \
+  /* Since it is a macro, we have to use (nw) in the following */       \
+  do {                                                                  \
+    /* Wait for the consumption of the previous notify */               \
+    omp_set_lock(&(nw)->ready_for_notify_lock);                         \
+    __VA_ARGS__;                                                        \
+    /* Release the waiting thread */                                    \
+    omp_unset_lock(&(nw)->notify_lock);                                 \
+  } while(0)
 
 
-#define COND_VAR_WAIT_WITH_OP(nw, ...)          \
-do {                                            \
-  /* Wait for a notification */                 \
-  omp_set_lock(&nw->notify_lock);               \
-  __VA_ARGS__;                                  \
-  /* Allow for a future notification */         \
-  omp_unset_lock(&nw->ready_for_notify_lock);   \
-} while(0)
+#define COND_VAR_WAIT_WITH_OP(nw, ...)                                  \
+  /* Since it is a macro, we have to use (nw) in the following */       \
+  do {                                                                  \
+    /* Wait for a notification */                                       \
+    omp_set_lock(&(nw)->notify_lock);                                   \
+    __VA_ARGS__;                                                        \
+    /* Allow for a future notification */                               \
+    omp_unset_lock(&(nw)->ready_for_notify_lock);                       \
+  } while(0)

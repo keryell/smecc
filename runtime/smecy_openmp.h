@@ -5,7 +5,21 @@
 
 /* For the final pause() */
 #include <unistd.h>
+/* For malloc() */
+#include <stdlib.h>
+/* For... assert() */
+#include <assert.h>
 
+/* To avoid race conditions in stream loop pipeline: */
+#include "conditional_variable_openmp.h"
+
+/* As in LaTeX to allow adding unbalanced {} and to avoid messing up
+   automatic indentation */
+#define SMECY_LBRACE {
+#define SMECY_RBRACE }
+
+/* Expansion hack to give a full string to _Pragma() */
+#define SMECY_STRINGIFY(s) #s
 
 /* SMECY_IMP_ are the real implementations doing the real work, to be
    defined somewhere else. */
@@ -66,55 +80,145 @@
 
 /* Implementation macros to deal with streaming */
 
-// RK: je ne suis pas sûr que cette histoire de DbLink devrait apparaître
-// Pourquoi int ?
+/* There is currently a static limit on the number of streamed loops in a
+   program */
+#define SMECY_STREAM_NUMBER_MAX 200
 
-#if 0
-//prototypes for the stream library
-typedef int DbLink;
+/* The algorithm used to do double buffering is
 
-DbLink pth_CreateDbLink(int size) { return (DbLink)0; }
-void* DbLinkGetInitBuf(DbLink outputLink) { return NULL; }
-void* DbLinkGetData(DbLink inputLink) { return NULL; }
-void* DbLinkPutData(DbLink inputLink) { return NULL; }
-int pth_CreateProcess(int (*f)(), ...) {return 0;}
+   stage i locks data input
+   stage i locks data output
+   stage i does the copy from input to output to implement any write-through
+   stage i does the computation
+   stage i unlocks data input
+   stage i unlocks data output
+   stage i does its double buffer index flip flop for next iteration
+*/
 
-#endif
+/* The number of buffers per stage to pass data through the pipeline. For
+   example 2 for double buffering, 1 for no buffering.
 
-/* Interface macros to deal with streaming */
+   Well, right now the implementation is simple and can only cope with 1
+   and 2. */
+#define SMECY_STREAM_STAGE_BUFFER_NB 1
 
-#define SMECY_MAX_STREAMING_LOOPS 64
-#define SMECY_MAX_STREAMING_NODES 32
+/* To deal with a pipeline stage */
+typedef struct {
+  /* The index of the last buffer consumed */
+  int consume;
+  /* The index of the next index buffer to be produced */
+  int produce;
+  /* Synchronize access of producer at stage i and comsumer at stage i-1 */
+  conditional_variable_t cv;
+} SMECY_stage_control_t;
 
-static int smecy_next_stream = 0;
-//DbLink smecy_streaming_buffers[SMECY_MAX_STREAMING_LOOPS][SMECY_MAX_STREAMING_NODES];
+/* To globally access to locally allocated buffers, indexed by the stream
+   id.
 
-//TODO for loop and nbNodes param
-#define SMECY_IMP_init_stream(stream, nbstreams)
-#if 0
-{\
-        for (int smecy_iter_##stream=0; smecy_iter_##stream<(nbstreams); smecy_iter_##stream++)\
-        {\
-                smecy_streaming_buffers[smecy_next_stream][smecy_iter_##stream] = pth_CreateDbLink(sizeof(struct smecy_buffer_type_##stream)); \
-        }\
-        smecy_next_stream++; \
+   TODO: This could be a macro inserted at the top-level instead? */
+static struct {
+  /* A pointer to an array of buffers to be used to transmit information
+     in this stream. To be seen as an array struct
+     smecy_stream_buffer_type_##stream
+     [nb_stages-1][SMECY_STREAM_STAGE_BUFFER_NB] */
+  void* stream_buffers;
+  /* An array of produce/consume indices to be used to deal with
+     multi-buffering at each pipeline stage in this stream with a monitor
+     to synchronize the consumer and producer: */
+  SMECY_stage_control_t* current_indices;
+} smecy_stream_buffer_global[SMECY_STREAM_NUMBER_MAX];
+
+
+/* Initialize smecy_stream_buffer_global for a stream */
+static void
+SMECY_init_pipeline_buffers(int stream,
+                            int nbstreams,
+                            void *buffers) {
+  assert(stream < SMECY_STREAM_NUMBER_MAX);
+  /* To be globally accessible */
+  smecy_stream_buffer_global[stream].stream_buffers = buffers;
+  /* Allocate the produce/consume index array: */
+  smecy_stream_buffer_global[stream].current_indices = (SMECY_stage_control_t*)
+    malloc(sizeof(SMECY_stage_control_t)*(nbstreams - 1));
+  for (int i = 0; i < nbstreams - 1; i++) {
+    /* Next buffer to write: */
+    smecy_stream_buffer_global[stream].current_indices[i].produce = 0;
+    /* Last buffer read. Since it is an initialization, it prepare to read
+       buffer 0 once it has been produced: */
+    smecy_stream_buffer_global[stream].current_indices[i].consume =
+      SMECY_STREAM_STAGE_BUFFER_NB - 1;
+    /* Initialize the monitor to synchronize the producer and the consumer */
+      conditional_variable_init(&smecy_stream_buffer_global[stream]
+                                .current_indices[i].cv);
+  }
 }
-#endif
 
-#define SMECY_IMP_launch_stream(stream, node)                           \
-  //pth_CreateProcess(((int (*)())smecy_node_##stream##_##node))
 
-#define SMECY_IMP_stream_get_init_buf(stream, node)\
-  //smecy_struct_buffer_out = ((struct smecy_buffer_type_##stream *)(DbLinkGetInitBuf(smecy_streaming_buffers[stream][node])))
+#define SMECY_IMP_stream_init(stream, nb_stages)                        \
+  /* Allocate memory to pass data through each pipeline stage in a double \
+     buffer way */                                                      \
+  struct smecy_stream_buffer_type_##stream smecy_stream_buffer_##stream[nb_stages-1][SMECY_STREAM_STAGE_BUFFER_NB]; \
+  SMECY_init_pipeline_buffers(stream, nb_stages,                        \
+                              (void*)smecy_stream_buffer_##stream);     \
+  /* Create a parallel block executed by nb_stages threads */           \
+  _Pragma(SMECY_STRINGIFY(omp parallel sections num_threads(nb_stages))) \
+  SMECY_LBRACE
 
-#define SMECY_IMP_stream_put_data(stream, node)                         \
-  //smecy_struct_buffer_out = ((struct smecy_buffer_type_##stream *)(DbLinkPutData(smecy_streaming_buffers[stream][node])))
 
-#define SMECY_IMP_stream_get_data(stream, node)                         \
-  //smecy_struct_buffer_in = ((struct smecy_buffer_type_##stream *)(DbLinkPutData(smecy_streaming_buffers[stream][node])))
+/* Execute a pipeline stage in its own thread */
+#define SMECY_IMP_stream_launch(stream, stage)                          \
+  _Pragma("omp section")                                                \
+  /* Put the verbose information afterwards to cope with OpenMP         \
+     constraints */                                                     \
+  SMECY_PRINT_VERBOSE_COMMA("Launched stage %d from stream %d\n", stage, stream) \
+  smecy_stream_stage_##stream##_##stage()
 
-#define SMECY_IMP_stream_copy_data(stream, node)                \
+
+/* Initialize the buffer stuff for the output to point on the first buffer
+   for this streamed loop for the next stage */
+#define SMECY_IMP_stream_get_init_buf(stream, stage)                    \
+/* Verify the initialization by SMECY_IMP_stream_init() */              \
+  assert(smecy_stream_buffer_global[stream].current_indices[stage].produce == 0); \
+  /* Since SMECY_stream_put_data() is at the end of the pipeline stage, we \
+     need a buffer to write the result before: */                       \
+  smecy_stream_buffer_out = &((struct smecy_stream_buffer_type_##stream*)smecy_stream_buffer_global[stream].stream_buffers)[stage*SMECY_STREAM_STAGE_BUFFER_NB + smecy_stream_buffer_global[stream].current_indices[stage].produce /* <- Should be 0 */]
+
+
+/* The stage produce something. Push it through the pipeline */
+#define SMECY_IMP_stream_put_data(stream, stage)                                \
+  /* Release the conditional variable blocking the consumer, when ready to \
+     consume */                                                         \
+  COND_VAR_NOTIFY_WITH_OP(&smecy_stream_buffer_global[stream]           \
+                          .current_indices[stage].cv,                   \
+                          {                                             \
+                            /* Deal with the multiple buffering here */ \
+                            /* First the buffer to consume at stage     \
+                               stage+1 is the buffer that is just       \
+                               produced at stage stage: */              \
+                            smecy_stream_buffer_global[stream].current_indices[stage].consume = smecy_stream_buffer_global[stream].current_indices[stage].produce; \
+                            /* The use the next buffer for the producer */ \
+                            smecy_stream_buffer_global[stream].current_indices[stage].produce = (smecy_stream_buffer_global[stream].current_indices[stage].produce + 1)%SMECY_STREAM_STAGE_BUFFER_NB; \
+                          });
+
+
+/* Initialize the buffer input to point on the first buffer
+   for this streamed loop for the current stage */
+#define SMECY_IMP_stream_get_data(stream, stage)                         \
+  /* Get a new data buffer to work on with a synchonous dependency with \
+     the producer */                                                    \
+  COND_VAR_WAIT_WITH_OP(&smecy_stream_buffer_global[stream]             \
+                        .current_indices[stage - 1].cv,                 \
+                        smecy_stream_buffer_in = &((struct smecy_stream_buffer_type_##stream*)smecy_stream_buffer_global[stream].stream_buffers)[stage*SMECY_STREAM_STAGE_BUFFER_NB + smecy_stream_buffer_global[stream].current_indices[stage - 1].consume])
+
+
+#define SMECY_IMP_stream_copy_data(stream, stage)                \
   //smecy_struct_buffer_out = smecy_struct_buffer_in
 
+
 /* Wait to the end of the application with Unix system-call: */
-#define SMECY_IMP_wait_for_the_end() pause()
+#define SMECY_IMP_wait_for_the_end()                                    \
+  SMECY_RBRACE                                                          \
+  /* Insert debugging information here to avoid a parasitic statement in \
+     the OpenMP section */                                              \
+  SMECY_PRINT_VERBOSE("Waiting the end of the program\n")               \
+  pause()
