@@ -121,33 +121,33 @@
   SMECY_PRINT_VERBOSE("Init stream %d with %d stages\n", stream, nbstreams) \
   SMECY_IMP_stream_init(stream, nbstreams)
 
-#define SMECY_stream_launch(stream, stage)                               \
+#define SMECY_stream_launch(stream, stage)                              \
   /* Put the verbose information afterwards inside the implementation   \
      to cope with OpenMP constraints */                                 \
   SMECY_IMP_stream_launch(stream, stage)
 
-#define SMECY_stream_get_init_buf(stream, stage)                         \
-  SMECY_PRINT_VERBOSE("Init get buffer on stage %d from stream %d\n",    \
-                      stage, stream)                                     \
+#define SMECY_stream_get_init_buf(stream, stage)                        \
+  SMECY_PRINT_VERBOSE("Init get buffer on stage %d of stream %d\n",     \
+                      stage, stream)                                    \
   SMECY_IMP_stream_get_init_buf(stream, stage)
 
 #define SMECY_stream_put_data(stream, stage)                            \
-  SMECY_PRINT_VERBOSE("Post data for next stage on stage %d from stream %d\n", \
+  SMECY_PRINT_VERBOSE("Post data for next stage on stage %d of stream %d\n", \
                       stage, stream)                                    \
   SMECY_IMP_stream_put_data(stream, stage);                             \
-  SMECY_PRINT_VERBOSE("Sent the data for next stage on stage %d from stream %d\n", \
+  SMECY_PRINT_VERBOSE("Sent the data for next stage on stage %d of stream %d\n", \
                       stage, stream)                                    \
 
 #define SMECY_stream_get_data(stream, stage)                            \
   SMECY_PRINT_VERBOSE("Get data from previous stage on stage %d"        \
-                      " from stream %d\n", stage, stream)               \
+                      " of stream %d\n", stage, stream)                 \
   SMECY_IMP_stream_get_data(stream, stage);                             \
   SMECY_PRINT_VERBOSE("Got the data from previous stage on stage %d"    \
-                      " from stream %d\n", stage, stream)               \
+                      " of stream %d\n", stage, stream)                 \
 
-#define SMECY_stream_copy_data(stream, stage)                            \
+#define SMECY_stream_copy_data(stream, stage)                           \
   SMECY_PRINT_VERBOSE("Copy data from previous stage to next stage unchanged" \
-                      " on stage %d from stream %d\n", stage, stream)   \
+                      " on stage %d of stream %d\n", stage, stream)     \
   SMECY_IMP_stream_copy_data(stream, stage)
 
 /* Wait for the end of the application with Unix system-call: */
