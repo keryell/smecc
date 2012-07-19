@@ -908,7 +908,7 @@ namespace smecy {
     if (in)
       // Not the first node, we need to copy the input buffer to the output
       SageInterface::appendStatement(addSmecyMacro("SMECY_stream_get_data",
-                                                   nLoop, nStage-1, scope),
+                                                   nLoop, nStage, scope),
                                      body);
     if (in and out)
       SageInterface::appendStatement(addSmecyMacro("SMECY_stream_copy_data",

@@ -8,15 +8,15 @@
 
 #ifdef SMECY_VERBOSE
 #include <stdio.h>
-#define SMECY_PRINT_VERBOSE_RAW(...)					\
+#define SMECY_PRINT_VERBOSE_RAW(...)                                    \
   fprintf(stderr, __VA_ARGS__)
 /* With a ; to allow a statement or a declaration afterards */
 #define SMECY_PRINT_VERBOSE(...) SMECY_PRINT_VERBOSE_RAW(__VA_ARGS__);
-#define SMECY_PRINT_VERBOSE_COMMA(...)					\
+#define SMECY_PRINT_VERBOSE_COMMA(...)                                  \
   /* The , instead of ; is to have a single statement with the statement \
-     following this macro. It allows for example to have this verbose	\
-     macro between a #pragma omp section and the real statement. Do not	\
-     work before a declaration... */					\
+     following this macro. It allows for example to have this verbose   \
+     macro between a #pragma omp section and the real statement. Do not \
+     work before a declaration... */                                    \
   SMECY_PRINT_VERBOSE_RAW(__VA_ARGS__),
 #else
 #define SMECY_PRINT_VERBOSE(...)
@@ -118,12 +118,12 @@
 /* Interface macros to deal with streaming */
 
 #define SMECY_stream_init(stream, nbstreams)                            \
-  SMECY_PRINT_VERBOSE("Init stream %d among 0..%d\n", stream, nbstreams) \
+  SMECY_PRINT_VERBOSE("Init stream %d with %d stages\n", stream, nbstreams) \
   SMECY_IMP_stream_init(stream, nbstreams)
 
 #define SMECY_stream_launch(stream, stage)                               \
-  /* Put the verbose information afterwards inside the implementation	\
-     to cope with OpenMP constraints */					\
+  /* Put the verbose information afterwards inside the implementation   \
+     to cope with OpenMP constraints */                                 \
   SMECY_IMP_stream_launch(stream, stage)
 
 #define SMECY_stream_get_init_buf(stream, stage)                         \
@@ -131,25 +131,29 @@
                       stage, stream)                                     \
   SMECY_IMP_stream_get_init_buf(stream, stage)
 
-#define SMECY_stream_put_data(stream, stage)                             \
+#define SMECY_stream_put_data(stream, stage)                            \
   SMECY_PRINT_VERBOSE("Post data for next stage on stage %d from stream %d\n", \
-                      stage, stream)                                     \
-  SMECY_IMP_stream_put_data(stream, stage)
+                      stage, stream)                                    \
+  SMECY_IMP_stream_put_data(stream, stage);                             \
+  SMECY_PRINT_VERBOSE("Sent the data for next stage on stage %d from stream %d\n", \
+                      stage, stream)                                    \
 
-#define SMECY_stream_get_data(stream, stage)                     \
-  SMECY_PRINT_VERBOSE("Get data from previous stage on stage %d" \
-                      " from stream %d\n", stage, stream)        \
-  SMECY_IMP_stream_get_data(stream, stage)
+#define SMECY_stream_get_data(stream, stage)                            \
+  SMECY_PRINT_VERBOSE("Get data from previous stage on stage %d"        \
+                      " from stream %d\n", stage, stream)               \
+  SMECY_IMP_stream_get_data(stream, stage);                             \
+  SMECY_PRINT_VERBOSE("Got the data from previous stage on stage %d"    \
+                      " from stream %d\n", stage, stream)               \
 
 #define SMECY_stream_copy_data(stream, stage)                            \
   SMECY_PRINT_VERBOSE("Copy data from previous stage to next stage unchanged" \
-                      " on stage %d from stream %d\n", stage, stream)	\
+                      " on stage %d from stream %d\n", stage, stream)   \
   SMECY_IMP_stream_copy_data(stream, stage)
 
 /* Wait for the end of the application with Unix system-call: */
-#define SMECY_wait_for_the_end()					\
-  /* Put the verbose information afterwards inside the implementation	\
-     to cope with OpenMP constraints */					\
+#define SMECY_wait_for_the_end()                                        \
+  /* Put the verbose information afterwards inside the implementation   \
+     to cope with OpenMP constraints */                                 \
   SMECY_IMP_wait_for_the_end()
 
 #endif //SMECY_LIB_H

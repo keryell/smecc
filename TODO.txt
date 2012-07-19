@@ -9,3 +9,10 @@ Loop streaming should work in C++.
 Right now they are some lacking cast in the generated code and C warning
 are C++ errors instead.
 
+
+2012/07/19 :
+
+It should be possible to have scalar in function calls inside stream
+loops.
+
+See examples/Bugs/input_scalar.c.bug

@@ -7,7 +7,9 @@
 #include <unistd.h>
 /* For malloc() */
 #include <stdlib.h>
-/* For... assert() */
+/* For memcpy() */
+#include <string.h>
+/* For... assert() :-) */
 #include <assert.h>
 
 /* To avoid race conditions in stream loop pipeline: */
@@ -98,9 +100,9 @@
 /* The number of buffers per stage to pass data through the pipeline. For
    example 2 for double buffering, 1 for no buffering.
 
-   Well, right now the implementation is simple and can only cope with 1
-   and 2. */
-#define SMECY_STREAM_STAGE_BUFFER_NB 1
+   Well, right now the implementation is simple and can only cope with
+   2. */
+#define SMECY_STREAM_STAGE_BUFFER_NB 2
 
 /* To deal with a pipeline stage */
 typedef struct {
@@ -169,8 +171,11 @@ SMECY_init_pipeline_buffers(int stream,
 #define SMECY_IMP_stream_launch(stream, stage)                          \
   _Pragma("omp section")                                                \
   /* Put the verbose information afterwards to cope with OpenMP         \
-     constraints */                                                     \
-  SMECY_PRINT_VERBOSE_COMMA("Launched stage %d from stream %d\n", stage, stream) \
+     constraints and use. Use a comma to have a single statement. Could be \
+     a block, anyway... */                                              \
+  SMECY_PRINT_VERBOSE_COMMA("Launched stage %d from stream %d, "        \
+                            "OpenMP thread %d of %d\n", stage, stream,  \
+                            omp_get_thread_num(), omp_get_num_threads()) \
   smecy_stream_stage_##stream##_##stage()
 
 
@@ -191,14 +196,13 @@ SMECY_init_pipeline_buffers(int stream,
   COND_VAR_NOTIFY_WITH_OP(&smecy_stream_buffer_global[stream]           \
                           .current_indices[stage].cv,                   \
                           {                                             \
-                            /* Deal with the multiple buffering here */ \
-                            /* First the buffer to consume at stage     \
-                               stage+1 is the buffer that is just       \
-                               produced at stage stage: */              \
-                            smecy_stream_buffer_global[stream].current_indices[stage].consume = smecy_stream_buffer_global[stream].current_indices[stage].produce; \
-                            /* The use the next buffer for the producer */ \
+                            /* Deal with the multiple buffering here.   \
+                               Use the next buffer for the producer */  \
                             smecy_stream_buffer_global[stream].current_indices[stage].produce = (smecy_stream_buffer_global[stream].current_indices[stage].produce + 1)%SMECY_STREAM_STAGE_BUFFER_NB; \
-                          });
+                            /* Update the pointer to the buffer to use as \
+                               output: */                               \
+                            smecy_stream_buffer_out = &((struct smecy_stream_buffer_type_##stream*)smecy_stream_buffer_global[stream].stream_buffers)[stage*SMECY_STREAM_STAGE_BUFFER_NB + smecy_stream_buffer_global[stream].current_indices[stage].produce]; \
+                              })
 
 
 /* Initialize the buffer input to point on the first buffer
@@ -208,11 +212,18 @@ SMECY_init_pipeline_buffers(int stream,
      the producer */                                                    \
   COND_VAR_WAIT_WITH_OP(&smecy_stream_buffer_global[stream]             \
                         .current_indices[stage - 1].cv,                 \
-                        smecy_stream_buffer_in = &((struct smecy_stream_buffer_type_##stream*)smecy_stream_buffer_global[stream].stream_buffers)[stage*SMECY_STREAM_STAGE_BUFFER_NB + smecy_stream_buffer_global[stream].current_indices[stage - 1].consume])
+                        {                                               \
+                          /* Use the next buffer to be consumed: */     \
+                          smecy_stream_buffer_global[stream].current_indices[stage - 1].consume = (smecy_stream_buffer_global[stream].current_indices[stage - 1].consume + 1)%SMECY_STREAM_STAGE_BUFFER_NB; \
+                          /* Update the pointer to the buffer to use as \
+                             input: */                                  \
+                          smecy_stream_buffer_in = &((struct smecy_stream_buffer_type_##stream*)smecy_stream_buffer_global[stream].stream_buffers)[stage*SMECY_STREAM_STAGE_BUFFER_NB + smecy_stream_buffer_global[stream].current_indices[stage - 1].consume]; \
+                        })
 
 
-#define SMECY_IMP_stream_copy_data(stream, stage)                \
-  //smecy_struct_buffer_out = smecy_struct_buffer_in
+#define SMECY_IMP_stream_copy_data(stream, stage)               \
+  memcpy(smecy_stream_buffer_out, smecy_stream_buffer_in,       \
+         sizeof(struct smecy_stream_buffer_type_##stream));
 
 
 /* Wait to the end of the application with Unix system-call: */
