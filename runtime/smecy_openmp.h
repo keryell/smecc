@@ -133,8 +133,9 @@ static void
 SMECY_init_pipeline_buffers(int stream,
                             int nb_stages,
                             void *buffers,
-                            int current_indices[nb_stages],
-                            conditional_variable_t cv[nb_stages - 1]) {
+			    /* No C99 VLA for C++ compatibility here: */
+                            int *current_indices /* [nb_stages] */,
+                            conditional_variable_t *cv /* [nb_stages - 1] */) {
   assert(stream < SMECY_STREAM_NUMBER_MAX);
   smecy_stream_buffer_global[stream].nb_stages = nb_stages;
   /* To be globally accessible */
