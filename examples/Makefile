@@ -9,7 +9,9 @@ SMECY_INC=../runtime
 
 # -fopenmp
 
-SMECY_FLAGS=-DSMECY_VERBOSE -I$(SMECY_INC)
+# To skip debug, use "make SMECY_DEBUG="
+SMECY_DEBUG=-DSMECY_VERBOSE
+SMECY_FLAGS=$(SMECY_DEBUG) -I$(SMECY_INC)
 CFLAGS=--std=c99 -fopenmp -g $(SMECY_FLAGS)
 CXXFLAGS=--std=c++0x -fopenmp -g $(SMECY_FLAGS)
 
@@ -18,11 +20,18 @@ CXXFLAGS=--std=c++0x -fopenmp -g $(SMECY_FLAGS)
 LOCAL_SRC= hello_world.c input.c input_cpp.C map-tab.c \
 	multiple_compilation_unit_a.c multiple_compilation_unit_b.c \
 	multiple_compilation_unit_a_cpp.C multiple_compilation_unit_b_cpp.C \
-	simple_map.C smecy.c
+	simple_map.C
 
-# Remove .c and .C extension to have executable names:
-LOCAL_BIN:=$(LOCAL_SRC:.c=)
-LOCAL_BIN:=$(LOCAL_BIN:.C=)
+## Remove .c and .C extension to have executable names:
+#LOCAL_BIN:=$(LOCAL_SRC:.c=)
+#LOCAL_BIN:=$(LOCAL_BIN:.C=)
+LOCAL_BIN= hello_world input input_cpp map-tab \
+	multiple_compilation_unit_a \
+	multiple_compilation_unit_a_cpp \
+	simple_map
+
+# Have an explicit list since we have some program with multiple
+# compilation units:
 
 # smecc generate file beginning with "rose_":
 LOCAL_ROSE=$(addprefix rose_,$(LOCAL_SRC))
@@ -30,10 +39,13 @@ LOCAL_ROSE_DOT=$(addsuffix .dot,$(LOCAL_SRC))
 LOCAL_ROSE_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
 
 # Remove .c and .C extension to have executable names:
-LOCAL_ROSE_BIN:=$(LOCAL_ROSE:.c=)
-LOCAL_ROSE_BIN:=$(LOCAL_ROSE_BIN:.C=)
+#LOCAL_ROSE_BIN:=$(LOCAL_ROSE:.c=)
+#LOCAL_ROSE_BIN:=$(LOCAL_ROSE_BIN:.C=)
+LOCAL_ROSE_BIN=$(addprefix rose_,$(LOCAL_BIN))
 
 all: $(LOCAL_ROSE)
+
+bin: $(LOCAL_BIN) $(LOCAL_ROSE_BIN)
 
 rose_%.C: %.C
 	smecc -smecy -c $(ROSE_FLAGS) $(SMECY_FLAGS) $<
