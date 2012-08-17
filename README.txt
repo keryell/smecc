@@ -84,6 +84,9 @@ to remove the objects from their keys. It is more practical to use the
 keys instead of the IDs since they keeps their value from one
 run... errr... failure to the other one.
 
+It looks like in the current MCA API Linux implementation if 2 different
+processes communicates with MCAPI, one of the mcapi_finalize() tends to
+fail.
 
 # Some Emacs stuff:
 ### Local Variables:

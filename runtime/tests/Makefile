@@ -11,4 +11,4 @@ CFLAGS=--std=c99 -fopenmp -DSMECY_VERBOSE -g -I.. $(MCA_INCLUDE)
 CXXFLAGS=--std=c++0x -fopenmp -DSMECY_VERBOSE -g -I.. $(MCA_INCLUDE)
 
 
-all: producer-consumer
+all: producer-consumer mca-api-openmp mca-api-producer mca-api-consumer
