@@ -126,6 +126,7 @@ Implementation limitations:
 \item all the program has to be written in C, not C++.
 \end{itemize}
 
+
 \subsection{Mapping on STHORM MCA API}
 \label{sec:prod-inform}
 
@@ -133,9 +134,9 @@ The STHORM platform is a MP-SoC with a 2-core ARM processor Cortex-A9
 running Linux and an accelerator fabric with a 2D array of clusters, each
 with 16 processing elements (PE).
 
+
 \subsubsection{Addressing model}
 \label{sec:addressing-model}
-
 
 The MCA API contain the MCAPI message passing interface for embedded
 system devices using an hierarchical addressing model made as a triplet
@@ -172,8 +173,12 @@ By using pragma such as
 \begin{lstlisting}
 #pragma smecy map(STHORM, 1, 3)
 \end{lstlisting}
-the execution of a function can be executed in the STHORM fabric on the PE
-3 of cluster 1.
+the execution of a function can be synchronously executed in the STHORM
+fabric on the PE 3 of cluster 1.
+
+Since for an execution on a PE the ARM processor has to launch a function
+on it and there are many PEs, the function to be executed has to be large
+grain.
 
 
 \subsubsection{Memory model}
@@ -184,7 +189,7 @@ the ARM host processor and the fabric.
 
 The global DDR memory, called the L3 memory, is shared in a weakly
 coherent way by the host processor and the fabric PEs, through a global L2
-cache. In the
+cache.
 
 This means that a multithread program running on the various cores and
 with the right synchronization could run in parallel just by sharing
@@ -220,7 +225,7 @@ void CC_free (void *ptr)
 \end{lstlisting}
 
 
-\section{Examples}
+\section{Some design patterns for STHORM SME-C}
 \label{sec:examples}
 
 Here are some typical use-cases for the MCAPI STHORM target.
@@ -228,7 +233,25 @@ Here are some typical use-cases for the MCAPI STHORM target.
 \todo{RK: no clear how to write an efficient application to use 64 PEs for
   example...}
 
+\subsection{Same computation on all the PEs}
+\label{sec:same-computation-all}
+
 \lstinputlisting{examples/distribute_PEs.c}
+
+
+\subsection{Same computation on all the PEs of a cluster}
+\label{sec:same-computation-all-1}
+
+\lstinputlisting{examples/independent_clusters.c}
+
+
+\subsection{Stream computation through the PEs of a cluster}
+\label{sec:same-computation-all-1}
+
+\lstinputlisting{examples/stream_cluster_PEs.c}
+
+
+%\lstinputlisting{examples/pipeline_cluster_PEs.c}
 
 \end{document}
 

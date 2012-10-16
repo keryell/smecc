@@ -1,4 +1,8 @@
-TARGETS=init_a init_a.p4a.c p4a_wrapper_init_array.cl
+TARGETS=init_a init_a.p4a.c p4a_wrapper_init_array.cl \
+	distribute_PEs distribute_PEs.p4a.c \
+	independent_clusters independent_clusters.p4a.c \
+	stream_cluster_PEs stream_cluster_PEs.p4a.c
+
 all: $(TARGETS)
 
 run:
@@ -16,12 +20,16 @@ clean:
 # and implicit rules (look at "10.2 Catalogue of Implicit Rules" in the
 # GNU make manual).
 
-CFLAGS = -std=c99 -g -fopenmp -Wall
-LDLIBS = -lgomp
+CFLAGS = -std=c99 -g -Wall -fopenmp -fmudflapth
+LDLIBS = -lgomp -lmudflapth
 
 
 init_a.p4a.c p4a_wrapper_init_array.cl: init_a.c
 	p4a --opencl init_a.c
+
+
+%.p4a.c : %.c
+	p4a --opencl $*.c
 
 
 # They need some other .o objects to be built:
