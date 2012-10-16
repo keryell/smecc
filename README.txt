@@ -53,6 +53,18 @@ The data transfers between the different computing nodes are done by using
 unidirectional connection-oriented packet channels between endpoints on
 the different nodes.
 
+Since it is impossible to infer the number of processes used by a generic
+SME-C program, we rely on a list of node type and instance to be run.
+
+For example
+  for (int i = 0; i < 10; i++) {
+#pragma smecy map(PE,i)
+...
+
+will need PE #0 up to #9 to run.
+A domain is used for PE, a node number for the instance number and group
+of ports for a calling instance.
+
 Compiling the Linux implementation of the MCA API:
 
 MCAPI_MRAPI_2.0.1_example/mca-2.0.1
