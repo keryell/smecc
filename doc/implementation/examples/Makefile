@@ -1,7 +1,9 @@
 TARGETS=init_a init_a.p4a.c p4a_wrapper_init_array.cl \
 	distribute_PEs distribute_PEs.p4a.c \
 	independent_clusters independent_clusters.p4a.c \
-	stream_cluster_PEs stream_cluster_PEs.p4a.c
+	round_robin_clusters round_robin_clusters.p4a.c \
+	stream_cluster_PEs stream_cluster_PEs.p4a.c \
+	systolic_PEs systolic_PEs.p4a.c
 
 all: $(TARGETS)
 

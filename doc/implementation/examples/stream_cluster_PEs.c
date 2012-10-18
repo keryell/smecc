@@ -1,11 +1,9 @@
-#define N 1000
 #define NB_CLUSTERS 4
 #define NB_PES 16
-#define MIN(x, y) ((x) < (y) ? x : y)
 
 #include <stdio.h>
 
-/* Compute a polynomial with Hörner method in a (pipeline) systolic way
+/* Compute a polynomial with Hörner method in a pipelined way as a stream
 
    (((ax + b)x + c)x + d)x + e
  */
