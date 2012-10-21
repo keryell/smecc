@@ -4,7 +4,7 @@
    Ronan.Keryell@wild-systems.com
 */
 
-#include "smecy-mca-common.h"
+#include "mca-api-common/smecy-mca-common.h"
 
 #include "mca-api-common/multi-process-producer-comsumer.h"
 #include "mca-api-common/producer.h"

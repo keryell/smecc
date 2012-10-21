@@ -6,7 +6,7 @@ targeting various parallel embedded systems and accelerators.
 
 http://smecy.eu
 
-Ronan KERYELL at Wild-Systems DOT com and others
+Ronan KERYELL at silkan DOT com and others
 
 
 
@@ -65,7 +65,15 @@ will need PE #0 up to #9 to run.
 A domain is used for PE, a node number for the instance number and group
 of ports for a calling instance.
 
-Compiling the Linux implementation of the MCA API:
+
+To test that the following implementation works, there are few example in
+smecy/runtime/tests
+
+
+Linux reference implementation of the MCA API:
+----------------------------------------------
+
+* Compiling the Linux implementation of the MCA API:
 
 MCAPI_MRAPI_2.0.1_example/mca-2.0.1
 To compile on Debian/unstable 64 bit x86, gcc version 4.7.1 (Debian 4.7.1-5):
@@ -79,6 +87,16 @@ libtool: compile:  gcc -DHAVE_CONFIG_H -I. -I. -I../../../.. -I ../../../.. -I..
 ../../mrapi.c:3166:19: error: variable ‘get_success’ set but not used [-Werror=unused-but-set-variable]
 
 The --enable-debug is to be able to play with mcapi_set_debug_level()
+
+
+* Using the Linux implementation of the MCA API:
+
+To use it, add the installation bin directory in your PATH, for example
+with something like:
+
+PATH=$PATH:/usr/local/mca-api/bin
+This makes the mcapi-config command available to give information about
+how to use the library for smecc.
 
 The Linux implementation of the MCA API is based on shared memory and
 semaphore IPC and is a little bit touchy when things go wrong, with
@@ -99,6 +117,20 @@ run... errr... failure to the other one.
 It looks like in the current MCA API Linux implementation if 2 different
 processes communicates with MCAPI, one of the mcapi_finalize() tends to
 fail.
+
+
+ST/CEA STHORM (ex-P2012) implementation of the MCA API:
+-------------------------------------------------------
+
+Get the CEA MCAPI for P2012 Release V0.2 (18th September 2012).
+
+Initialize the environment variable SMECC_STHORM_MCAPI to point to where
+the STORM MCA API is installed, for example with:
+export SMECC_STHORM_MCAPI=~/p2012-SDK-release-2012.2/modules/P2012-MCAPI
+
+Initialize the STHORM SDK environment, for example with:
+source ~/p2012-SDK-release-2012.2/setup.sh
+
 
 # Some Emacs stuff:
 ### Local Variables:

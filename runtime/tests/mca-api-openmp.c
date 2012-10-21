@@ -4,15 +4,18 @@
    Ronan.Keryell@wild-systems.com
 */
 
-#include "smecy-mca-common.h"
+#include "mca-api-common/smecy-mca-common.h"
 
 
 enum {
   SMECY_DOMAIN = 42,
   PRODUCER_NODE = 3,
   CONSUMER_NODE = 7,
-  SEND_PORT = 11,
-  RECEIVE_PORT = 13
+  SEND_MSG_PORT = 11,
+  RECEIVE_MSG_PORT = 13,
+  SEND_PKT_PORT = 41,
+  RECEIVE_PKT_PORT = 43,
+  N_MSG = 10
 };
 
 #include "mca-api-common/producer.h"
