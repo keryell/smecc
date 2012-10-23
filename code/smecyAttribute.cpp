@@ -81,7 +81,7 @@ namespace smecy
 //==========================================================================//
 // Attribute
 	//initializes all fields to a value that means the field is uninitialized
-	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1)), streamNode(-1), streamLoop(-1)
+	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1)), streamLoop(-1), stage(-1), label(-1)
 	{
 	}
 
@@ -99,6 +99,7 @@ namespace smecy
 
 	//static attribute used in counting the stream loops (smecy lowering part, see smecyTranslation)
 	int Attribute::streamLoopTotal = 0;
+    int Attribute::currentStreamStage;
 
 	//methods to add clauses
 	void Attribute::addMap(std::string mapName, IntExpr mapNumber)
@@ -168,14 +169,21 @@ namespace smecy
 	{
 		this->streamLoop = streamLoopTotal;
 		streamLoopTotal++;
+		// Reset the current stage numbering
+		currentStreamStage = 0;
 	}
 
-	void Attribute::addStreamNode(int number)
+	void Attribute::addStage()
 	{
-		this->streamNode = number;
+		this->stage = currentStreamStage++;
 	}
 
-	//get and set methods
+	void Attribute::addLabel(int number)
+	    {
+	        this->label = number;
+	    }
+
+	    //get and set methods
 
 	void Attribute::setExpressionList(std::vector<std::string> exprList)
 	{
@@ -293,9 +301,14 @@ namespace smecy
 		return this->streamLoop;
 	}
 
-	int Attribute::getStreamNode()
+    int Attribute::getStage()
+    {
+        return this->stage;
+    }
+
+	int Attribute::getLabel()
 	{
-		return this->streamNode;
+		return this->label;
 	}
 
 	bool Attribute::hasMapClause()

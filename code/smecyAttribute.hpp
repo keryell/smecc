@@ -75,8 +75,9 @@ namespace smecy
 		std::vector<std::string> expressionList; //FIXME refactor to keep only a list of IntExpr
 		std::vector<SgExpression*> sgExpressionList;
 		IntExpr condition; //condition if if clause
-		int streamNode; //number of stream node or -1 if not a stream node
 		int streamLoop; //number of stream loop or -1 if not a stream loop
+        int stage; //stage number or -1 if nor a stage in a pipelined stream loop
+        int label; //number of label or -1 if no label
 
 		//private methods
 		int argIndex(int arg); //returns index of arg in argList -1 otherwise
@@ -92,8 +93,10 @@ namespace smecy
 		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
 		void addIf(IntExpr condition);
 		void addStreamLoop();
-		void addStreamNode(int number);
+		void addStage();
+        void addLabel(int number);
 		static int streamLoopTotal;
+        static int currentStreamStage;
 
 		//get and set methods
 		void addParsedExpression(SgExpression* expr);
@@ -107,7 +110,8 @@ namespace smecy
 
 		//methods to know the kind of pragma
 		int getStreamLoop();
-		int getStreamNode();
+		int getLabel();
+        int getStage();
 		bool hasMapClause();
 		bool hasArgClause();
 		bool hasIfClause();

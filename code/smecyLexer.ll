@@ -18,7 +18,8 @@ map						{ return exprMode(MAP); }
 arg						{ return exprMode(ARG); }
 if						{ return exprMode(IF); }
 stream_loop				{ return exprMode(STREAM_LOOP); }
-stream_node				{ return exprMode(STREAM_NODE); }
+stage				{ return exprMode(STAGE); }
+label				{ return exprMode(LABEL); }
 in						{ return exprMode(IN); }
 out						{ return exprMode(OUT); }
 inout					{ return exprMode(INOUT); }

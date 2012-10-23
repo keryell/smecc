@@ -17,7 +17,7 @@ int _yyparse();
 	const char *stringType;
 }
 
-%token SMECY MAP ARG '[' ']' '/' '(' ')' ':' ',' IN OUT INOUT UNUSED NOPAR STREAM_LOOP STREAM_NODE IF
+%token SMECY MAP ARG '[' ']' '/' '(' ')' ':' ',' IN OUT INOUT UNUSED NOPAR STREAM_LOOP STAGE IF LABEL
 %token <intType> INTEGER
 %token <stringType> ID EXPR_THING
 
@@ -40,7 +40,8 @@ clause_list
 					| arg_clause clause_list
 					| if_clause clause_list
 					| stream_loop_clause clause_list
-					| stream_node_clause clause_list
+					| stage_clause clause_list
+					| label_clause clause_list
 					;
 
 /*From there, we use the various methods of Attribute objects
@@ -52,8 +53,12 @@ stream_loop_clause
 					: STREAM_LOOP { Attribute::currentAttribute->addStreamLoop(); }
 					;
 
-stream_node_clause
-					: STREAM_NODE '(' INTEGER ')' { Attribute::currentAttribute->addStreamNode($3); }
+stage_clause
+					: STAGE { Attribute::currentAttribute->addStage(); }
+					;
+
+label_clause
+					: LABEL '(' INTEGER ')' { Attribute::currentAttribute->addLabel($3); }
 					;
 
 /* RK: normalement il suffit d'utiliser $$ = ... pour passer des

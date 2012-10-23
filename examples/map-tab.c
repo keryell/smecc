@@ -12,11 +12,11 @@ int main() {
   int c=3;
 #pragma smecy stream_loop
   while (1) {
-#pragma smecy stream_node(1) arg(1,out) map(PE,1)
+#pragma smecy stage arg(1,out) map(PE,1)
       stuff(tab);
-#pragma smecy stream_node(2) arg(1,inout) map(OpenCL)
+#pragma smecy stage arg(1,inout) map(OpenCL)
       stuff2(tab,c);
-#pragma smecy stream_node(3) arg(1,in) map(EdkDSP)
+#pragma smecy stage arg(1,in) map(EdkDSP)
       stuff(tab);
   }
 

@@ -27,11 +27,11 @@ int main() {
 
 #pragma smecy stream_loop
   while (1) {
-#pragma smecy stream_node(1) arg(1,out) arg(2,out) map(PE,1)
+#pragma smecy stage arg(1,out) arg(2,out) map(PE,1)
     generate(b, c);
-#pragma smecy stream_node(2) arg(1,inout) arg(2,in)
+#pragma smecy stage label(2) arg(1,inout) arg(2,in)
     transform(b, c);
-#pragma smecy stream_node(3) arg(1,in)
+#pragma smecy stage arg(1,in)
     consume(b);
   }
 
