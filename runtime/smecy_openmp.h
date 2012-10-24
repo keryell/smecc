@@ -30,53 +30,55 @@
 
 
 // Create a variable name used to pass an argument to function
-#define SMECY_IMP_VAR_ARG(pe, instance, func, arg)      \
-  p4a_##pe##_##instance##_##func##_##arg
+#define SMECY_IMP_VAR_ARG(func, arg, pe, ...)	\
+  SMECY_CONCATN(SMECY_CONCATN(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),_##func##_##arg)
+
+//  SMECY_CONCAT(SMECY_CONCAT(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),##_##func##_##arg)
 
 /* Wrapper that can be used for example to launch the function in another
    thread */
 #define SMECY_IMP_LAUNCH_WRAPPER(func_call) func_call
 
 // Implementations for the smecy library
-#define SMECY_IMP_set(pe, instance, func)
+#define SMECY_IMP_set(func, pe, ...)
 
-#define SMECY_IMP_send_arg(pe, instance, func, arg, type, value)        \
-  type SMECY_IMP_VAR_ARG(pe, instance, func, arg) = value
+#define SMECY_IMP_send_arg(func, arg, type, value, pe, ...)        \
+  type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = value
 
-#define SMECY_IMP_cleanup_send_arg(pe, instance, func, arg, type, value)
+#define SMECY_IMP_cleanup_send_arg(func, arg, type, value, pe, ...)
 
-#define SMECY_IMP_send_arg_vector(pe, instance, func, arg, type, addr, size) \
-  type* SMECY_IMP_VAR_ARG(pe, instance, func, arg) = addr
+#define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
+  type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr
 
-#define SMECY_IMP_cleanup_send_arg_vector(pe, instance, func, arg, type, addr, size)
+#define SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...)
 
-#define SMECY_IMP_update_arg_vector(pe, instance, func, arg, type, addr, size) \
-  type* SMECY_IMP_VAR_ARG(pe, instance, func, arg) = addr
+#define SMECY_IMP_update_arg_vector(func, arg, type, addr, size, pe, ...) \
+  type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr
 
-#define SMECY_IMP_cleanup_update_arg_vector(pe, instance, func, arg, type, addr, size)
+#define SMECY_IMP_cleanup_update_arg_vector(func, arg, type, addr, size, pe, ...)
 
-#define SMECY_IMP_launch(pe, instance, func, n_args)    \
-  SMECY_IMP_launch_##n_args(pe, instance, func)
+#define SMECY_IMP_launch(func, n_args, pe, ...)    \
+  SMECY_IMP_launch_##n_args(func, pe, __VA_ARGS__)
 
-#define SMECY_IMP_prepare_get_arg_vector(pe, instance, func, arg, type, addr, size) \
-  type* SMECY_IMP_VAR_ARG(pe, instance, func, arg) = addr
+#define SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
+  type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr
 
-#define SMECY_IMP_get_arg_vector(pe, instance, func, arg, type, addr, size)
+#define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...)
 
 /* TODO: To be implemented... */
-#define SMECY_IMP_get_return(pe, instance, func, type)
+#define SMECY_IMP_get_return(func, type, pe, ...)
 
 /* Implementation of the function calls themselves */
-#define SMECY_IMP_launch_0(pe, instance, func)  \
+#define SMECY_IMP_launch_0(func, pe, ...)  \
   SMECY_IMP_LAUNCH_WRAPPER(func())
 
 
-#define SMECY_IMP_launch_1(pe, instance, func)                          \
-  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_VAR_ARG(pe, instance, func, 1)))
+#define SMECY_IMP_launch_1(func, pe, ...)                          \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_VAR_ARG(func, 1, pe, __VA_ARGS__)))
 
-#define SMECY_IMP_launch_2(pe, instance, func)                          \
-  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_VAR_ARG(pe, instance, func, 1), \
-                                SMECY_IMP_VAR_ARG(pe, instance, func, 2)))
+#define SMECY_IMP_launch_2(func, pe, ...)                          \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_VAR_ARG(func, 1, pe, __VA_ARGS__), \
+                                SMECY_IMP_VAR_ARG(func, 2, pe, __VA_ARGS__)))
 
 
 

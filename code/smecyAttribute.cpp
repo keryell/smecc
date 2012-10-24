@@ -81,13 +81,13 @@ namespace smecy
 //==========================================================================//
 // Attribute
 	//initializes all fields to a value that means the field is uninitialized
-	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapNumber(IntExpr(-1)), condition(IntExpr(-1)), streamLoop(-1), stage(-1), label(-1)
+	Attribute::Attribute(SgNode* parent): parent(parent), mapName(""), mapCoordinates(std::vector<IntExpr>{}), condition(IntExpr(-1)), streamLoop(-1), stage(-1), label(-1)
 	{
 	}
 
 	//static attributes used in parsing
 	Attribute* Attribute::currentAttribute ;
-	std::vector<IntExpr> Attribute::argSize;
+	std::vector<IntExpr> Attribute::args;
 	std::vector<std::pair<IntExpr,IntExpr> > Attribute::argRange;
 	int Attribute::argNumber;
 	int Attribute::isExprMode = 0;
@@ -102,10 +102,10 @@ namespace smecy
     int Attribute::currentStreamStage;
 
 	//methods to add clauses
-	void Attribute::addMap(std::string mapName, IntExpr mapNumber)
+	void Attribute::addMap(std::string mapName, std::vector<IntExpr> coordinates)
 	{
 		this->mapName = mapName;
-		this->mapNumber = mapNumber;
+		this->mapCoordinates = coordinates;
 	}
 
 	void Attribute::addArg(int argNumber, ArgType argType)
@@ -206,9 +206,12 @@ namespace smecy
 		return SageBuilder::buildOpaqueVarRefExp(this->mapName, scope);
 	}
 
-	SgExpression* Attribute::getMapNumber()
-	{
-		return this->intExprToSgExpression(this->mapNumber);
+	std::vector<SgExpression*> Attribute::getMapCoordinates() {
+	  std::vector<SgExpression*> c;
+	  // Parse all the integer expressions of the accelerator coordinates
+	  for (auto e: this->mapCoordinates)
+	    c.push_back(intExprToSgExpression(e));
+	  return c;
 	}
 
 	//transforms a intExpr into a SgExpression regardless of the actual type stored in the intexpr
@@ -447,7 +450,10 @@ namespace smecy
 	void Attribute::print()
 	{
 		std::cout << "Attribute with " << this->argList.size() << " argument clauses." << std::endl;
-		std::cout << "\tMapped to " << this->mapName << " n°" << this->mapNumber << "." << std::endl;
+		std::cout << "\tMapped to " << this->mapName<< " n°(";
+		for (auto e: this->mapCoordinates)
+		  std::cout << e;
+		std::cout << ")." << std::endl;
 		for (unsigned int i=0; i<this->argList.size(); i++)
 		{
 			std::cout << "\t" ;

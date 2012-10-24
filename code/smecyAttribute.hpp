@@ -54,7 +54,7 @@ namespace smecy
 	//individual smecy clause
 	class Arg
 	{
-	public:	//for internal use only
+	public:	//for internal use of the #pragma parser only
 		int argNumber;
 		ArgType argType;
 		std::vector<IntExpr> argSize;
@@ -70,7 +70,7 @@ namespace smecy
 	protected:
 		SgNode* parent;
 		std::string mapName; //name of the accelerator to map to
-		IntExpr mapNumber; //number of said accelerator
+		std::vector<IntExpr> mapCoordinates; // the coordinate id of the accelerator, if any.
 		std::vector<Arg> argList; //list of arguments
 		std::vector<std::string> expressionList; //FIXME refactor to keep only a list of IntExpr
 		std::vector<SgExpression*> sgExpressionList;
@@ -87,7 +87,7 @@ namespace smecy
 		Attribute(SgNode* parent=NULL); //TODO add new constructors
 
 		//adding clauses
-		void addMap(std::string mapName, IntExpr mapNumber);
+		void addMap(std::string mapName, std::vector<IntExpr> coordinates);
 		void addArg(int argNumber, ArgType argType);
 		void addArg(int argNumber, std::vector<IntExpr> argSize);
 		void addArg(int argNumber, std::vector<std::pair<IntExpr,IntExpr> > argRange);
@@ -103,7 +103,7 @@ namespace smecy
 		std::vector<std::string> getExpressionList();
 		void setExpressionList(std::vector<std::string> exprList);
 		SgExpression* getMapName(SgScopeStatement* scope);
-		SgExpression* getMapNumber();
+		std::vector<SgExpression*> getMapCoordinates();
 		SgExpression* intExprToSgExpression(IntExpr ie);
 		SgExpression* argSizeExp(int arg);
 		SgExpression* getIf();
@@ -125,9 +125,9 @@ namespace smecy
 		int argDimension(int arg);	//returns effective dimension, taking range into account
 		std::vector<IntExpr>& getSize(int arg); //FIXME FIXME FIXME
 
-		//static attributes needed for parsing
+		//static attributes needed for parsing #pragma
 		static Attribute *currentAttribute ;
-		static std::vector<IntExpr> argSize;
+		static std::vector<IntExpr> args;
 		static std::vector<std::pair<IntExpr,IntExpr> > argRange;
 		static std::pair<IntExpr,IntExpr> currentPair;
 		static int argNumber;

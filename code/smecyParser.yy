@@ -24,11 +24,15 @@ int _yyparse();
 %start smecy_directive
 
 %%
-/* a smecy directive is a list of clauses
-the static attribute object that will be used
-to store the result of the parsing is initialized
-a list meant to contain all C expressions contained in
-the directive is also initilaized*/
+
+/* a SME-C directive is a list of clauses
+
+   The static attribute object that will be used to store the result of
+   the parsing is initialized
+
+   A list meant to contain all C expressions contained in the directive is
+   also initialized */
+
 smecy_directive
 					: SMECY { Attribute::currentExpressionList.clear(); Attribute::currentAttribute = new Attribute(Attribute::currentParent); }
 					  clause_list { Attribute::currentAttribute->setExpressionList(Attribute::currentExpressionList) }
@@ -44,10 +48,9 @@ clause_list
 					| label_clause clause_list
 					;
 
-/*From there, we use the various methods of Attribute objects
-(see smecyAttribute.h) to add the information regarding
-the different types of clause
-*/
+/* From there, we use the various methods of Attribute objects (see
+   smecyAttribute.hpp) to add the information regarding the different
+   types of clause */
 
 stream_loop_clause
 					: STREAM_LOOP { Attribute::currentAttribute->addStreamLoop(); }
@@ -78,16 +81,17 @@ arg_clause
 					;
 
 map_clause
-					: MAP '(' ID closing_map_clause {
-						Attribute::currentAttribute->addMap($3,Attribute::currentIntExpr);
-						}
-					;
+                                        : MAP '(' ID closing_map_clause {
+                                                Attribute::currentAttribute->addMap($3, Attribute::args);
+                                                }
+                                        ;
 
 closing_map_clause
-					: ')'
-					| ',' int ')'
-					/* some computation is hidden in int*/
-					;
+                                        : ')' { // No argument provided:
+                                                Attribute::args.clear(); }
+                                        | ',' int_list ')'
+                                        /* some computation is hidden in int_list */
+                                        ;
 
 arg_parameter_list
 					: arg_parameter
@@ -106,15 +110,32 @@ arg_parameter
 					;
 
 size
-					: '[' int ']' { Attribute::argSize.clear();
-						Attribute::argSize.push_back(Attribute::currentIntExpr);
+					: '[' int ']' { Attribute::args.clear();
+						Attribute::args.push_back(Attribute::currentIntExpr);
 						} size_list
-					/* some computation is hidden in int*/
+					/* some computation is hidden in size_list */
 					;
 
 size_list
-					: /*empty*/ { Attribute::currentAttribute->addArg(Attribute::argNumber,Attribute::argSize);}
-					| '[' int ']' { Attribute::argSize.push_back(Attribute::currentIntExpr); } size_list
+					: /*empty*/ { Attribute::currentAttribute->addArg(Attribute::argNumber,Attribute::args);}
+					| '[' int ']' { Attribute::args.push_back(Attribute::currentIntExpr); } size_list
+					/* some computation is hidden in int*/
+					;
+
+// Parse into args a list of integer expressions separated by ',':
+int_list
+					: int {
+					  // Clear the current list of arguments
+					  Attribute::args.clear();
+					  // and initialize wuth the first int expression
+					  Attribute::args.push_back(Attribute::currentIntExpr);
+					  }
+					  more_int_list
+					;
+
+more_int_list
+					: /*empty*/
+					| ',' int { Attribute::args.push_back(Attribute::currentIntExpr); } more_int_list
 					/* some computation is hidden in int*/
 					;
 

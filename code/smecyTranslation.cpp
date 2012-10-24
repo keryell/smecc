@@ -130,7 +130,7 @@ namespace smecy {
           SgStatement* target = pragmaDeclaration;
           //SageInterface::getScope(pragmaDeclaration);
 
-          /* Big hack to be able to evaluate expressions in pragma in local
+          /* Big hack to be able to evaluate expressions in pragma in the local
              context: we create some dummy variable declarations initialized
              with the expressions found in the pragma. :-)
              Then we extract the expression from the declarations
@@ -208,11 +208,14 @@ namespace smecy {
    *  */
   void addSmecySet(SgStatement* target,
                    SgExpression* mapName,
-                   SgExpression* mapNumber,
+                   std::vector<SgExpression*> mapCoordinates,
                    SgExpression* functionToMap) {
     // building parameters to build the func call (bottom-up building)
-    SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName),
-        copy(mapNumber), copy(functionToMap));
+    std::vector<SgExpression*> ev { copy(functionToMap), copy(mapName) };
+    // Since the coordinates have variadic dimension, append them at the end
+    for (auto c: mapCoordinates)
+      ev.push_back(c);
+    SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
     SgName name("SMECY_set");
     SgType* type = SageBuilder::buildVoidType();
     SgScopeStatement* scope = SageInterface::getScope(target);
@@ -229,15 +232,19 @@ namespace smecy {
    *  */
   void addSmecyLaunch(SgStatement* target,
                       SgExpression* mapName,
-                      SgExpression* mapNumber,
+                      std::vector<SgExpression*> mapCoordinates,
                       SgStatement* functionToMap) {
     SgExpression* f = getFunctionRef(functionToMap);
     // Build the expression to the number or arguments given to the function to call:
     SgIntVal* nb_args =
         SageBuilder::buildIntVal(getArgList(functionToMap)->get_expressions().size());
     //building parameters to build the func call (bottom-up building)
-    SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName),
-        copy(mapNumber), copy(f), copy(nb_args));
+    std::vector<SgExpression*> ev { copy(f), copy(nb_args), copy(mapName) };
+    // Since the coordinates have variadic dimension, append them at the end
+    for (auto c: mapCoordinates)
+      ev.push_back(c);
+    SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
+
     SgName name("SMECY_launch");
     SgType* type = SageBuilder::buildVoidType();
     SgScopeStatement* scope = SageInterface::getScope(target);
@@ -253,16 +260,22 @@ namespace smecy {
    *  */
   void addSmecySendArg(SgStatement* target,
                        SgExpression* mapName,
-                       SgExpression* mapNumber,
+                       std::vector<SgExpression*> mapCoordinates,
                        SgExpression* functionToMap,
                        int argNumber,
                        SgExpression* typeDescriptor,
                        SgExpression* value) {
     // Building parameters to build the func call (bottom-up building)
     SgExpression* argNumberExpr = SageBuilder::buildIntVal(argNumber);
-    SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName),
-        copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
-        copy(typeDescriptor), copy(value));
+    // All this should to a variadic function/template...
+    std::vector<SgExpression*> ev { copy(functionToMap), copy(argNumberExpr),
+                                    copy(typeDescriptor), copy(value),
+                                    copy(mapName) };
+    // Since the coordinates have variadic dimension, append them at the end
+    for (auto c: mapCoordinates)
+      ev.push_back(c);
+
+    SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
     SgName name("SMECY_send_arg");
     SgType* type = SageBuilder::buildVoidType();
     SgScopeStatement* scope = SageInterface::getScope(target);
@@ -286,7 +299,7 @@ namespace smecy {
   */
   void addSmecyTransferVector(SgStatement* target,
 			      SgExpression* mapName,
-			      SgExpression* mapNumber,
+			      std::vector<SgExpression*> mapCoordinates,
 			      SgExpression* functionToMap,
 			      int argNumber,
 			      SgExpression* typeDescriptor,
@@ -312,9 +325,14 @@ namespace smecy {
     };
     // Building parameters to build the func call (bottom-up building)
     SgExpression* argNumberExpr = SageBuilder::buildIntVal(argNumber);
-    SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName),
-        copy(mapNumber), copy(functionToMap), copy(argNumberExpr),
-        copy(typeDescriptor), copy(value), copy(size));
+    std::vector<SgExpression*> ev { copy(functionToMap), copy(argNumberExpr),
+                                    copy(typeDescriptor), copy(value),
+                                    copy(size), copy(mapName) };
+    // Since the coordinates have variadic dimension, append them at the end
+    for (auto c: mapCoordinates)
+      ev.push_back(c);
+
+    SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
     SgType* type = SageBuilder::buildVoidType();
     SgScopeStatement* scope = SageInterface::getScope(target);
 
@@ -331,14 +349,18 @@ namespace smecy {
    *  */
   SgExpression* smecyReturn(SgStatement* target,
                             SgExpression* mapName,
-                            SgExpression* mapNumber,
+                            std::vector<SgExpression*> mapCoordinates,
                             SgExpression* functionToMap,
                             SgType* returnType) {
     // Parameters for the builder
     SgScopeStatement* scope = SageInterface::getScope(target);
     SgExpression* typeDescriptor = SageBuilder::buildOpaqueVarRefExp(returnType->unparseToString(), scope);
-    SgExprListExp * exprList = SageBuilder::buildExprListExp(copy(mapName),
-        copy(mapNumber), copy(functionToMap), copy(typeDescriptor));
+    std::vector<SgExpression*> ev { copy(functionToMap), copy(typeDescriptor),
+                                    copy(mapName) };
+    // Since the coordinates have variadic dimension, append them at the end
+    for (auto c: mapCoordinates)
+      ev.push_back(c);
+    SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
     SgName name("SMECY_get_return");
 
     /* Since there's no proper builder for functionCallExp, we will
@@ -553,7 +575,7 @@ namespace smecy {
       // Parameters for the smecyAddXXX methods
       SgScopeStatement* scope = SageInterface::getScope(functionToMap);
       SgExpression* mapName = attribute->getMapName(scope);
-      SgExpression* mapNumber = attribute->getMapNumber();
+      std::vector<SgExpression*> mapCoordinates = attribute->getMapCoordinates();
       SgExpression* funcToMapExp = getFunctionRef(functionToMap);
       SgExpression* value = getArgRef(functionToMap, i-1);
 
@@ -561,7 +583,7 @@ namespace smecy {
         // Scalar arg
         SgExpression* typeDescriptor = getArgTypeDescriptor(functionToMap, i-1);
         if (argType == _arg_in or argType == _arg_inout)
-          addSmecySendArg(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value);
+          addSmecySendArg(target, mapName, mapCoordinates, funcToMapExp, i, typeDescriptor, value);
         if (argType == _arg_out or argType == _arg_inout)
           std::cerr << debugInfo(target) << "warning: argument " << i
             << " is a scalar with type out or inout and can not be retrieved." << std::endl
@@ -571,8 +593,8 @@ namespace smecy {
         // Vector arg
         SgExpression* typeDescriptor = getArgVectorTypeDescriptor(functionToMap, i-1);
         SgExpression* argSize = attribute->argSizeExp(i);
-        addSmecyTransferVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize, argType, true);
-        addSmecyTransferVector(target, mapName, mapNumber, funcToMapExp, i, typeDescriptor, value, argSize, argType, false);
+        addSmecyTransferVector(target, mapName, mapCoordinates, funcToMapExp, i, typeDescriptor, value, argSize, argType, true);
+        addSmecyTransferVector(target, mapName, mapCoordinates, funcToMapExp, i, typeDescriptor, value, argSize, argType, false);
       }
     }
   }
@@ -583,7 +605,7 @@ namespace smecy {
 	{
 		SgExpression* tempExp;
 		SgExpression* mapName = attribute->getMapName(SageInterface::getScope(functionToMap));
-		SgExpression* mapNumber = attribute->getMapNumber();
+		auto mapCoordinates = attribute->getMapCoordinates();
 
 		//check the function call statement
 		SgExprStatement* exprSmt = isSgExprStatement(functionToMap);
@@ -595,7 +617,7 @@ namespace smecy {
 			if (assignOp) // case a = f(...)
 			{
 				SgType* type = assignOp->get_lhs_operand()->get_type();
-				SageInterface::setRhsOperand(assignOp, smecyReturn(target, mapName, mapNumber, getFunctionRef(functionToMap), type));
+				SageInterface::setRhsOperand(assignOp, smecyReturn(target, mapName, mapCoordinates, getFunctionRef(functionToMap), type));
 			}
 			else
 				SageInterface::removeStatement(functionToMap);
@@ -610,7 +632,7 @@ namespace smecy {
 				throw 0;
 			}
 			SgType* type = SageInterface::getFirstVarType(varDec);
-			assignInit->set_operand_i(smecyReturn(target, mapName, mapNumber, getFunctionRef(functionToMap), type));
+			assignInit->set_operand_i(smecyReturn(target, mapName, mapCoordinates, getFunctionRef(functionToMap), type));
 		}
 		else
 		{
@@ -1015,13 +1037,13 @@ namespace smecy {
 
 		//parameters
 		SgScopeStatement* scope = SageInterface::getScope(functionToMap);
-		SgExpression* mapNumber = attribute->getMapNumber();
+		std::vector<SgExpression*> mapCoordinates = attribute->getMapCoordinates();
 		SgExpression* mapName = attribute->getMapName(scope);
 
 		//adding calls to SMECY API
-		addSmecySet(target, mapName, mapNumber, getFunctionRef(functionToMap));
+		addSmecySet(target, mapName, mapCoordinates, getFunctionRef(functionToMap));
 		processArgs(target, attribute, functionToMap);
-		addSmecyLaunch(target, mapName, mapNumber, functionToMap);
+		addSmecyLaunch(target, mapName, mapCoordinates, functionToMap);
 		processReturn(target, attribute, functionToMap);
 
 		//removing pragma declaration TODO free memory

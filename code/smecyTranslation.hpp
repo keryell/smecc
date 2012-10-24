@@ -20,7 +20,7 @@ namespace smecy
 	//functions that add SMECY API functions
 	void addSmecyInclude(SgProject* sageFilePtr);
 	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
-	void addSmecySendArg(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
+	void addSmecySendArg(SgStatement* target, SgExpression* mapName, std::vector<SgExpression*> mapCoordinates, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
 	void addSmecySendArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value, SgExpression* size);

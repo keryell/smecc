@@ -15,7 +15,8 @@ int main() {
      different thread, whatever the number of CPU is: */
 #pragma omp parallel for schedule(static, 1)
   for (int i = 0; i < N; i++) {
-#pragma smecy map(PE,i) \
+    // Map on STHORM cluster 0 PE i:
+#pragma smecy map(STHORM, 0, i)	       \
               arg(1,out,[N][M],/[i][]) \
               arg(2,in)
     init(&tab[i][0], M);
