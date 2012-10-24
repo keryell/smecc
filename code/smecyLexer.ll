@@ -80,8 +80,13 @@ smecy::Attribute *smecy::parseDirective(std::string directive, SgNode* parent)
 	yyin = fmemopen(stream, directive.size(), "r");
 
 	//actual parsing
-	_yyparse();
-
+	int error_code = _yyparse();
 	fclose(yyin);
+
+	if (error_code != 0)
+           /* Uplift the current text as an exception
+              if there is an error during parsing */
+	   throw yytext;
+
 	return smecy::Attribute::currentAttribute;
 }

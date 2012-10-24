@@ -72,6 +72,13 @@ sudo ln -s g++-4.6 /usr/bin/g++
 sudo rm /usr/bin/cpp
 sudo ln -s cpp-4.6 /usr/bin/cpp
 
+To be back to the last compiler instead:
+sudo rm /usr/bin/gcc
+sudo ln -s gcc-4.7 /usr/bin/gcc
+sudo rm /usr/bin/g++
+sudo ln -s g++-4.7 /usr/bin/g++
+sudo rm /usr/bin/cpp
+sudo ln -s cpp-4.7 /usr/bin/cpp
 
 
 

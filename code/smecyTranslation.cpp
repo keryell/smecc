@@ -96,8 +96,13 @@ namespace smecy {
 
           // Attach a parsed version of the pragma to the AST through
           // flex/bison:
-          pragmaDeclaration->addNewAttribute("smecy",
-                                             smecy::parseDirective(pragmaString, pragmaDeclaration));
+          try {
+            pragmaDeclaration->addNewAttribute("smecy",
+                                               smecy::parseDirective(pragmaString, pragmaDeclaration));
+          }
+          catch (const char * yytext) {
+            std::cerr << "Cannot parse \"" << yytext << "\" in \"" << pragmaString << "\"" << std::endl ;
+          }
         }
       }
     }
