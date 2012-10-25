@@ -69,6 +69,33 @@ namespace smecy {
     return boost::make_filter_iterator<is_SMECY_pragma>(pragmas.end(), pragmas.end());
   }
 
+  /* Declare a fake variable locally without any verification so that
+   * we can have a reference expression on it.
+   *
+   * The aim is to generate any symbol from a string to synthesis for example
+   * a macro name, even if the name is used somewhere else, such as a type.
+   * Ouch!
+   *
+   * This is a more offensive implementation than
+   * SageBuilder::buildOpaqueVarRefExp since it skips pre-existing test
+   */
+  SgVarRefExp*
+  buildHackVarRefExp(const std::string& name,SgScopeStatement* scope/* =NULL */)
+  {
+    SgVarRefExp *result = NULL;
+
+    if (scope == NULL)
+      scope = SageBuilder::topScopeStack();
+    ROSE_ASSERT(scope != NULL);
+
+    SgVariableDeclaration* fakeVar = SageBuilder::buildVariableDeclaration(name, SageBuilder::buildIntType(),NULL, scope);
+    Sg_File_Info* file_info = fakeVar->get_file_info();
+    file_info->unsetOutputInCodeGeneration ();
+    SgVariableSymbol *  fakeSymbol = SageInterface::getFirstVarSym(fakeVar);
+    result = SageBuilder::buildVarRefExp(fakeSymbol);
+    return result;
+  }
+
 
   /* \brief First steps : attaching attributes and parsing expressions
      from pragmas.
@@ -453,7 +480,7 @@ namespace smecy {
 		SgType* argType = argRef->get_type();
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
 
-		return SageBuilder::buildOpaqueVarRefExp(argType->unparseToString(), scope);
+		return buildHackVarRefExp(argType->unparseToString(), scope);
 	}
 
 	/* get a specific type descriptor from arg number argNumber in
@@ -467,17 +494,23 @@ namespace smecy {
 		SgExpression* argRef = getArgRef(functionCall, argNumber);
 		SgType* argType = argRef->get_type();
 
+        // std::cerr << "DEBUG: " << argType->unparseToString() << std::endl;
 		if (SageInterface::isScalarType(argType))
 		{
 			//std::cerr << "DEBUG: " << argType->unparseToString() << std::endl;
 			std::cerr << debugInfo(functionCall) << "error: Argument is a scalar and the cannot be used to pass information between pipeline stages (args are passed by copy in C...)." << std::endl;
 			throw 0;
 		}
-		while (!SageInterface::isScalarType(argType))
-			argType = SageInterface::getElementType(argType);
+		/* Try to find the basic type even if constructed as
+		 * array of array of struct for example */
+		while (!SageInterface::isScalarType(argType)
+		       && !SageInterface::isStructType(argType))
+		  // Get the type of the pointer or array element:
+		  argType = SageInterface::getElementType(argType);
+	    // std::cerr << "getElementType: " << argType->unparseToString() << std::endl;
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
 
-		return SageBuilder::buildOpaqueVarRefExp(argType->unparseToString(), scope);
+		return buildHackVarRefExp(argType->unparseToString(), scope);
 	}
 
 	SgFunctionCallExp* getFunctionCallExp(SgStatement* functionCall)
