@@ -494,7 +494,7 @@ namespace smecy {
 		SgExpression* argRef = getArgRef(functionCall, argNumber);
 		SgType* argType = argRef->get_type();
 
-        // std::cerr << "DEBUG: " << argType->unparseToString() << std::endl;
+        std::cerr << "Arg vector type: " << argType->unparseToString() << std::endl;
 		if (SageInterface::isScalarType(argType))
 		{
 			//std::cerr << "DEBUG: " << argType->unparseToString() << std::endl;
@@ -502,12 +502,13 @@ namespace smecy {
 			throw 0;
 		}
 		/* Try to find the basic type even if constructed as
-		 * array of array of struct for example */
-		while (!SageInterface::isScalarType(argType)
-		       && !SageInterface::isStructType(argType))
-		  // Get the type of the pointer or array element:
-		  argType = SageInterface::getElementType(argType);
-	    // std::cerr << "getElementType: " << argType->unparseToString() << std::endl;
+		 * array of array of struct for example, by recurruring
+		 * getElementType() up to get something elemental */
+		for (SgType* elemType = argType;
+		     elemType != nullptr;
+		     elemType = SageInterface::getElementType(elemType))
+		    argType = elemType;
+		std::cerr << "-> getElementType: " << argType->unparseToString() << std::endl;
 		SgScopeStatement* scope = SageInterface::getScope(functionCall);
 
 		return buildHackVarRefExp(argType->unparseToString(), scope);
