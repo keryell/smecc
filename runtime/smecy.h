@@ -116,69 +116,73 @@
 
 #define SMECY_set(func, pe, ...)					\
   SMECY_PRINT_VERBOSE("Preparing to launch function \"%s\" on "         \
-                      "processor \"%s\" n° \"%s\"\n", #func, #pe, #__VA_ARGS__) \
+                      "processor \"%s\" n° \"%s\"\n",                   \
+                      #func, #pe, #__VA_ARGS__)                         \
   SMECY_IMP_set(func, pe, __VA_ARGS__)
 
-#define SMECY_send_arg(func, arg, type, value, pe, ...)			\
-  SMECY_PRINT_VERBOSE("Sending %s to function \"%s\" on processor "     \
-                      "\"%s\" n° \"%s\"\n", #type, #func, #pe, #__VA_ARGS__) \
+#define SMECY_send_arg(func, arg, type, value, pe, ...)             \
+  SMECY_PRINT_VERBOSE("Sending %s as arg #%d to function \"%s\""    \
+                      " on processor \"%s\" n° \"%s\"\n",           \
+                      #type, arg, #func, #pe, #__VA_ARGS__)         \
   SMECY_IMP_send_arg(func, arg, type, value, pe, __VA_ARGS__)
 
 #define SMECY_cleanup_send_arg(func, arg, type, value, pe, ...)		\
-  SMECY_PRINT_VERBOSE("Deal with post-sending %s to function"           \
-                      " \"%s\" on processor "                           \
-                      "\"%s\" n° \"%s\"\n", #type, #func, #pe, #__VA_ARGS__) \
+  SMECY_PRINT_VERBOSE("Deal with post-sending %s as arg #%d"            \
+                      " to function \"%s\" on processor \"%s\" n° "     \
+                      "\"%s\"\n", #type, arg, #func, #pe, #__VA_ARGS__) \
   SMECY_IMP_cleanup_send_arg(func, arg, type, value, pe, __VA_ARGS__)
 
 #define SMECY_send_arg_vector(func, arg, type, addr, size, pe, ...)	\
   SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s at address" \
-                      " %p from argument %zd of function \"%s\" on "    \
-                      "processor \"%s\" n° \"%s\"\n",                       \
-                      (size_t) size, #type, addr, arg, #func, #pe, #__VA_ARGS__) \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
 
 #define SMECY_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...) \
   SMECY_PRINT_VERBOSE("Deal with post-sending vector "                  \
                       "of %zd elements of %s at address"                \
-                      " %p from argument %zd of function \"%s\" on "    \
-                      "processor \"%s\" n° \"%s\"\n",                       \
-                      (size_t) size, #type, addr, arg, #func, #pe, #__VA_ARGS__) \
-  SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
+                      " %p from arg #%d of function \"%s\" on "          \
+                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
+  SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr,              \
+                                    size, pe, __VA_ARGS__)
 
 #define SMECY_update_arg_vector(func, arg, type, addr, size, pe, ...)	\
   SMECY_PRINT_VERBOSE("Update by sending vector "                       \
                       "of %zd elements of %s at address"                \
-                      " %p from argument %zd of function \"%s\" on "    \
-                      "processor \"%s\" n° \"%s\"\n",                       \
-                      (size_t) size, #type, addr, arg, #func, #pe, #__VA_ARGS__) \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   SMECY_IMP_update_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
 
 #define SMECY_cleanup_update_arg_vector(func, arg, type, addr, size, pe, ...) \
-  SMECY_PRINT_VERBOSE("Udate by receiving vector "              \
+  SMECY_PRINT_VERBOSE("Udate by receiving vector "                      \
                       "of %zd elements of %s at address"                \
-                      " %p from argument %zd of function \"%s\" on "    \
-                      "processor \"%s\" n° \"%s\"\n",                       \
-                      (size_t) size, #type, addr, arg, #func, #pe, #__VA_ARGS__) \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"\n",(size_t) size,     \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   SMECY_IMP_cleanup_update_arg_vector(func, arg, type, addr, size, pe, ...)
 
 #define SMECY_launch(func, n_args, pe, ...)				\
   SMECY_PRINT_VERBOSE("Running function \"%s\" with %zd arguments on "  \
-                      "processor \"%s\" n° \"%s\"\n",                       \
+                      "processor \"%s\" n° \"%s\"\n",                   \
                       #func, (size_t) n_args, #pe, #__VA_ARGS__)	\
   SMECY_IMP_launch(func, n_args, pe, __VA_ARGS__)
 
 #define SMECY_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
   SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
-                      "of %s at address %p from argument %zd of "       \
-                      "function \"%s\" on processor \"%s\" n° \"%s\"\n",    \
-                      (size_t) size, #type, addr, arg, #func, #pe, #__VA_ARGS__) \
+                      "of %s at address %p from arg #%d of "            \
+                      "function \"%s\" on processor \"%s\" n° \"%s\"\n", \
+                      (size_t) size, #type, addr, arg,                  \
+                      #func, #pe, #__VA_ARGS__)                         \
   SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
 
 #define SMECY_get_arg_vector(func, arg, type, addr, size, pe, ...)	\
   SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address" \
-                      " %p from argument %zd of function \"%s\" on "    \
-                      "processor \"%s\" n° \"%s\"\n",                       \
-                      (size_t) size, #type, addr, arg, #func, #pe, #__VA_ARGS__) \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
 
 #define SMECY_get_return(func, type, pe, ...)				\
