@@ -69,18 +69,64 @@
 #define SMECY_IMP_get_return(func, type, pe, ...)
 
 /* Implementation of the function calls themselves */
+
+/* Call a function without parameter */
 #define SMECY_IMP_launch_0(func, pe, ...)  \
   SMECY_IMP_LAUNCH_WRAPPER(func())
+/* For the recurrence afterwards: no parameter when 0 parameter :-) */
+#define SMECY_IMP_ARG_launch_0(func, pe, ...)
 
+/* Call a function with 1 parameter */
+#define SMECY_IMP_ARG_launch_1(func, pe, ...) SMECY_IMP_VAR_ARG(func, 1, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_1(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_1(func, pe, __VA_ARGS__)))
 
-#define SMECY_IMP_launch_1(func, pe, ...)                          \
-  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_VAR_ARG(func, 1, pe, __VA_ARGS__)))
+/* Declare the launchers for function calls with 2 and more parameters by
+   recurrence. Each time, add a parameter to the list of parameter of the
+   previous call */
+#define SMECY_IMP_ARG_launch_2(func, pe, ...) SMECY_IMP_ARG_launch_1(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 2, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_2(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_2(func, pe, __VA_ARGS__)))
 
-#define SMECY_IMP_launch_2(func, pe, ...)                          \
-  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_VAR_ARG(func, 1, pe, __VA_ARGS__), \
-                                SMECY_IMP_VAR_ARG(func, 2, pe, __VA_ARGS__)))
+#define SMECY_IMP_ARG_launch_3(func, pe, ...) SMECY_IMP_ARG_launch_2(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 3, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_3(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_3(func, pe, __VA_ARGS__)))
 
+#define SMECY_IMP_ARG_launch_4(func, pe, ...) SMECY_IMP_ARG_launch_3(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 4, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_4(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_4(func, pe, __VA_ARGS__)))
 
+#define SMECY_IMP_ARG_launch_5(func, pe, ...) SMECY_IMP_ARG_launch_4(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 5, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_5(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_5(func, pe, __VA_ARGS__)))
+
+#define SMECY_IMP_ARG_launch_6(func, pe, ...) SMECY_IMP_ARG_launch_5(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 6, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_6(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_6(func, pe, __VA_ARGS__)))
+
+#define SMECY_IMP_ARG_launch_7(func, pe, ...) SMECY_IMP_ARG_launch_6(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 7, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_7(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_7(func, pe, __VA_ARGS__)))
+
+#define SMECY_IMP_ARG_launch_8(func, pe, ...) SMECY_IMP_ARG_launch_7(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 8, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_8(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_8(func, pe, __VA_ARGS__)))
+
+#define SMECY_IMP_ARG_launch_9(func, pe, ...) SMECY_IMP_ARG_launch_8(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 9, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_9(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_9(func, pe, __VA_ARGS__)))
+
+#define SMECY_IMP_ARG_launch_10(func, pe, ...) SMECY_IMP_ARG_launch_9(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 10, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_10(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_10(func, pe, __VA_ARGS__)))
+
+#define SMECY_IMP_ARG_launch_11(func, pe, ...) SMECY_IMP_ARG_launch_10(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 11, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_11(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_11(func, pe, __VA_ARGS__)))
+
+#define SMECY_IMP_ARG_launch_12(func, pe, ...) SMECY_IMP_ARG_launch_11(func, pe, __VA_ARGS__),SMECY_IMP_VAR_ARG(func, 12, pe, __VA_ARGS__)
+#define SMECY_IMP_launch_12(func, pe, ...)                               \
+  SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_12(func, pe, __VA_ARGS__)))
 
 /* Implementation macros to deal with streaming */
 
