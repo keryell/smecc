@@ -45,7 +45,7 @@ void consumer() {
 						       &status);
   MCAPI_CHECK_STATUS(status);
 
-  mcapi_pktchan_send_hndl_t receive_gate;
+  mcapi_pktchan_recv_hndl_t receive_gate;
   mcapi_request_t handle;
   // Let the sender do the connection and open for receive
   mcapi_pktchan_recv_open_i(&receive_gate, pkt_receive, &handle, &status);
