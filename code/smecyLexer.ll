@@ -13,32 +13,34 @@ int exprMode(int);
 %option nounput
 
 %%
-smecy					{ return exprMode(SMECY); }
-map						{ return exprMode(MAP); }
-arg						{ return exprMode(ARG); }
-if						{ return exprMode(IF); }
-stream_loop				{ return exprMode(STREAM_LOOP); }
-stage				{ return exprMode(STAGE); }
-label				{ return exprMode(LABEL); }
-in						{ return exprMode(IN); }
-out						{ return exprMode(OUT); }
-inout					{ return exprMode(INOUT); }
-unused					{ return exprMode(UNUSED); }
-[\[\](),:]				{ return *yytext; }
-[/]						{ return exprMode(*yytext); }
-[0-9]+					{ yylval.intType = atoi(yytext);
-						  return INTEGER; }
-[a-zA-Z_][-a-zA-Z0-9_]*	{ yylval.stringType = strdup(yytext);
-						  return exprMode(ID); }
-[ \\\t\n]+				{ ; }
-.						{ if (!smecy::Attribute::isExprMode)
-							yyerror((char *)"Unknown character");
-						  else
-						  {
-						  	yylval.stringType = strdup(yytext);
-							return EXPR_THING;
-						  }
-						}
+smecy                   { return exprMode(SMECY); }
+map                     { return exprMode(MAP); }
+arg                     { return exprMode(ARG); }
+if                      { return exprMode(IF); }
+stream_loop             { return exprMode(STREAM_LOOP); }
+stage                   { return exprMode(STAGE); }
+label                   { return exprMode(LABEL); }
+in                      { return exprMode(IN); }
+out                     { return exprMode(OUT); }
+inout                   { return exprMode(INOUT); }
+unused                  { return exprMode(UNUSED); }
+communication           { return exprMode(COMMUNICATION); }
+src                     { return exprMode(SRC); }
+dst                     { return exprMode(DST); }
+[\[\](),:]              { return *yytext; }
+[/]                     { return exprMode(*yytext); }
+[0-9]+                  { yylval.intType = atoi(yytext);
+                          return INTEGER; }
+[a-zA-Z_][-a-zA-Z0-9_]* { yylval.stringType = strdup(yytext);
+                          return exprMode(ID); }
+[ \\\t\n]+              { ; }
+.                       { if (!smecy::Attribute::isExprMode)
+                            yyerror((char *)"Unknown character");
+                          else {
+                            yylval.stringType = strdup(yytext);
+                            return EXPR_THING;
+                          }
+                        }
 %%
 
 int yywrap(void)
