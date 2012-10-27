@@ -15,14 +15,6 @@
 /* To avoid race conditions in stream loop pipeline: */
 #include "conditional_variable_openmp.h"
 
-/* As in LaTeX to allow adding unbalanced {} and to avoid messing up
-   automatic indentation */
-#define SMECY_LBRACE {
-#define SMECY_RBRACE }
-
-/* Expansion hack to give a full string to _Pragma() */
-#define SMECY_STRINGIFY(s) #s
-
 /* SMECY_IMP_ are the real implementations doing the real work, to be
    defined somewhere else. */
 
@@ -39,7 +31,7 @@
    thread */
 #define SMECY_IMP_LAUNCH_WRAPPER(func_call) func_call
 
-// Implementations for the smecy library
+// Implementations for the SMECY library
 #define SMECY_IMP_set(func, pe, ...)
 
 #define SMECY_IMP_send_arg(func, arg, type, value, pe, ...)        \

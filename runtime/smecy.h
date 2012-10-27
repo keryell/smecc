@@ -30,6 +30,16 @@
 #define SMECY_PRINT_VERBOSE_COMMA(...)
 #endif
 
+
+/* As in LaTeX to allow adding unbalanced {} and to avoid messing up
+   automatic indentation */
+#define SMECY_LBRACE {
+#define SMECY_RBRACE }
+
+/* Expansion hack to give a full string to _Pragma() */
+#define SMECY_STRINGIFY(s) #s
+
+
 /* Some helper function to redirect a macro call to M21 for example when M
    is called with 21 arguments
 
@@ -126,6 +136,12 @@
                       "processor \"%s\" n° \"%s\"\n",                   \
                       #func, #pe, #__VA_ARGS__)                         \
   SMECY_IMP_set(func, pe, __VA_ARGS__)
+
+#define SMECY_accelerator_end(func, pe, ...)                            \
+  SMECY_PRINT_VERBOSE("End accelerator section of function \"%s\" on "  \
+                      "processor \"%s\" n° \"%s\"\n",                   \
+                      #func, #pe, #__VA_ARGS__)                         \
+  SMECY_IMP_accelerator_end(func, pe, __VA_ARGS__)
 
 #define SMECY_send_arg(func, arg, type, value, pe, ...)             \
   SMECY_PRINT_VERBOSE("Sending %s as arg #%d to function \"%s\""    \
