@@ -24,7 +24,7 @@ sudo mkdir /usr/local/rose
 sudo chown keryell.keryell /usr/local/rose
 
 
-Make the old compiler current to be used during ROSE compilation:
+# Make the old compiler current to be used during ROSE compilation:
 sudo rm /usr/bin/gcc
 sudo ln -s gcc-4.4 /usr/bin/gcc
 sudo rm /usr/bin/g++
@@ -81,6 +81,36 @@ sudo rm /usr/bin/cpp
 sudo ln -s cpp-4.7 /usr/bin/cpp
 
 
+
+
+
+For Ubuntu 12.04 :
+
+mkdir compileTree
+cd compileTree
+
+aptitude install libboost-all-dev libhpdf-dev libgcrypt11-dev
+
+# Make the old compiler current to be used during ROSE compilation:
+sudo rm /usr/bin/gcc
+sudo ln -s gcc-4.4 /usr/bin/gcc
+sudo rm /usr/bin/g++
+sudo ln -s g++-4.4 /usr/bin/g++
+sudo rm /usr/bin/cpp
+sudo ln -s cpp-4.4 /usr/bin/cpp
+
+../rose/configure --prefix=/usr/local/rose --with-boost=/usr --disable-binary-analysis-tests --disable-projects-directory --disable-tests-directory --disable-tutorial-directory --without-java --disable-cuda --disable-fortran --disable-opencl --disable-php --disable-ppl --disable-cloog --disable-scoplib --disable-candle --disable-python --disable-xmltest
+
+make -j4
+make install
+
+# To get back a more modern compiler:
+sudo rm /usr/bin/gcc
+sudo ln -s gcc-4.6 /usr/bin/gcc
+sudo rm /usr/bin/g++
+sudo ln -s g++-4.6 /usr/bin/g++
+sudo rm /usr/bin/cpp
+sudo ln -s cpp-4.6 /usr/bin/cpp
 
 
 
