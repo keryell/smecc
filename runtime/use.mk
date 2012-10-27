@@ -46,23 +46,16 @@ rose_%.c: %.c
 	smecc -c -smecy --std=c99 -rose:C99_only -rose:C_output_language \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 
-rose_%: rose_%.c smecy.o
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-
-# Specific C++ compiler for C++ linking:
-rose_%: rose_%.C smecy.o
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-
 run_%: %
 	./$<
 
 # Produce a CPP output to help debugging
 %.E: %.[cC]
 	# Keep comments in the output
-	$(CPP) -CC $(SMECY_FLAGS) $(MORE_FLAGS) $< > $@
+	$(CPP) -CC $(CFLAGS) $< > $@
 
 %.E: %.x
-	$(CPP) -C $(SMECY_FLAGS) $(MORE_FLAGS) $< > $@
+	$(CPP) -CC $(CFLAGS) $< > $@
 
 
 # Use :: so that a user of this Makefile can extend this rule
