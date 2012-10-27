@@ -16,9 +16,11 @@
 SMECY_DEBUG=-DSMECY_VERBOSE
 
 SMECY_FLAGS=$(SMECY_DEBUG) -I$(SMECY_INC)
-CFLAGS=--std=c99 -fopenmp -g $(SMECY_FLAGS) $(MORE_FLAGS)
+CFLAGS=--std=c99 -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
 LDFLAGS=-fopenmp
-CXXFLAGS=--std=c++0x -fopenmp -g $(SMECY_FLAGS) $(MORE_FLAGS)
+CXXFLAGS=--std=c++0x -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
+LDLIBS+=$(MCAPI_LINK) $(MRAPI_LINK)
+
 
 # Have an explicit list since we have some program with multiple
 # compilation units:
@@ -45,11 +47,11 @@ rose_%.c: %.c
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 
 rose_%: rose_%.c smecy.o
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 # Specific C++ compiler for C++ linking:
 rose_%: rose_%.C smecy.o
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 run_%: %
 	./$<
