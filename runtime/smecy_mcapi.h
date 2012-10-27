@@ -72,9 +72,13 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
 /* Implementation macros to deal with mapping and function executions */
 
 
-// Create a variable name used to pass an argument to function
+// Create a unique variable name used to pass an argument to function
 #define SMECY_IMP_VAR_ARG(func, arg, pe, ...)	\
   SMECY_CONCATN(SMECY_CONCATN(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),_##func##_##arg)
+
+// Create a unique variable name for a message
+#define SMECY_IMP_VAR_MSG(func, arg, pe, ...)	\
+  SMECY_CONCATN(SMECY_CONCATN(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),_##func##_##arg##_msg)
 
 //  SMECY_CONCAT(SMECY_CONCAT(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),##_##func##_##arg)
 
@@ -175,26 +179,31 @@ enum {
   mcapi_status_t SMECY_MCAPI_status; /*
   Analyze the PE type and coordinates into domain & node */             \
   SMECY_MCAPI_PARSE_PE(pe, __VA_ARGS__);                                \
+  /* The handle to sending packets
+   */                                                                   \
+  static mcapi_pktchan_send_hndl_t P4A_transmit = -1;                   \
+  /* The handle to receiving packets
+   */                                                                   \
+  static mcapi_pktchan_recv_hndl_t P4A_receive = -1;                    \
   /* Since the host part may be used in a loop, only set-up the         \
      connection once by testing this flag */                            \
   static char already_initialized = 0; /*
                                         */                              \
-  static mcapi_pktchan_send_hndl_t transmit = -1; /*
-                                                   */                   \
-  static mcapi_pktchan_recv_hndl_t receive = -1;  /*
-                                                   */                   \
   if (!already_initialized) { /*
                                 Do it in this order compared with the PE
                                 to avoid dead-locks on opening: first open
                                 a connection to send data to the PE */  \
-    transmit = SMECY_MCAPI_send_gate_create(SMECY_MCAPI_HOST_TX_PORT,   \
-                                            domain,                     \
-                                            node,                       \
-                                            SMECY_MCAPI_PE_RX_PORT); /*
+    P4A_transmit = SMECY_MCAPI_send_gate_create(SMECY_MCAPI_HOST_TX_PORT, \
+                                                domain,                 \
+                                                node,                   \
+                                                SMECY_MCAPI_PE_RX_PORT); /*
                   Then open a connection to receive data from the PE */ \
-    receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_HOST_RX_PORT);/*
+    P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_HOST_RX_PORT);/*
                                                                          */ \
-  }
+  }                                                                     \
+  /* The size of some received data
+   */                                                                   \
+  size_t P4A_received_size
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_set(func, pe, ...)                                    \
@@ -204,23 +213,36 @@ enum {
      with the host to avoid dead-locks on opening: first wait from the
      host a connection to receive data to the PE
                                         */                              \
-  mcapi_pktchan_recv_hndl_t receive =                                   \
-    SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PE_RX_ENDP); /*
+  mcapi_pktchan_recv_hndl_t P4A_receive =                               \
+    SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PE_RX_PORT); /*
                                                               */        \
-  mcapi_pktchan_send_hndl_t transmit =                                  \
+  mcapi_pktchan_send_hndl_t P4A_transmit =                              \
     SMECY_MCAPI_send_gate_create(SMECY_MCAPI_PE_TX_PORT,                \
                                  SMECY_MCAPI_HOST_DOMAIN,               \
                                  SMECY_MCAPI_HOST_NODE,                 \
                                  SMECY_MCAPI_HOST_RX_PORT);             \
   /* Enter the infinite service loop on the PE
    */                                                                   \
-  for(;;) SMECY_LBRACE
+  for(;;) SMECY_LBRACE                                                  \
+    /* The size of some received data
+     */                                                                 \
+    size_t P4A_received_size
 #endif
 
 
+#ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_accelerator_end(func, pe, ...)        \
   /* End of the accelerated part */                     \
   SMECY_RBRACE
+#else
+/* This is on the accelerator side */
+#define SMECY_IMP_accelerator_end(func, pe, ...)        \
+  /* End of the accelerator service loop
+   */                                           \
+  SMECY_RBRACE /*
+                 End of the accelerated part */ \
+  SMECY_RBRACE
+#endif
 
 
 #ifdef SMECY_MCAPI_HOST
@@ -230,71 +252,171 @@ enum {
   type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = value;           \
   /* Send the scalar data to the PE
    */                                                                   \
-  mcapi_pktchan_send(transmit,                                          \
+  mcapi_pktchan_send(P4A_transmit,                                        \
                      &SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__),    \
                      sizeof(type),                                      \
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_send_arg(func, arg, type, value, pe, ...)             \
   /* A pointer that will point to the received message */               \
-  char *SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__)_message;          \
-  /* The size of the received scalar received
-   */                                                                   \
-  size_t received_size;                                                 \
+  type* SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__);                  \
   /* Receive the packet with the value
    */                                                                   \
-  mcapi_pktchan_recv(receive, (void **)&SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__)_message, \
-                     &received_size, &SMECY_MCAPI_status);              \
+  mcapi_pktchan_recv(P4A_receive,                                       \
+                     (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
+                     &P4A_received_size,                                \
+                     &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(status);                                     \
-  /* Store the value to the argument to be given to the function
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                        \
+  /* Store the value in the argument to be given to the function
      call */                                                            \
-  type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = *(type)value;
+  type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) =                  \
+    *SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__)
 #endif
+
 
 #ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_cleanup_send_arg(func, arg, type, value, pe, ...)     \
-/* Nothing to do for SMECY__cleanup_send_arg */
+/* Nothing to do for SMECY_cleanup_send_arg */
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_cleanup_send_arg(func, arg, type, value, pe, ...)     \
   /* Give back the memory buffer to the API for recycling
    */                                                                   \
-  mcapi_pktchan_release((void **)&SMECY_IMP_VAR_ARG(func,               \
-                                                    arg,                \
-                                                    pe,                 \
-                                                    __VA_ARGS__)_message,\
+  mcapi_pktchan_release(SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__),     \
                         &SMECY_MCAPI_status);                           \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
 #endif
 
-#define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
-  type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr
 
+#ifdef SMECY_MCAPI_HOST
+#define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
+  /* Send the vector data to the PE
+   */                                                                   \
+  mcapi_pktchan_send(P4A_transmit, addr, size, &SMECY_MCAPI_status);    \
+  /* Check the correct execution
+   */                                                                   \
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+#else
+/* This is on the accelerator side */
+#define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
+  /* A pointer that will point to the received message
+   */                                                                   \
+  type* SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__);                  \
+  /* Receive the packet with the value
+   */                                                                   \
+  mcapi_pktchan_recv(P4A_receive,                                       \
+                     (void **)&SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__), \
+                     &P4A_received_size,                                \
+                     &SMECY_MCAPI_status);                              \
+  /* Check the correct execution
+   */                                                                   \
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                         \
+  /* Store the address if the vector into the argument to be given
+     to the function call */                                            \
+  type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) =                 \
+    SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__)
+#endif
+
+
+#ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...)
+/* Nothing to do for SMECY_cleanup_send_arg_vector */
+#else
+/* This is on the accelerator side */
+#define SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...) \
+  /* Give back the memory buffer to the API for recycling
+   */                                                                   \
+  mcapi_pktchan_release(SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__),     \
+                        &SMECY_MCAPI_status);                           \
+  /* Check the correct execution
+   */                                                                   \
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+#endif
+
 
 #define SMECY_IMP_update_arg_vector(func, arg, type, addr, size, pe, ...) \
-  type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr
+  TODO_SMECY_IMP_update_arg_vector
 
-#define SMECY_IMP_cleanup_update_arg_vector(func, arg, type, addr, size, pe, ...)
 
+#define SMECY_IMP_cleanup_update_arg_vector(func, arg, type, addr, size, pe, ...) \
+  TODO_SMECY_IMP_cleanup_update_arg_vector
+
+
+#ifdef SMECY_MCAPI_HOST
+#define SMECY_IMP_launch(func, n_args, pe, ...)    \
+  /* Nothing to launch: it is done on the accelerator side */
+#else
+/* This is on the accelerator side */
 #define SMECY_IMP_launch(func, n_args, pe, ...)    \
   SMECY_IMP_launch_##n_args(func, pe, __VA_ARGS__)
+#endif
 
+
+#ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
-  type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr
+  /* The pointer to the packet received from the PE by MCAPI
+   */                                                           \
+  type* SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__)
+#else
+/* This is on the accelerator side */
+#define SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
+  /* Allocate the memory given to the function to receive the data
+     from the execution */                                      \
+  type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__)[size]
+#endif
 
-#define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...)
+
+#ifdef SMECY_MCAPI_HOST
+#define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...)  \
+  /* Receive the vector result from the accelerator
+   */                                                                   \
+  mcapi_pktchan_recv(P4A_receive,                                       \
+                     (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
+                     &P4A_received_size,                                \
+                     &SMECY_MCAPI_status);                              \
+  /* Check the correct execution
+   */                                                                   \
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                         \
+  /* Store the received vector into the destination vector
+   */                                                                   \
+  memcpy(addr,                                                          \
+         SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__),                    \
+         size*sizeof(type));                                            \
+  /* Give back the memory buffer to the API for recycling
+   */                                                                   \
+  mcapi_pktchan_release(SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__),     \
+                        &SMECY_MCAPI_status);                           \
+  /* Check the correct execution
+   */                                                                   \
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+#else
+/* This is on the accelerator side */
+#define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...)  \
+  /* Send the vector data given by the function execution back to the host
+   */                                                                   \
+  mcapi_pktchan_send(P4A_transmit,                                      \
+                     SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__),     \
+                     size*sizeof(type),                                 \
+                     &SMECY_MCAPI_status);                              \
+  /* Check the correct execution
+   */                                                                   \
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+#endif
+
+
 
 /* TODO: To be implemented... */
-#define SMECY_IMP_get_return(func, type, pe, ...)
+#define SMECY_IMP_get_return(func, type, pe, ...) \
+  TODO_SMECY_IMP_get_return
+
 
 /* Implementation of the function calls themselves */
 

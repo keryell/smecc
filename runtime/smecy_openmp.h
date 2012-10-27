@@ -59,6 +59,8 @@
 
 /* TODO: To be implemented... */
 #define SMECY_IMP_get_return(func, type, pe, ...)
+  TODO_SMECY_IMP_get_return
+
 
 /* Implementation of the function calls themselves */
 
