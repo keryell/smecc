@@ -9,18 +9,12 @@ SMECY_INC=../runtime
 
 # -fopenmp
 
-# To skip debug, use "make SMECY_DEBUG="
-SMECY_DEBUG=-DSMECY_VERBOSE
-SMECY_FLAGS=$(SMECY_DEBUG) -I$(SMECY_INC)
-CFLAGS=--std=c99 -fopenmp -g $(SMECY_FLAGS)
-CXXFLAGS=--std=c++0x -fopenmp -g $(SMECY_FLAGS)
-
 # All the sources to compile:
 # Skip map-tab_cpp.C.bug
 LOCAL_SRC= hello_world.c input.c input_cpp.C map-tab.c \
 	multiple_compilation_unit_a.c multiple_compilation_unit_b.c \
 	multiple_compilation_unit_a_cpp.C multiple_compilation_unit_b_cpp.C \
-	simple_map.C
+	simple_map.c simple_map_cpp.C
 
 ## Remove .c and .C extension to have executable names:
 #LOCAL_BIN:=$(LOCAL_SRC:.c=)
@@ -28,50 +22,12 @@ LOCAL_SRC= hello_world.c input.c input_cpp.C map-tab.c \
 LOCAL_BIN= hello_world input input_cpp map-tab \
 	multiple_compilation_unit_a \
 	multiple_compilation_unit_a_cpp \
-	simple_map
+	simple_map simple_map_cpp
 
-# Have an explicit list since we have some program with multiple
-# compilation units:
+include $(SMECY_INC)/use.mk
 
-# smecc generate file beginning with "rose_":
-LOCAL_ROSE=$(addprefix rose_,$(LOCAL_SRC))
-LOCAL_ROSE_DOT=$(addsuffix .dot,$(LOCAL_SRC))
-LOCAL_ROSE_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
-
-# Remove .c and .C extension to have executable names:
-#LOCAL_ROSE_BIN:=$(LOCAL_ROSE:.c=)
-#LOCAL_ROSE_BIN:=$(LOCAL_ROSE_BIN:.C=)
-LOCAL_ROSE_BIN=$(addprefix rose_,$(LOCAL_BIN))
-
-all: $(LOCAL_ROSE)
-
-bin: $(LOCAL_BIN) $(LOCAL_ROSE_BIN)
-
-rose_%.C: %.C
-	smecc -smecy -c $(ROSE_FLAGS) $(SMECY_FLAGS) $<
-
-rose_%.c: %.c
-	smecc -c -smecy --std=c99 -rose:C99_only -rose:C_output_language \
-		$(ROSE_FLAGS) $(SMECY_FLAGS) $<
-
-rose_%: rose_%.c smecy.o
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
-
-# Specific C++ compiler for C++ linking:
-rose_%: rose_%.C smecy.o
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
-
-run_%: %
-	./$<
-
-# Produce a CPP output to help debugging
-%.E: %.[cC]
-	# Keep comments in the output
-	$(CPP) -CC $(SMECY_FLAGS) $< > $@
-
-%.E: %.x
-	$(CPP) -C $(SMECY_FLAGS) $< > $@
-
+# To skip debug, use "make SMECY_DEBUG=" or uncomment the following line:
+#SMECY_DEBUG=
 
 multiple_compilation_unit_a: multiple_compilation_unit_b.o
 rose_multiple_compilation_unit_a: rose_multiple_compilation_unit_b.o
@@ -82,8 +38,3 @@ rose_multiple_compilation_unit_a_cpp: rose_multiple_compilation_unit_b_cpp.o
 
 #rose_multiple_compilation_unit_a.c + rose_multiple_compilation_unit_b.c: multiple_compilation_unit_a.c multiple_compilation_unit_b.c multiple_compilation_unit.h
 #	smecc -c -smecy --std=c99 multiple_compilation_unit_a.c multiple_compilation_unit_b.c
-
-clean:
-	rm -f $(LOCAL_ROSE) $(LOCAL_BIN) $(LOCAL_ROSE_BIN) \
-		$(LOCAL_ROSE_DOT) $(LOCAL_ROSE_PDF) rose_transformation_* \
-		*.o *.E

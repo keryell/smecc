@@ -1,12 +1,11 @@
-// This #include do not get through ROSE... :-(
-#include <iostream>
+#include <stdio.h>
 
 #define N 10
 #define M 5
 
-void init(int* array, int size) {
+void init(int* array, int size, int scale) {
   for (int i = 0; i < size; i++)
-    array[i] = i;
+    array[i] = i*scale;
 }
 
 int main() {
@@ -18,15 +17,16 @@ int main() {
     // Map on STHORM cluster 0 PE i:
 #pragma smecy map(STHORM, 0, i)	       \
               arg(1,out,[N][M],/[i][]) \
-              arg(2,in)
-    init(&tab[i][0], M);
+              arg(2,in) \
+              arg(3,in)
+    init(&tab[i][0], M, i+1);
   }
 
   for (int i = 0; i < N; i++) {
-    std::cout << "Line " << i << " :";
+    printf("Line %d :", i);
     for (int j = 0; j < M; j++)
-      std::cout << " " << tab[i][j];
-    std::cout << std::endl;
+      printf("%d ", tab[i][j]);
+    puts("");
   }
   return 0;
 }
