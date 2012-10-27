@@ -113,9 +113,12 @@
 
 
 /* Load the implementations */
-//#ifdef SMECY_OPENMP
-#include <smecy_openmp.h>
-//#endif
+#ifdef SMECY_MCAPI
+#include "smecy_mcapi.h"
+#else
+/* By default */
+#include "smecy_openmp.h"
+#endif
 
 
 /* SMECY_IMP_ are the real implementations doing the real work, to be
