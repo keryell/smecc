@@ -34,6 +34,11 @@
 // Implementations for the SMECY library
 #define SMECY_IMP_set(func, pe, ...)
 
+
+#define SMECY_IMP_accelerator_end(func, pe, ...)        \
+  /* End of the accelerated part */                     \
+
+
 #define SMECY_IMP_send_arg(func, arg, type, value, pe, ...)        \
   type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = value
 
@@ -58,7 +63,7 @@
 #define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...)
 
 /* TODO: To be implemented... */
-#define SMECY_IMP_get_return(func, type, pe, ...)
+#define SMECY_IMP_get_return(func, type, pe, ...) \
   TODO_SMECY_IMP_get_return
 
 
