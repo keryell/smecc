@@ -236,26 +236,46 @@ namespace smecy {
   }
 
   /** \brief Generate the call to SMECY_set(pe, instance, func)
-   *  in the generated code
+   *  and the closing SMECY_accelerator_end(pe, instance, func)
+   *   in the generated code
    *  */
   void addSmecySet(SgStatement* target,
                    SgExpression* mapName,
                    std::vector<SgExpression*> mapCoordinates,
                    SgExpression* functionToMap) {
-    // building parameters to build the func call (bottom-up building)
-    std::vector<SgExpression*> ev { copy(functionToMap), copy(mapName) };
-    // Since the coordinates have variadic dimension, append them at the end
-    for (auto c: mapCoordinates)
-      ev.push_back(c);
-    SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
-    SgName name("SMECY_set");
-    SgType* type = SageBuilder::buildVoidType();
-    SgScopeStatement* scope = SageInterface::getScope(target);
+    {
+      // building parameters to build the func call (bottom-up building)
+      std::vector<SgExpression*> ev { copy(functionToMap), copy(mapName) };
+      // Since the coordinates have variadic dimension, append them at the end
+      for (auto c: mapCoordinates)
+        ev.push_back(c);
+      SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
+      SgName name("SMECY_set");
+      SgType* type = SageBuilder::buildVoidType();
+      SgScopeStatement* scope = SageInterface::getScope(target);
 
-    //b uilding the function call
-    SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name,
-        type, exprList, scope);
-    SageInterface::insertStatement(target, funcCall);
+      // building the function call
+      SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name,
+          type, exprList, scope);
+      SageInterface::insertStatement(target, funcCall);
+    }
+    {
+      // building parameters to build the func call (bottom-up building)
+      std::vector<SgExpression*> ev { copy(functionToMap), copy(mapName) };
+      // Since the coordinates have variadic dimension, append them at the end
+      for (auto c: mapCoordinates)
+        ev.push_back(c);
+      SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
+      SgName name("SMECY_accelerator_end");
+      SgType* type = SageBuilder::buildVoidType();
+      SgScopeStatement* scope = SageInterface::getScope(target);
+
+      // building the function call
+      SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name,
+          type, exprList, scope);
+      // insert after
+      SageInterface::insertStatement(target, funcCall, false);
+    }
   }
 
 
@@ -287,10 +307,15 @@ namespace smecy {
 }
 
 
-  /** \brief Generate the call to SMECY_send_arg(pe, instance, func, arg, type, value)
+  /** \brief Generate for instance the call to
+   *  SMECY_send_arg(pe, instance, func, arg, type, value)
+   *  or
+   *  SMECY_cleanup_send_arg(pe, instance, func, arg, type, value)
    *  in the generated code
    *  */
-  void addSmecySendArg(SgStatement* target,
+  void addSmecySendArg(const char* macro_name,
+                       bool before,
+                       SgStatement* target,
                        SgExpression* mapName,
                        std::vector<SgExpression*> mapCoordinates,
                        SgExpression* functionToMap,
@@ -308,14 +333,14 @@ namespace smecy {
       ev.push_back(c);
 
     SgExprListExp * exprList = SageBuilder::buildExprListExp(ev);
-    SgName name("SMECY_send_arg");
+    SgName name(macro_name);
     SgType* type = SageBuilder::buildVoidType();
     SgScopeStatement* scope = SageInterface::getScope(target);
 
     // Building the function call itself
     SgExprStatement* funcCall = SageBuilder::buildFunctionCallStmt(name,
         type, exprList, scope);
-    SageInterface::insertStatement(target, funcCall);
+    SageInterface::insertStatement(target, funcCall, before);
   }
 
 
@@ -621,8 +646,14 @@ namespace smecy {
       if (dimension == 0) {
         // Scalar arg
         SgExpression* typeDescriptor = getArgTypeDescriptor(functionToMap, i-1);
-        if (argType == _arg_in or argType == _arg_inout)
-          addSmecySendArg(target, mapName, mapCoordinates, funcToMapExp, i, typeDescriptor, value);
+        if (argType == _arg_in or argType == _arg_inout) {
+          addSmecySendArg("SMECY_send_arg", true, target, mapName,
+                          mapCoordinates, funcToMapExp, i,
+                          typeDescriptor, value);
+          addSmecySendArg("SMECY_cleanup_send_arg", false, target, mapName,
+                          mapCoordinates, funcToMapExp, i,
+                          typeDescriptor, value);
+        }
         if (argType == _arg_out or argType == _arg_inout)
           std::cerr << debugInfo(target) << "warning: argument " << i
             << " is a scalar with type out or inout and can not be retrieved." << std::endl
