@@ -15,10 +15,11 @@
 # To skip debug, use "make SMECY_DEBUG="
 SMECY_DEBUG=-DSMECY_VERBOSE
 
-SMECY_FLAGS=$(SMECY_DEBUG) -I$(SMECY_INC)
-CFLAGS=--std=c99 -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
-LDFLAGS=-fopenmp
-CXXFLAGS=--std=c++0x -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
+# Add some flags to previously ones, if any:
+SMECY_FLAGS+=$(SMECY_DEBUG) -I$(SMECY_INC)
+CFLAGS+=--std=c99 -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
+LDFLAGS+=-fopenmp
+CXXFLAGS+=--std=c++0x -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
 LDLIBS+=$(MCAPI_LINK) $(MRAPI_LINK)
 
 
@@ -48,6 +49,16 @@ rose_%.c: %.c
 
 run_%: %
 	./$<
+
+# Produce a specialized MCAPI expansion for host side:
+%_host.E: %.[cC]
+	# Keep comments in the output
+	$(CPP) -CC $(CFLAGS) -DSMECY_MCAPI -DSMECY_MCAPI_HOST $< > $@
+
+# Produce a specialized MCAPI expansion for fabric side:
+%_fabric.E: %.[cC]
+	# Keep comments in the output
+	$(CPP) -CC $(CFLAGS) -DSMECY_MCAPI -DSMECY_MCAPI_PE $< > $@
 
 # Produce a CPP output to help debugging
 %.E: %.[cC]
