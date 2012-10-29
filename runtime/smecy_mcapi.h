@@ -160,9 +160,9 @@ enum {
   SMECY_MCAPI_PE_RX_PORT = 4,
 };
 
-/* Analyze the PE type and coordinates */
+/* Analyze the PE type and coordinates by redirect to the function that
+   knows about the "pe" accelerator */
 #define SMECY_MCAPI_PARSE_PE(pe, ...)                                   \
-  /* Redirect to the function that knows about pe accelerator */        \
   SMECY_MCAPI_PARSE_PE_##pe(__VA_ARGS__)
 
 
@@ -170,7 +170,14 @@ enum {
 #define SMECY_MCAPI_PARSE_PE_STHORM(d, n)       \
   mcapi_domain_t domain = d;/*
                              */                 \
-  mcapi_node_t node = n;
+  mcapi_node_t node = n
+
+/* Analyze the Host coordinates, which are not specified in the pragma.
+   Replace them with the host MCAPI node */
+#define SMECY_MCAPI_PARSE_PE_Host()                     \
+  mcapi_domain_t domain = SMECY_MCAPI_HOST_DOMAIN;/*
+                                                   */   \
+  mcapi_node_t node = SMECY_MCAPI_HOST_NODE
 
 #ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_set(func, pe, ...)                                    \
