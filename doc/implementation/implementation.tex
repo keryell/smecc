@@ -225,6 +225,127 @@ void CC_free (void *ptr)
 \end{lstlisting}
 
 
+\subsubsection{Code transformation}
+\label{sec:code-transformation}
+
+For example the \verb|examples/simple_map.c|
+\begin{lstlisting}
+#include <stdio.h>
+
+#define N 10
+#define M 5
+
+void init(int* array, int size, int scale) {
+  for (int i = 0; i < size; i++)
+    array[i] = i*scale;
+}
+
+int main() {
+  int tab[N][M];
+  /* The schedule(static, 1) enforces each iteration to be executed in a
+     different thread, whatever the number of CPU is: */
+#pragma omp parallel for schedule(static, 1)
+  for (int i = 0; i < N; i++) {
+    // Map on STHORM cluster 0 PE i:
+#pragma smecy map(STHORM, 0, i)        \
+              arg(1,out,[N][M],/[i][]) \
+              arg(2,in) \
+              arg(3,in)
+    init(&tab[i][0], M, i+1);
+  }
+
+  for (int i = 0; i < N; i++) {
+    printf("Line %d :", i);
+    for (int j = 0; j < M; j++)
+      printf("%d ", tab[i][j]);
+    puts("");
+  }
+  return 0;
+}
+\end{lstlisting}
+is compiled to 2 files, a \texttt{STHORM_rose_simple_map.c} file which is
+to be compiled for the Cortex A9 ARM host with this content:
+% This is the output examples/rose_simple_map.c after make in examples,
+% without the definition of init()
+\begin{lstlisting}
+#include <stdio.h>
+#define N 10
+#define M 5
+#include "smecy.h" 
+
+int main()
+{
+  int tab[10UL][5UL];
+/* The schedule(static, 1) enforces each iteration to be executed in a
+     different thread, whatever the number of CPU is: */
+  
+#pragma omp parallel for schedule ( static, 1 )
+  for (int i = 0; i < 10; i++) {
+    SMECY_set(init,STHORM,0,i);
+    SMECY_prepare_get_arg_vector(init,1,int,(tab[i] + 0),5,STHORM,0,i);
+    SMECY_send_arg(init,2,int,5,STHORM,0,i);
+    SMECY_send_arg(init,3,int,(i + 1),STHORM,0,i);
+    SMECY_launch(init,3,STHORM,0,i);
+    SMECY_get_arg_vector(init,1,int,(tab[i] + 0),5,STHORM,0,i);
+  }
+  for (int i = 0; i < 10; i++) {
+    printf("Line %d :",i);
+    for (int j = 0; j < 5; j++) 
+      printf("%d ",tab[i][j]);
+    puts("");
+  }
+  return 0;
+}
+\end{lstlisting}
+and a \texttt{STHORM_fabric.c} to be executed on the processors elements
+of the STHORM fabric that will launch all the threads:
+\begin{lstlisting}
+#include "smecy.h"
+
+// Provide extern call awaited by STHORM MCAPI implementation
+void mcapi_domain_entry()
+{
+
+  SMECY_accelerator_loop_begin(init,STHORM,0,i);
+  SMECY_set(init,STHORM,0,i);
+  SMECY_prepare_get_arg_vector(init,1,int,(tab[i] + 0),5,STHORM,0,i);
+  SMECY_send_arg(init,2,int,5,STHORM,0,i);
+  SMECY_send_arg(init,3,int,(i + 1),STHORM,0,i);
+  SMECY_launch(init,3,STHORM,0,i);
+  SMECY_get_arg_vector(init,1,int,(tab[i] + 0),5,STHORM,0,i);
+\end{lstlisting}
+and a for each MCAPI kernel to be launched on a PE, a file like
+\verb|STHORM_PE_simple_map_init.c| with the code for the \verb|init|
+function in this example with:
+\begin{lstlisting}
+#include <stdio.h>
+#define N 10
+#define M 5
+#include "smecy.h"
+
+void init(int *array,int size,int scale)
+{
+  for (int i = 0; i < size; i++)
+    array[i] = (i * scale);
+}
+
+void STHORM_PE_simple_map_init()
+{
+  SMECY_accelerator_loop_begin(init,STHORM,0,i);
+  SMECY_set(init,STHORM,0,i);
+  SMECY_prepare_get_arg_vector(init,1,int,(tab[i] + 0),5,STHORM,0,i);
+  SMECY_send_arg(init,2,int,5,STHORM,0,i);
+  SMECY_send_arg(init,3,int,(i + 1),STHORM,0,i);
+  SMECY_launch(init,3,STHORM,0,i);
+  SMECY_get_arg_vector(init,1,int,(tab[i] + 0),5,STHORM,0,i);
+  SMECY_accelerator_loop_end(init,STHORM,0,i);
+}
+\end{lstlisting}
+All the \verb|SMECY_| have different meaning in the 3 different use case,
+so that mainly only one code is interpreted differently for the right
+purpose.
+
+
 \section{Some design patterns for STHORM SME-C}
 \label{sec:examples}
 
@@ -275,4 +396,4 @@ Here are some typical use-cases for the MCAPI STHORM target.
 %%% TeX-PDF-mode: t
 %%% End:
 
-% vim:spell spelllang=fr
+% vim:spell spelllang=en
