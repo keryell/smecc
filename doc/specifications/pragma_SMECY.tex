@@ -5,7 +5,9 @@
 \usepackage[latin9]{inputenc}
 \usepackage{a4wide}
 \usepackage{alltt,url}
+\usepackage{todonotes}
 \usepackage{listings}
+
 
 \lstset{language=C, numbers=left, numberfirstline=false, stepnumber=5,
   basicstyle=\small, keywordstyle=\bf}
@@ -28,17 +30,17 @@
 
 \begin{document}
 
-\title{SME-C v0.3\\
+\title{SME-C v0.5\\
   ---\\
   C99 with pragma and API for parallel execution, streaming, processor
   mapping and
   communication generation\\
   ---\\
-  SMECY}
+  SMECY Artemis European Project}
 
 \author{Rémi~\textsc{Barrère}~(\url{Remi.Barrere@thalesgroup.com}) \and
   Marcel~\textsc{Beemster}~(\url{marcel@ace.nl}) \and
-  Ronan~\textsc{Keryell}~(\url{Ronan.Keryell@hpc-project.com})}
+  Ronan~\textsc{Keryell}~(\url{Ronan.Keryell@silkan.com})}
 
 \maketitle
 
@@ -54,15 +56,16 @@ to lower-level tools because of its good trade-off between expressiveness
 and readability, without compromising portability.
 
 The targets envisioned in SMECY are heterogeneous multicore systems with
-shared memory or not, with various hardware accelerator, such as ASIC,
+shared memory or not, with various hardware accelerators, such as ASIC,
 ASIP, FPGA, GPU, specialized vector processors, partially reconfigurable
 accelerators...
 
 Unfortunately, since it is undecidable to get high-level properties from
 such programs, we use decorations to help tools to understand program
 behaviour and generate codes for some hardware targets. We try to keep
-clear decorations, easy to understand, so that SMECY C can also used as a
-programming language.
+clear decorations, easy to understand, so that SMECY C (summarized as
+SME-C in the following but also referred as IR-1 in the project) can also
+used as a programming language.
 
 A SMECY program contains various functions that may be executed on various
 processors, accelerators, GPU... that may consume and produce data from
@@ -77,6 +80,11 @@ The hardware specific pragma and intrinsics are to be defined between
 software and hardware partners involved in various use cases. But it may
 not possible to address all the programming models and platforms
 envisioned in the project.
+
+The description of a reference compiler, \texttt{smecc}, is given in a
+companion report, ``Some implementation details from the \texttt{smecc}
+compiler''. Several tools producing or consuming SME-C have been developed
+in the SMECY project.
 
 
 \subsection{SMECY programming model}
@@ -96,7 +104,7 @@ model because of its (rather) simple readability, elegance, old background
 and wide acceptance. We make the hypothesis that a SMECY program is a
 correct OpenMP program that can be executed in sequential with a C
 OpenMP-free compiler (just by ignoring OpenMP \verb|#pragma|) and in
-parallel on a SMP target (such an $x$86 machine) by using an OpenMP
+parallel on a SMP target (such an ARM or $x$86 machine) by using an OpenMP
 compiler \emph{with the same semantics}. Since we use C (by opposition to
 a DSL) as an internal representation, we choose this behaviour to stick to
 standard behaviour as much as possible. This is known as the sequential
@@ -112,13 +120,13 @@ describe general dependencies, we approximate memory dependencies with
 rectangles (and more generally hyperparallelepipede in any dimension) that
 can be read, written or both. We think these abstractions are good
 trade-offs between expressiveness (and what a programmer can endure...)
-and hardware capabilities. Even if there is some similitude with HPF
-(High Performance Fortran) we do not deal with strides\footnote{Indeed, by
-  using some higher dimensional arrays than the arrays used in the
-  application, you can express them... So may be we can express them in
-  the syntax?}.
+and hardware capabilities. Even if there is some similitude with HPF (High
+Performance Fortran) or XMP pragmas, we do not deal with
+strides\footnote{Indeed, by using some higher dimensional arrays than the
+  arrays used in the application, you can express them... So may be we
+  should allow to express them in the syntax?}.
 
-With this information the tools can guess the communication to generate
+With this information, the tools can guess the communication to generate
 between the different functions and memory spaces to emulate the global
 OpenMP memory semantics.
 
@@ -135,7 +143,7 @@ To be able to address real hardware from the C level with special needs:
 \begin{itemize}
 \item to specify hardware register names;
 \item define input/output routines specifically but in portable way;
-\item define fixed point computations;
+\item define fixed point arithmetic computations with a given precision;
 \item specific data size;
 \item accumulator register (DSP...);
 \item different memory spaces that can be chosen specifically to optimize
@@ -214,7 +222,7 @@ a shared memory connection between the processing nodes.
 \begin{enumerate}
 \item The SME-C streaming model is an annotation on top of
   a valid sequential program. Thus, the program should also
-  work when the streaming annotations are ingored. This eases
+  work when the streaming annotations are ignored. This eases
   program development because it allows the validation of the
   program in an sequential environment.
 \item In principle, a streaming program can also be written using
@@ -236,7 +244,7 @@ a shared memory connection between the processing nodes.
 \subsubsection{Status as of June 2011}
 \label{sec:status-as-june}
 
-ACE has currently implemented a source to source compiler
+ACE has currently implemented a source-to-source compiler
 that accepts C programs with the streaming annotation and
 produces a partitioned program with separate processes
 (nodes) for each of the nodes in the stream. In addition,
@@ -248,7 +256,7 @@ small library of about 5 calls is currently implemented on top
 of (shared memory) POSIX pthreads. It is not hard to retarget
 this library to different underlying run-time systems.
 
-To be used, the Streaming model requires a part of the target
+To be used, the streaming model requires a part of the target
 application to be rewritten into a particular form, using a
 while loop and the SME-C stream annotations. Only this part
 needs to be passed through the source-to-source compiler. Hence,
@@ -279,7 +287,7 @@ communication primitives.
 Instead of generating communication primitives, the compiler
 can also limit itself to only partitioning and generate a
 communication graph for subsequent processing by tools such
-as SPEAR and BIPS.
+as SPEAR and BIPS in the SMECY project.
 
 An extension is needed to pass (fixed) parameters and
 initial values into the streaming nodes that do not turn
@@ -288,14 +296,15 @@ into communication.
 For TVN's H264 application, certain compute intensive loops
 rely on array processing. Although there is parallelism
 in these loops, they cannot be easily mapped to a fully
-data-parallel implementation because of data dependences. Given
-the nature of these data dependences, it seems to be possible
+data-parallel implementation because of data dependencies. Given
+the nature of these data dependencies, it seems to be possible
 to transform them into a stream-processing model.
 
 
 \subsection{Reference documents}
 \label{sec:reference-documents}
 
+\todo{To update, with OpenMP 4, XMP, C11, C++11..., OpenACC, OpenHMPP...}
 Besides the SMECY documentation, the reader should be knowledgeable of
 some work of the ISO/IEC JTC1/SC22/WG14 committee on the C language
 standard:
@@ -320,14 +329,13 @@ and other standards such as
 \section{Intermediate representation use cases}
 \label{sec:interm-repr-use}
 
-\marginpar{TODO: insert here the SMECY use-cases to develop generic
-  use-cases}
+\todo{Insert here the SMECY use-cases to develop generic use-cases}
 
 
 \subsection{Direct programming}
 \label{sec:direct-programming}
 
-A programmer can program her application directly in SMECY C with OpenMP
+A programmer can program her application directly in SME-C with OpenMP
 and SMECY-specific pragma and API to target a SMECY platform.
 
 It can be at rather high-level, by using only high-level pragma, or rather
@@ -344,10 +352,10 @@ asynchronous way.
 \subsection{System high-level synthesis}
 \label{sec:high-level-synthesis}
 
-A compiler can take a sequential plain C or Matlab or another language
-code, analyze and parallelize the code by adding automatically parallel
-and mapping pragma. This can be seen as a high-level synthesis at system
-level.
+A compiler can take a sequential plain C, MATLAB, Scilab, NumPy or another
+language code, analyze and parallelize the code by adding automatically
+parallel and mapping pragma. This can be seen as a high-level synthesis at
+system level.
 
 A tool such as Par4All can do these kinds of transformation.
 
@@ -424,8 +432,8 @@ be used by a specific hardware accelerator.
 
 Here should be described the metadata on the process organization.
 
-It should be able to describe process instance, interconnection...
-\marginpar{TODO}
+\todo{It should be able to describe process instance, interconnection...}
+
 
 \section{SMECY embedded C language}
 \label{sec:embedded-c}
@@ -435,7 +443,7 @@ embedded systems (TR 18037).
 
 Refer to these documents for more information.
 
-\marginpar{TODO: comment the following}
+\todo{comment the following}
 \begin{verbatim}
 __thread
 Thread-Local Storage
@@ -520,12 +528,14 @@ behavior is unspecified.
 \subsection{OpenMP support}
 \label{sec:openmp-support}
 
-SMECY is based on OpenMP. It is not clear yet what level of OpenMP is
-supported. Since a SMECY platform is made at least form a (SMP) control
-processor, any OpenMP compliant program can run on it anyway.
+SMECY is based on OpenMP 3.1. Since a SMECY platform is made at least form
+a (SMP) control processor, any OpenMP compliant program can run on it
+anyway. The SMECY tools can use more or less information from available
+OpenMP decorations available in the code.
 
-But the SMECY tools can use more or less information from available OpenMP
-decorations available in the code.
+The on-coming version 4 dealing more with SIMD instruction and
+heterogeneous computing seems promising as a starting point for a next
+version of SME-C.
 
 
 \subsection{Mapping on hardware}
@@ -534,7 +544,7 @@ decorations available in the code.
 The mapping of a function call on a specific piece of hardware can be
 specified with
 \begin{alltt}
-#pragma smecy map(\emph{hardware[}, \emph{unit]})
+#pragma smecy map(\emph{hardware[}, \emph{unit][, unit]...})
   some_function_call(...);
 \end{alltt}
 
@@ -542,10 +552,12 @@ specified with
 \item \texttt{\emph{hardware}} is a symbol representing a hardware
   component of a given target such as \texttt{CPU}, \texttt{GPP},
   \texttt{GPU}, \texttt{PE}... They are target specific.
-\item \texttt{\emph{unit}} is an optional instance number for a specific
-  hardware part. This is typically an integer starting a 0. This hardware
-  number can be an expression of the environment to be able to have a loop
-  managing different accelerators.
+\item \texttt{\emph{unit}} are optional multidimensional instance number
+  for a specific hardware part. This is typically an integer starting a 0
+  or for ST THORM 2 integers, the first one is the cluster number and the
+  second one is the processor element number inside the cluster. This
+  hardware number can be an expression of the environment to be able to
+  have a loop managing different accelerators.
 \end{itemize}
 
 We can add an \texttt{if(\emph{scalar-expression})} to predicate hardware
@@ -583,7 +595,7 @@ the compiler need to figure out what is the memory zone used to execute
 the function and then what memory zone in written by the function
 \emph{and} that will be used later in the program\footnote{If a function
   produces something not used later, it is useless to get it back.}. From
-these information, copy-in and copy-out operations can be generates.
+these information, copy-in and copy-out operations can be generated.
 
 \subsubsection{Function arguments}
 \label{sec:function-arguments}
@@ -599,10 +611,10 @@ these information, copy-in and copy-out operations can be generates.
 \item[Direction directive] defines how the data flows between the caller
   and the function:
   \begin{itemize}
-  \item \texttt{in} the argument is used by the function;
-  \item \texttt{out} the argument is used by the function;
-  \item \texttt{inout} the argument is used and produced by the function;
-  \item \texttt{unused} the argument is not used and produced by the
+  \item[\texttt{in}:] the argument is used by the function;
+  \item[\texttt{out}:] the argument is used by the function;
+  \item[\texttt{inout}:] the argument is used and produced by the function;
+  \item[\texttt{unused}:] the argument is not used and produced by the
     function.
   \end{itemize}
 
@@ -667,7 +679,7 @@ The two pragmas used here are:
   body define a stage up to the next stage pragma.
 \end{description}
 
-You can refere to example shown on figure~\ref{fig:pipelined_example}.
+You can refer to example shown on figure~\ref{fig:pipelined_example}.
 
 
 \subsection{Labelling statement}
@@ -686,7 +698,7 @@ statements:
 \subsection{Remapping specification}
 \label{sec:remapp-spec}
 
-\marginpar{TO FINISH}
+\todo{To finish}
 
 Since we always want a sequential equivalence, that means that the
 sequential code representing the computation on an accelerator really
@@ -699,11 +711,11 @@ HPF
 \subsection{Hardware specific pragma}
 \label{sec:hardw-spec-pragma}
 
-\marginpar{To be defined in collaboration with the various hardware
-  suppliers of the project (P2012, EdkDSP...).}
+\todo{To be defined in collaboration with the various hardware
+  suppliers of the project (ST P2012/STHORM, EdkDSP/ASVP...).}
 
 
-\section{SMECY high-level API}
+\section{SMECY high-level APIs}
 \label{sec:smecy-api}
 
 \subsection{OpenMP}
@@ -718,24 +730,14 @@ example:
 \end{itemize}
 
 
-\subsection{MultiCore Association API}
-\label{sec:mult-assoc-api}
-
-There is a reference implementation based on Linux \emph{pthreads} that
-can be used as an example to port to the various available hardware.
-
-This can be used to express communicating process, asynchronous
-communications, synchronization, etc.
-
-
-\section{MultiCore Association APIs}
+\subsection{MultiCore Association APIs}
 \label{sec:mult-assoc-apis}
 
 Since in this project we deal with communicating processes, asynchronous
-communications, synchronization, etc.{} we need an API to be able to
+communications, synchronization, etc. we need an API to be able to
 express them from inside the processes. We rely on a standard API instead
 of reinventing on again. The MultiCore Association designed some APIs
-specially targeted at low resource embedded systems, so We rely on the
+specially targeted at low resource embedded systems, so we rely on the
 MCAPI, MTAPI and MRAPI for low memory footprint light-weight
 communications, threading and synchronization.
 
@@ -745,7 +747,12 @@ Since this is a reference implementation based on Linux \emph{pthreads},
 it can also be used as an example to port to the various available
 hardware.
 
-Right now there is 3 different specification we can use in the project.
+During the SMECY project, ST \& CEA has phased out NPL, their own library
+to program the STHORM, because it was equivalent to the MCA standard API.
+So for a message passing interface API, the MCA APIs have to be used on
+this platform.
+
+Right now there are 3 different specifications we can use in the project.
 
 
 \subsection{Multicore Communication API (MCAPI)}
@@ -772,9 +779,6 @@ A communication entity in MCAPI is a node, that can be gathered in
 some domains to add hierarchy, and can represent a process on a processor
 or a hardware accelerator for example.
 
-
-\marginpar{TODO}
-
 Please refer to the ``Multicore Communications API (MCAPI) Specification
 V2.015'' document for more information.
 
@@ -782,36 +786,39 @@ V2.015'' document for more information.
 \subsubsection{MTAPI}
 \label{sec:mtapi}
 
+\todo{To complete}
+
 
 \subsubsection{MRAPI}
 \label{sec:mrapi}
 
-
+\todo{To complete}
 
 
 \subsection{NPL API}
 \label{sec:npl-api}
 
-NPL is the API defined to program ST P2012 in a native way. Since it is
+NPL is the API defined to program ST P2012/STHORM in a native way. Since it is
 rather at the same level of MCAPI/MRAPI/MTAPI, it should be easy to
 implement one above the other. Since the MCA APIs are standard, we thing
 that it is commercially interesting to provide a MCA APIs over NPL or
-other to widen P2012 usage.
+other to widen P2012/STHORM usage.
 
-Indeed, in 10/2011 this API seems to have been phased out by ST. So this
-part should be removed soon... To be kept in the history part.
+Indeed, in 10/2011 this API seems to have been phased out by ST \& CEA. So
+this part is kept for it history interest and MCAPI is used in the SMECY
+project as a lower intermediate representation, the IR-2.
 
 
-\subsection{EdkDSP API}
+\subsection{EdkDSP/ASVP API}
 \label{sec:edkdsp-api}
 
-\marginpar{Define here what is useful in the project.}
+\todo{Define here what is useful in the project.}
 
 
 \subsection{OpenCL}
 \label{sec:opencl}
 
-Since ST P2012 can be programmed in OpenCL which is also a programming
+Since ST P2012/STHORM can be programmed in OpenCL which is also a programming
 API, a C process can use OpenCL orthogonally with other API. A kernel
 launching is done by defining the kernel source, the memory zone to use
 and to transfer and the different parameters of the kernel.
