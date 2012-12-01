@@ -46,7 +46,7 @@
 \section{Introduction}
 \label{sec:introduction}
 
-The shorter the better.
+\todo{The shorter the better.}
 
 \section{OpenMP support}
 \label{sec:openmp-support}
@@ -263,7 +263,7 @@ int main() {
   return 0;
 }
 \end{lstlisting}
-is compiled to 2 files, a \texttt{STHORM_rose_simple_map.c} file which is
+is compiled to 2 files, a \verb|STHORM_rose_simple_map.c| file which is
 to be compiled for the Cortex A9 ARM host with this content:
 % This is the output examples/rose_simple_map.c after make in examples,
 % without the definition of init()
@@ -297,7 +297,7 @@ int main()
   return 0;
 }
 \end{lstlisting}
-and a \texttt{STHORM_fabric.c} to be executed on the processors elements
+and a \verb|STHORM_fabric.c| to be executed on the processors elements
 of the STHORM fabric that will launch all the threads:
 \begin{lstlisting}
 #include "smecy.h"
@@ -346,45 +346,417 @@ so that mainly only one code is interpreted differently for the right
 purpose.
 
 
-\section{Some design patterns for STHORM SME-C}
-\label{sec:examples}
+\section{SMECY low level hardware API}
+\label{sec:low-level-hardware}
 
-Here are some typical use-cases for the MCAPI STHORM target.
+To call real hardware accelerators, few C macros are needed to interface a
+program running on some processor to a function running on another
+processor or in some hardware accelerator.
 
-\todo{RK: no clear how to write an efficient application to use 64 PEs for
-  example...}
+Since the implementation may depend also on the processor calling the
+macros (not the same IO bus will be used from an $x$86 or a DSP to call
+the same operator), a global preprocessing symbol must be defined by the
+compiler before using these macros, such as
+\begin{lstlisting}
+#define SMECY_LOCAL_PROC x86
+\end{lstlisting}
+or
+\begin{lstlisting}
+#define SMECY_LOCAL_PROC DSP
+\end{lstlisting}
 
-\subsection{Same computation on all the PEs}
-\label{sec:same-computation-all}
+Few macros are necessary:
+\todo{RK: to update with an automatic extraction}
+\begin{lstlisting}
+/* Prepare a processing element to execute a function
 
-\lstinputlisting{examples/distribute_PEs.c}
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function to load on the processor element
+
+   pe is not a string because it is easy to make a string from it but not
+   the opposite. The same for func
+*/
+#define SMECY_set(pe, instance, func) ...
+
+/* Send a scalar argument to a function on a processing element
+
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function running on the processor element
+   @param[in] arg is the argument instance to set
+   @param type is the type of the scalar argument to send
+   @param[in] val is the value of the argument to send
+*/
+#define SMECY_send_arg(pe, instance, func, arg, type, val) ...
+
+/* Send a vector argument to a function on a processing element
+
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function to load on the processor element
+   @param[in] arg is the argument instance to set
+   @param type is the type of the vector element to send
+   @param[in] addr is the starting address of the vector to read from
+              caller memory
+   @param[in] size is the length of the vector
+*/
+#define SMECY_send_arg_vector(pe, instance, func, arg, type, addr, size) ...
+
+/* Launch the hardware function or remote program using previously loaded
+   arguments
+
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function to load on the processor element
+
+   A kernel can be launched several times without having to set/reset its function.
+*/
+#define SMECY_launch(pe, instance, func) ...
+
+/* Get the return value of a function on a processing element
+
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function to load on the processor element
+   @param type is the type of the scalar argument to send
+   @return the value computed by the function
+*/
+#define SMECY_get_return(pe, instance, func, type) ...
+
+/* Get a vector value computed by a function on a processing element
+
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function to load on the processor element
+   @param[in] arg is the argument instance to retrieve
+   @param type is the type of the vector element
+   @param[out] addr is the starting address of the vector to write in
+               caller memory
+   @param[in] size is the length of the vector
+*/
+#define SMECY_get_arg_vector(pe, instance, func, arg, type, addr, size) ...
+
+/* Prepare the retrieving of a vector value that will be computed by a
+   function on a processing element.
+
+   Typically, it can be used to allocate software or hardware resources
+   for the later SMECY_get_arg_vector().
+
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function to load on the processor element
+   @param[in] arg is the argument instance to retrieve
+   @param type is the type of the vector element
+   @param[out] addr is the starting address of the vector to write in
+               caller memory
+   @param[in] size is the length of the vector
+*/
+#define SMECY_future_get_arg_vector(pe, instance, func, arg, type, addr, size) ...
+
+/* Reset a processing element to execute a function
+
+   @param pe is the symbol of a processing element, such as GPP, DSP, PE...
+   @param[in] instance is the instance number of the processor element to use
+   @param func is the function to unload from the processor element
+
+   This is used for example to remove consuming resources to decrease
+   power. Giving here the function name may be useful for weird case to
+   avoid having short-circuit between CLB in a FPGA during unconfiguring stuff
+*/
+#define SMECY_reset(pe, instance, func) ...
+\end{lstlisting}
+There is also a macro for an asynchronous call and to wait for completion.
 
 
-\subsection{Same computation on all the PEs of a cluster}
-\label{sec:same-computation-all-2}
+\section{Compilation}
+\label{sec:compilation}
 
-\lstinputlisting{examples/independent_clusters.c}
+\subsection{Example of OpenCL mapping}
+\label{sec:example-opencl-mapp}
+
+A typical mapping of the SMECY low level hardware API shown on
+\S~\ref{sec:low-level-hardware} would be organized as follows:
+\begin{itemize}
+\item \verb|SMECY_set(PE, proc & 7, invert_vector)|:\\
+  \texttt{clCreateProgramFromSource()} +
+  \texttt{clBuildProgramExecutable()} + \texttt{clCreateKernel()}
+\item \verb|SMECY_send_arg(PE, proc & 7, invert_vector, 1, int, LINE_SIZE)|:\\
+  \texttt{clSetKernelArg()}
+\item \verb|SMECY_send_arg_vector(PE, proc & 7, invert_vector, 2, int,...)|:\\
+  \texttt{clCreateBuffer()} + \texttt{clSetKernelArg()} (+
+  \texttt{clEnqueueWriteBuffer()})
+\item \verb|SMECY_launch(PE, 0, invert_vector)|:\\
+  \texttt{clExecuteKernel()}
+\item \verb|SMECY_get_arg_vector(PE, proc & 7, invert_vector, 3, ...)|:\\
+  \texttt{clEnqueueReadBuffer()}
+\end{itemize}
 
 
-\subsection{Stream computation through the PEs of a cluster}
-\label{sec:stre-comp-thro}
-
-\lstinputlisting{examples/stream_cluster_PEs.c}
+\subsection{Example of EdkDSP mapping}
+\label{sec:example-edkdsp-mapp}
 
 
-\subsection{Systolic computation with the PEs of a cluster}
-\label{sec:syst-comp-with}
+\subsection{OpenMP support}
+\label{sec:openmp-support-1}
 
-\lstinputlisting{examples/systolic_PEs.c}
+From the programmer point of view it may be equivalent to have
+\begin{itemize}
+\item an OpenMP compiler generating SMECY API code such as the parallelism
+  between SMECY target accelerators is run by OpenMP threads dealing each
+  one with an hardware resource sequentially in a synchronous way;
+\item or a SMECY compiler understanding the OpenMP syntax and generating
+  directly some parallel execution of SMECY accelerators in an
+  asynchronous way.
+\end{itemize}
 
 
-\subsection{Round robin computation on the clusters}
-\label{sec:round-robin-comp}
+\subsection{Doxygen qualifier}
+\label{sec:doxygen-qualifier}
 
-\lstinputlisting{examples/round_robin_clusters.c}
+In the Doxygen documentation mark-up language used in comments to detail
+various entities of a program, there are information such as \texttt{in},
+\texttt{out} or \texttt{inout} qualifier on function parameters that can
+be used to generate the right communication with some hardware
+accelerators.
 
 
-%\lstinputlisting{examples/pipeline_cluster_PEs.c}
+\subsection{C qualifier}
+\label{sec:c-qualifier}
+
+Qualifiers such as \texttt{const} attribute qualifier, address space
+names, register names, accumulator, saturation, etc. are used to generate
+the right target function or instruction.
+
+
+\subsection{Generating communications from pragma}
+\label{sec:pragma}
+
+Of course the pragma information is heavily used in the compilation
+process.
+
+For example to generate correct communication, the mapping information is
+used, and from the used/defined information plus optional remapping
+information, a real communication with an API is used.
+
+\begin{lstlisting}
+void
+invert_vector(int line_size,
+          int input_line[line_size],
+          int output_line[line_size]) {
+  for(int i = 0; i < line_size; i++)
+    output_line[i] = 500 - input_line[i];
+}
+  [...]
+  int image[HEIGHT][WIDTH];
+  [...]
+#pragma smecy map(PE, proc & 7)         \
+              arg(2, in, [1][LINE_SIZE])    \
+              arg(3, out, [1][LINE_SIZE])
+    // Invert an horizontal line:
+    invert_vector(LINE_SIZE,
+          &image[HEIGHT - 20 - proc][WIDTH/2 + 2*proc],
+          &image[HEIGHT - 20 - proc][WIDTH/2 + 2*proc]);
+\end{lstlisting}
+can be compiled into
+\begin{lstlisting}
+  int image[HEIGHT][WIDTH];
+  /* First prepare the PE #(proc & 7) hardware to execute invert_vector.
+     That may be used to load some program or microcode, reconfigure a
+     FPGA, load/compile an OpenCL kernel... */
+  SMECY_set(PE, proc & 7, invert_vector);
+  /* Send the WIDTH integer as arg 1 on invert_vector hardware function on
+     PE #(proc & 7): */
+  SMECY_send_arg(PE, proc & 7, invert_vector, 1, int, LINE_SIZE);
+  /* Send a vector of int of size LINE_SIZE as arg 2 on invert_vector
+     hardware function on PE #(proc & 7): */
+  SMECY_send_arg_vector(PE, proc & 7, invert_vector, 2, int,
+                        &image[HEIGHT - 20 - proc][WIDTH/2 + 2*proc], LINE_SIZE);
+  // Launch the hardware function or remote program:
+  SMECY_launch(PE, 0, invert_vector);
+  /* Get a vector of int of size LINE_SIZE as arg 3 on invert_vector
+     hardware function on PE #(proc & 7): */
+  SMECY_get_arg_vector(PE, proc & 7, invert_vector, 3, &image[HEIGHT - 20 - proc]
+                                                             [WIDTH/2 + 2*proc],
+                       LINE_SIZE);
+\end{lstlisting}
+with low level macros described in \S~\ref{sec:low-level-hardware}.
+
+\lstinline|invert_vector()| is either an already implemented function in a
+hardware library, or it is compiled by a target specific compiler with
+some callable interface.
+
+For more complex calls needing remapping, such as:
+\begin{lstlisting}
+    int input_line[LINE_SIZE];
+    int output_line[LINE_SIZE];
+    /* We need to remap data in the good shape. The compiler should use
+       the remapping information to generate DMA transfer for example and
+       remove input_line array */
+    SMECY_remap_int2D_to_int1D(HEIGHT, WIDTH, HEIGHT/3, 30 + 20*proc,
+                   LINE_SIZE, 1, image,
+                   LINE_SIZE, input_line);
+    // Each iteration is on a different PE in parallel:
+#pragma smecy map(PE, proc) arg(2, in, [LINE_SIZE]) arg(3, out, [LINE_SIZE])
+    invert_vector(LINE_SIZE, input_line, output_line);
+    SMECY_remap_int1D_to_int2D(LINE_SIZE, output_line,
+                   HEIGHT, WIDTH, HEIGHT/3, 30 + 20*proc,
+                   LINE_SIZE, 1, image);
+\end{lstlisting}
+is compiled by using other hardware interfaces involving more complex DMA:
+\begin{lstlisting}
+  // May not be useful if this function is already set:
+  SMECY_set(PE, proc & 7, invert_vector);
+  /* Send the WIDTH integer as arg 1 on invert_vector hardware function on
+     PE #(proc & 7): */
+  SMECY_send_arg(PE, proc & 7, invert_vector, 1, int, LINE_SIZE);
+  /* Send a vector of int of size LINE_SIZE as arg 2 on invert_vector
+     hardware function on PE #(proc & 7) but read as a part of a 2D array: */
+  smecy_send_arg_int_DMA_2D_PE_0_invert_vector(3, &image[HEIGHT - 20 - proc]
+                                                        [WIDTH/2 + 2*proc],
+                                               HEIGHT, WIDTH, HEIGHT/3, 30 + 20*proc,
+                                               LINE_SIZE, 1);
+  SMECY_send_arg_DMA_2D_to_1D(PE, proc & 7, invert_vector, 2, int,
+                              &image[HEIGHT - 20 - proc][WIDTH/2 + 2*proc],
+                              HEIGHT, WIDTH, HEIGHT/3, 30 + 20*proc,
+                              LINE_SIZE, 1);
+  // Launch the hardware function or remote program:
+  SMECY_launch(PE, 0, invert_vector);
+  SMECY_get_arg_DMA_1D_to_2D(PE, proc & 7, invert_vector, 3, int,
+                             &image[HEIGHT - 20 - proc][WIDTH/2 + 2*proc],
+                             HEIGHT, WIDTH, HEIGHT/3, 30 + 20*proc,
+                             LINE_SIZE, 1);
+\end{lstlisting}
+
+
+\subsection{Compilation for streaming computing}
+\label{sec:comp-stre-comp}
+
+\todo{RK: not longer implemented this way}
+If we come back on the example shown in \S~\ref{sec:pipelined-example} on
+page~\pageref{sec:pipelined-example}, this program is given to the
+source-to-source stream compiler that may generate the following output
+(only partially shown, the type definitions are missing):
+\begin{lstlisting}
+/* Definition of procedures */
+int main(void)
+{
+    typ_7 data_buffer;
+    typ_21 data12Link;
+    data12Link = pth_CreateDbLink(512);
+    pth_CreateProcess((&__Node1), data12Link);
+    pth_CreateProcess((&__Node2), data12Link);
+    pause();
+    return 0;
+}
+
+static void __outlinedproc2(typ_9 data_buffer)
+{
+    Consume(((typ_4)data_buffer));
+}
+
+static void __outlinedproc1(typ_9 data_buffer)
+{
+    Produce(((typ_4)data_buffer));
+}
+
+static void __Node1(typ_21 data12Link)
+{
+    typ_9 data_bufferOut;
+    typ_4 tmp0;
+    typ_4 tmp1;
+    tmp0 = DbLinkGetInitBuff(data12Link);
+    data_bufferOut = ((typ_9)tmp0);
+    while(1){
+        __outlinedproc1(data_bufferOut);
+        tmp1 = DbLinkPutData(data12Link);
+        data_bufferOut = ((typ_9)tmp1);
+    }
+}
+
+static void __Node2(typ_21 data12Link)
+{
+    typ_9 data_bufferIn;
+    typ_4 tmp0;
+    while(1){
+        tmp0 = DbLinkGetData(data12Link);
+        data_bufferIn = ((typ_9)tmp0);
+        __outlinedproc2(data_bufferIn);
+    }
+}
+\end{lstlisting}
+The last two functions are \verb|__Node1()| and \verb|__Node2()|. These
+are the functions that run in the two processes. These two functions are
+the wrappers around the user code, which is embedded in the two
+\verb|__oulined...| functions. These wrappers take care of the
+data communications. For every communication channel, they manage a
+double-buffered scheme that minimizes the amount of copying.
+
+In more realistic settings than this simple send/receive scheme,
+the wrapper function become quickly more complex and non-trivial
+to maintain manually.
+
+The generated code contains calls to the following communication
+library:
+\begin{lstlisting}
+/*
+ * Create a double buffered communication link,
+ * with each buffer the given size in bytes */
+DbLink createDbLink( int size ) ;
+/*
+ * Get a pointer to a free output buffer from the
+ * link. The pointer must be given back in the
+ * call to DbLinkPutData */
+void *DbLinkGetInitBuf( DbLink outputLink ) ;
+/*
+ * Get a pointer to data out of the link. This
+ * is a read action of the link. The data pointed
+ * to is valid until the next read. */
+void *DbLinkGetData( DbLink inputLink ) ;
+/*
+ * Output the data pointed to over the link. The
+ * pointer must have been previously obtained from
+ * the link. */
+data_bufferOut = DbLinkPutData( data_bufferOut ) ;
+\end{lstlisting}
+
+And finally there is also the process creation call:
+\begin{lstlisting}
+int pth_CreateProcess( int (*f)(), ... );
+\end{lstlisting}
+This library is not intended to become part of the SMECY-API described for
+example in \S~\ref{sec:smecy-api} or \ref{sec:low-level-hardware}.
+Instead, the library is intended for easy porting to SMECY-API, while
+taking advantage of the most efficient communication implementation for
+the specific target architecture. Currently, a \texttt{pthread}s-based
+implementation exists.
+
+This is just an example of a compilation path and it should be easy to
+generate a C++ TBB (Thread Building Block) target code using for example
+the \verb|tbb::pipeline|, a more low-level OpenMP runtime based on
+\texttt{parallel sections} or \texttt{parallel task} pragma, or even an
+MPI or MCA API for distributed memory execution.
+
+
+\subsection{Geometric inference}
+\label{sec:geometric-inference}
+
+In the OpenMP SMP model, there is a global memory (well, with a weak
+coherence model) that may not exist in the execution model of a given
+target. For example, even if 2 hardware accelerators exchange information
+through memory according to the high-level programming model, in the real
+world we may have 2 processors communicating through message passing with
+MCAPI on a NoC or 2 hardware accelerators connected through a pipeline.
+
+To solve this issue, we use the OpenMP global memory like a scoreboard
+memory that is used to symbolically relate all the data flows and
+generates various communication schemes.
+
+Since the memory dependencies are expresses by hyperparallelepipedes, we
+can do some intersection analysis to compute if a communication is needed
+or not between 2 devices of the target.
+
+
 
 \end{document}
 
