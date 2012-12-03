@@ -63,7 +63,13 @@ export SMECY_LIB=smecy_lib_directory/
 		\paragraph{Specific flags}
 		\scompiler supports some specific flags. Here are a few examples, for a more complete list type \verb+smecc --help+.
 		\begin{itemize}
-			\item \verb+-smecy+ triggers smecy pragmas translation/compilation; if pragmas contain many expressions \scompiler may produce a lot of output : \verb+>\dev\null+ is recommended;
+        \item \verb+-smecy+ triggers smecy pragmas
+          translation/compilation; if pragmas contain many expressions
+          \scompiler may produce a lot of output: \verb+>\dev\null+ is
+          recommended to discard them;
+			\item \verb+-smecy-accel+ asks for the generation of the
+              accelerator parts, mainly by outlining the \texttt{map}-ped
+              function;
 			\item \verb+--smecy_lib=smecy_lib_directory/+ can be used to specify the path to the SMECY library; if specified it will be used instead of the environment variable \verb+SEMCY_LIB+;
 			\item \verb+-std=c99+ should be used when compiling C99;
 			\item \verb+-c+ will only translate input file instead of compiling it; with input file \verb+fileName.C+, \scompiler will generate a \verb+rose_fileName.C+ file with calls to SMECY API instead of SMECY pragmas;

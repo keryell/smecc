@@ -10,6 +10,8 @@
 
 namespace smecy
 {
+  extern bool isAccelerator;
+
 	//attaches smecy attributes to smecy pragmas
 	void attachAttributes(SgProject* sageFilePtr);
 

@@ -6,8 +6,11 @@
 //===================================================================
 
 namespace smecy {
-/* \brief Test if the string can describe a #pragma smecy
- */
+  // Control if we generate code for the accelerator part
+  bool isAccelerator;
+
+  /* \brief Test if the string can describe a #pragma smecy
+   */
   bool smecyPragmaString(std::string s) {
     // Get the first word of it by reading from an ad-hoc string stream
     // initialized with the full pragma:
@@ -792,6 +795,9 @@ namespace smecy {
 
 		// Getting options in a string vector instead of argc/argv fo easier later processing:
 		std::vector<std::string> list = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
+
+		// Skip the following and use some command line options if necessary
+		// for better control
 #if 0
 		//openmp settings
 		CommandlineProcessing::removeArgs(list,"-rose:openmp");
@@ -830,8 +836,11 @@ namespace smecy {
 			}
 		}
 
-		// Test if the -smecy option is here and remove it from the list:
-		bool isSmecy = CommandlineProcessing::isOption(list,"-smecy","",true);
+        // Test if the -smecy option is here and remove it from the list:
+        bool isSmecy = CommandlineProcessing::isOption(list,"-smecy","",true);
+
+        // Test if the -smecy-accel option is here and remove it from the list:
+        bool isAccel = CommandlineProcessing::isOption(list,"-smecy-accel","",true);
 
 		std::cerr << "Options after processing:" << list << std::endl;
 

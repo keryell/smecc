@@ -26,26 +26,42 @@ LDLIBS+=$(MCAPI_LINK) $(MRAPI_LINK)
 # Have an explicit list since we have some program with multiple
 # compilation units:
 
-# smecc generate file beginning with "rose_":
-LOCAL_ROSE=$(addprefix rose_,$(LOCAL_SRC))
-LOCAL_ROSE_DOT=$(addsuffix .dot,$(LOCAL_SRC))
-LOCAL_ROSE_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
+# smecc generate file beginning with "smecy_" and "smecy_accel_" for the
+# host and accelerator sides respectively:
+LOCAL_SMECY=$(addprefix smecy_,$(LOCAL_SRC)) \
+	$(addprefix accel_smecy_,$(LOCAL_SRC))
+LOCAL_SMECY_DOT=$(addsuffix .dot,$(LOCAL_SRC))
+LOCAL_SMECY_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
 
 # Remove .c and .C extension to have executable names:
 #LOCAL_ROSE_BIN:=$(LOCAL_ROSE:.c=)
 #LOCAL_ROSE_BIN:=$(LOCAL_ROSE_BIN:.C=)
-LOCAL_ROSE_BIN=$(addprefix rose_,$(LOCAL_BIN))
+LOCAL_SMECY_BIN=$(addprefix smecy_,$(LOCAL_BIN))
 
-all: $(LOCAL_ROSE)
+all: $(LOCAL_SMECY)
 
-bin: $(LOCAL_BIN) $(LOCAL_ROSE_BIN)
+bin: $(LOCAL_BIN) $(LOCAL_SMECY_BIN)
 
-rose_%.C: %.C
-	smecc -smecy -c $(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
+smecy_%.C: %.C
+	smecc -smecy -rose:skipfinalCompileStep $(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
+	mv rose_$*.C $@
 
-rose_%.c: %.c
-	smecc -c -smecy --std=c99 -rose:C99_only -rose:C_output_language \
+smecy_%.c: %.c
+	smecc -smecy --std=c99 -rose:C99_only \
+		-rose:skipfinalCompileStep -rose:C_output_language \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
+	mv rose_$*.c $@
+
+accel_smecy_%.C: %.C
+	smecc -smecy -smecy-accel -rose:skipfinalCompileStep \
+		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
+	mv rose_$*.C $@
+
+accel_smecy_%.c: %.c
+	smecc -smecy -smecy-accel --std=c99 -rose:C99_only \
+		-rose:skipfinalCompileStep -rose:C_output_language \
+		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
+	mv rose_$*.c $@
 
 run_%: %
 	./$<
@@ -71,6 +87,6 @@ run_%: %
 
 # Use :: so that a user of this Makefile can extend this rule
 clean::
-	rm -f $(LOCAL_ROSE) $(LOCAL_BIN) $(LOCAL_ROSE_BIN) \
-		$(LOCAL_ROSE_DOT) $(LOCAL_ROSE_PDF) rose_transformation_* \
+	rm -f $(LOCAL_SMECY) $(LOCAL_BIN) $(LOCAL_SMECY_BIN) \
+		$(LOCAL_SMECY_DOT) $(LOCAL_SMECY_PDF) rose_transformation_* \
 		*.o *.E

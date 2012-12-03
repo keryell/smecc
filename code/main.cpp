@@ -1,4 +1,7 @@
-//small main for testing purposes
+/* Main program of the SME-C compiler
+ *
+ * European SMECY ARTEMIS project
+ */
 
 #include "public.hpp"
 #include "smecyTranslation.hpp"
@@ -46,5 +49,4 @@ int main(int argc, char *argv[]) {
 void display_string_argv(Rose_STL_Container<std::string> fileList) {
   printf("In display_string_argv: %s\n",
          StringUtility::listToString(fileList).c_str());
-
 }
