@@ -228,6 +228,21 @@ void CC_free (void *ptr)
 \subsubsection{Code transformation}
 \label{sec:code-transformation}
 
+The basic compilation scheme to generate MCAPI from the SME-C original
+code is to generate several files:
+\begin{itemize}
+\item 1 host file running the host code on the Cortex-A9, an OpenMP C or
+  C++ program with some calls to MCAPI functions to interact with the PEs;
+\item as many source codes there are PEs, with the dual MCAPI function
+  calls to get some data and to respond to the remote procedure calls from
+  the hosts.
+\end{itemize}
+
+In this current implementation, since the host can chose at run-time the
+PE on which a function will be executed, all the mapped functions are
+loaded on the PEs and the real function to be executed is selected from a
+previous MCAPI communication.
+
 For example the \verb|examples/simple_map.c|
 \begin{lstlisting}
 #include <stdio.h>
@@ -297,6 +312,15 @@ int main()
   return 0;
 }
 \end{lstlisting}
+the effect of \verb|SMECY_set(init,STHORM,0,i)| is to prepare the selection of
+\texttt{init()} on the STHORM PE of coordinate $(0,i)$ by sending a first
+MCAPI packet to prepare the execution of the following.
+
+
+
+\todo{RK: rewrite the following by using a dispatch loop according to the
+  SMECY\_set()
+}
 and a \verb|STHORM_fabric.c| to be executed on the processors elements
 of the STHORM fabric that will launch all the threads:
 \begin{lstlisting}
@@ -314,7 +338,7 @@ void mcapi_domain_entry()
   SMECY_launch(init,3,STHORM,0,i);
   SMECY_get_arg_vector(init,1,int,(tab[i] + 0),5,STHORM,0,i);
 \end{lstlisting}
-and a for each MCAPI kernel to be launched on a PE, a file like
+and for each MCAPI kernel to be launched on a PE, a file like
 \verb|STHORM_PE_simple_map_init.c| with the code for the \verb|init|
 function in this example with:
 \begin{lstlisting}
@@ -341,9 +365,9 @@ void STHORM_PE_simple_map_init()
   SMECY_accelerator_loop_end(init,STHORM,0,i);
 }
 \end{lstlisting}
-All the \verb|SMECY_| have different meaning in the 3 different use case,
-so that mainly only one code is interpreted differently for the right
-purpose.
+All the \verb|SMECY_| have different meanings in the 3 different use
+cases, so that mainly only one code is interpreted differently for the
+right purpose.
 
 
 \section{SMECY low level hardware API}
