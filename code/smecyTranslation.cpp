@@ -1,5 +1,6 @@
 #include "smecyTranslation.hpp"
 #include <boost/iterator/filter_iterator.hpp>
+#include <Outliner.hh>
 
 //===================================================================
 // Implements functions used during the translation of SMECY programs
@@ -840,7 +841,7 @@ namespace smecy {
         bool isSmecy = CommandlineProcessing::isOption(list,"-smecy","",true);
 
         // Test if the -smecy-accel option is here and remove it from the list:
-        bool isAccel = CommandlineProcessing::isOption(list,"-smecy-accel","",true);
+        isAccelerator = CommandlineProcessing::isOption(list,"-smecy-accel","",true);
 
 		std::cerr << "Options after processing:" << list << std::endl;
 
@@ -1097,8 +1098,25 @@ namespace smecy {
           throw 0;
         SgStatement* subject = SageInterface::getNextStatement(target);
 
-        if (attribute->hasMapClause()) // If stream node mapping is handled separately
+        if (attribute->hasMapClause()) {
+          if (isAccelerator) {
+            // On the accelerator side, we have to outline
+            // both #pragma & function call, so we have to move them
+            // into a block and outline them first
+
+            // First create a block with the function call just before the
+            // #pragma
+            SageInterface::removeStatement(subject);
+            SgBasicBlock* b = SageBuilder::buildBasicBlock(subject);
+            // Replace the #pragma bu the block
+            SageInterface::replaceStatement(target, b);
+            // Then insert the #pragma before the function call inside the block
+            SageInterface::insertStatementBefore(subject, target, true);
+            Outliner::outline(b);
+          }
+          // If stream node mapping is handled separately
           translateMap(target, attribute, subject);
+        }
       }
     }
   }
@@ -1107,9 +1125,6 @@ namespace smecy {
 	// If directive has a map clause, translates it in corresponding calls to SMECY API
 	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
 	{
-		//various preprocessing steps
-	        // This does no longer exist in recent ROSE Compiler:
-		//SageInterface::ensureBasicBlockAsParent(target);
 		processVariableDeclaration(target, attribute, functionToMap);
 		completeSizeInfo(target, attribute, functionToMap);
 		processIf(target, attribute, functionToMap);

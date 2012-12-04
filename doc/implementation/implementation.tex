@@ -321,8 +321,11 @@ MCAPI packet to prepare the execution of the following.
 \todo{RK: rewrite the following by using a dispatch loop according to the
   SMECY\_set()
 }
-and a \verb|STHORM_fabric.c| to be executed on the processors elements
-of the STHORM fabric that will launch all the threads:
+The \verb|STHORM_fabric.c| to be executed on the processors elements
+of the STHORM fabric that will launch all the threads is constructed by
+outlining the function calls to be executed to the fabric and only then
+adding the MCAPI macros. This way, we can have a function object to be
+given to the STHORM run-time that contains the MCAPI macros:
 \begin{lstlisting}
 #include "smecy.h"
 
