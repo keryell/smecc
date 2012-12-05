@@ -1098,24 +1098,32 @@ namespace smecy {
           throw 0;
         SgStatement* subject = SageInterface::getNextStatement(target);
 
+        // Only deal with the #pragma map decorated statements
         if (attribute->hasMapClause()) {
+          SgBasicBlock* b;
           if (isAccelerator) {
             // On the accelerator side, we have to outline
             // both #pragma & function call, so we have to move them
-            // into a block and outline them first
+            // into a block and outline them first.
+
+            // Since the #pragma may contain expressions that may be
+            // concerned by the outlining itself, we have to deal with the
+            // #pragma before outlining the code.
 
             // First create a block with the function call just before the
             // #pragma
             SageInterface::removeStatement(subject);
-            SgBasicBlock* b = SageBuilder::buildBasicBlock(subject);
-            // Replace the #pragma bu the block
+            b = SageBuilder::buildBasicBlock(subject);
+            // Replace the #pragma by the block
             SageInterface::replaceStatement(target, b);
             // Then insert the #pragma before the function call inside the block
             SageInterface::insertStatementBefore(subject, target, true);
-            Outliner::outline(b);
           }
           // If stream node mapping is handled separately
           translateMap(target, attribute, subject);
+          if (isAccelerator) {
+            Outliner::outline(b);
+          }
         }
       }
     }
