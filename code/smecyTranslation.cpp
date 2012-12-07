@@ -65,6 +65,7 @@ namespace smecy {
     }
   };
 
+
   FilterSmecyPragma smecyPragma(std::vector<SgNode*> pragmas) {
     return boost::make_filter_iterator<is_SMECY_pragma>(pragmas.begin(), pragmas.end());
   }
@@ -1123,13 +1124,21 @@ namespace smecy {
           // If stream node mapping is handled separately
           translateMap(target, attribute, subject);
           if (isAccelerator) {
-            Outliner::outline(b);
+            // Get the reference expression of the called function
+            // after the #pragma
+            SgExpression* f = getFunctionRef(subject);
+            std::ostringstream s;
+            // Construct a name depending from the function name
+            // with an instance number to avoid conflicts if a function
+            // is mapped several time
+            static int map_instance = 0;
+            s << "smecy_func_"<< f->unparseToString() << "_" << ++map_instance;
+            /* Outliner::Result r = */ Outliner::outline(b, s.str());
           }
         }
       }
     }
   }
-
 
 	// If directive has a map clause, translates it in corresponding calls to SMECY API
 	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap)
