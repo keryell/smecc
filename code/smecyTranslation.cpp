@@ -793,9 +793,10 @@ namespace smecy {
 	    std::cerr << " " << argv[i];
 	  std::cerr << std::endl;
 
-
 		// Getting options in a string vector instead of argc/argv fo easier later processing:
 		std::vector<std::string> list = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
+		// Deal with outliner-specific options:
+	    Outliner::commandLineProcessing(list);
 
 		// Skip the following and use some command line options if necessary
 		// for better control
