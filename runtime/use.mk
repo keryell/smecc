@@ -56,12 +56,16 @@ accel_smecy_%.C: %.C
 	smecc -smecy -smecy-accel -rose:skipfinalCompileStep \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.C $@
+	# Append the automatically generated dispatch system on the PEs
+	cat $*.C-smecy_dispatch >> $@
 
 accel_smecy_%.c: %.c
 	smecc -smecy -smecy-accel --std=c99 -rose:C99_only \
 		-rose:skipfinalCompileStep -rose:C_output_language \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.c $@
+	# Append the automatically generated dispatch system on the PEs
+	cat $*.c-smecy_dispatch >> $@
 
 run_%: %
 	./$<
@@ -89,4 +93,4 @@ run_%: %
 clean::
 	rm -f $(LOCAL_SMECY) $(LOCAL_BIN) $(LOCAL_SMECY_BIN) \
 		$(LOCAL_SMECY_DOT) $(LOCAL_SMECY_PDF) rose_transformation_* \
-		*.o *.E
+		*.o *.E *-smecy_dispatch
