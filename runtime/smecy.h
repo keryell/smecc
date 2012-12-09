@@ -134,17 +134,17 @@
 /* According to the targets, the PE coordinates have 0 or more dimension,
    so use __VA_ARGS__ for them at the end of the macros */
 
-#define SMECY_set(func, pe, ...)					\
-  SMECY_PRINT_VERBOSE("Preparing to launch function \"%s\" on "         \
-                      "processor \"%s\" n° \"%s\"\n",                   \
-                      #func, #pe, #__VA_ARGS__)                         \
-  SMECY_IMP_set(func, pe, __VA_ARGS__)
+#define SMECY_set(func, instance, pe, ...)                              \
+  SMECY_PRINT_VERBOSE("Preparing to launch instance %d of function "    \
+                      "\"%s\" on processor \"%s\" n° \"%s\"\n",         \
+                      instance, #func, #pe, #__VA_ARGS__)               \
+  SMECY_IMP_set(func, instance, pe, __VA_ARGS__)
 
-#define SMECY_accelerator_end(func, pe, ...)                            \
-  SMECY_PRINT_VERBOSE("End accelerator section of function \"%s\" on "  \
-                      "processor \"%s\" n° \"%s\"\n",                   \
-                      #func, #pe, #__VA_ARGS__)                         \
-  SMECY_IMP_accelerator_end(func, pe, __VA_ARGS__)
+#define SMECY_accelerator_end(func, instance, pe, ...)                  \
+  SMECY_PRINT_VERBOSE("End accelerator section of instance %d of "      \
+                      "function \"%s\" on processor \"%s\" n° \"%s\"\n", \
+                      instance, #func, #pe, #__VA_ARGS__)               \
+  SMECY_IMP_accelerator_end(func, instance, pe, __VA_ARGS__)
 
 #define SMECY_send_arg(func, arg, type, value, pe, ...)             \
   SMECY_PRINT_VERBOSE("Sending %s as arg #%d to function \"%s\""    \

@@ -21,7 +21,7 @@ namespace smecy
 
 	//functions that add SMECY API functions
 	void addSmecyInclude(SgProject* sageFilePtr);
-	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap);
+	void addSmecySet(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap, int instance_number);
 	void addSmecySendArg(SgStatement* target, SgExpression* mapName, std::vector<SgExpression*> mapCoordinates, SgExpression* functionToMap,
 			int argNumber, SgExpression* typeDescriptor, SgExpression* value);
 	void addSmecySendArgVector(SgStatement* target, SgExpression* mapName, SgExpression* mapNumber, SgExpression* functionToMap,
@@ -65,7 +65,7 @@ namespace smecy
 void translateSmecy(SgProject* sageFilePtr);
 	void translateStreaming(SgProject *sageFilePtr);
 	void translateMapping(SgProject *sageFilePtr);
-	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap);
+	void translateMap(SgStatement* target, Attribute* attribute, SgStatement* functionToMap, int instance_number);
 	void translateStreamLoop(SgStatement* target, Attribute* attribute, SgStatement* whileLoop);
 }
 
