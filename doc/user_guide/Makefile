@@ -1,6 +1,10 @@
 #SMECY_DIR			= /hpc/projects/smecy
 #RMFLAGS				= -f
 
+PUB = doc.pdf
+# Assume the GitHub wiki cloned here:
+PUB_DIR=../smecc.wiki/docs
+
 all: doc.pdf
 
 %.pdf: %.tex
@@ -19,3 +23,8 @@ clean:
 
 doc: doc.pdf
 	@cp doc.pdf $(SMECY_DIR)/doc/smecc_doc.pdf
+
+pub:
+	# To publish temporary versions on my web page:
+	mkdir -p $(PUB_DIR)
+	cp -a $(PUB) $(PUB_DIR)
