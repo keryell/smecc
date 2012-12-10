@@ -4,7 +4,11 @@ SME-C compiler from SMECY project
 smecc is a compiler for a C-based internal representation with #pragma
 targeting various parallel embedded systems and accelerators.
 
-http://smecy.eu
+There is some documentation on the GitHub wiki at
+https://github.com/keryell/smecc/wiki
+
+This is funded by the SMECY ARTEMIS European project http://smecy.eu
+
 
 Ronan KERYELL at silkan DOT com and others
 
@@ -18,7 +22,8 @@ The organization of the directories:
 
 - code : the compiler
 
-- doc : basic user guide
+- doc : some documentation on the project, such as basic user guide and a
+  specification of the SME-C
 
 - examples : few examples for testing and demos
 
