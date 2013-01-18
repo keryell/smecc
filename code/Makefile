@@ -16,7 +16,8 @@ YACCFLAGS			= -d
 RMFLAGS				= -f
 TESTFLAGS			= -smecy -fopenmp
 
-allFiles = smecc smecc_identity
+allFiles = smecc smecc_identity smecc_post_processor
+smecc_post_processor: LDLIBS += -lboost_regex
 
 # The compilation of the compiler:
 
