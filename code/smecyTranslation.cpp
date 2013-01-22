@@ -1175,19 +1175,18 @@ namespace smecy {
       // This is done textually in a file named from the main file
       // with "-smecy_dispatch" because I'm in a rush
 
-      std::ostringstream s;
-      s << SageInterface::getEnclosingFileNode(main_func)->getFileName()
-        << "-smecy_dispatch";
-      std::ofstream main_file { s.str() };
+      std::ofstream main_file { SageInterface::getEnclosingFileNode(main_func)->getFileName() + "-smecy_dispatch" };
       main_file << std::endl << std::endl
                 << "/* The dispatch loop on the accelerator side for one PE */" << std::endl
                 << "SMECY_begin_accel_function_dispatch" << std::endl;
-      for(auto &f: generated_functions) {
-        main_file << "  SMECY_dispatch_accel_func(smecy_func_" << f.first /* <- the name */
-                  << "_" << f.second /* <- instance number */
+      for(const auto &f: generated_functions) {
+        main_file << "  SMECY_dispatch_accel_func("
+                  // The function name
+                  << f.first
+                  // and the instance number
                   << ", " << f.second << ")" << std::endl;
       }
-      main_file << "SMECY_end_accel_main" << std::endl
+      main_file << "SMECY_end_accel_function_dispatch" << std::endl
                 << std::endl
                 << "/* The hook to start the PEs */" << std::endl
                 << "SMECY_start_PEs_dispatch" << std::endl;
