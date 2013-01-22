@@ -1,4 +1,6 @@
-# A makefile to ease compilation of SME-C with smecc
+# A Makefile to ease compilation of SME-C with smecc
+# SMECY ARTEMIS European project
+# Ronan Keryell @ silkan.com
 
 # To run smecc with ROSE in verbose mode, try:
 # make ROSE_FLAGS="-rose:verbose 3"
@@ -15,9 +17,20 @@
 # To skip debug, use "make SMECY_DEBUG="
 SMECY_DEBUG=-DSMECY_VERBOSE
 
+# By default use MCA API reference implementation
+MCA_INCLUDE?=`mcapi-config --cflags`
+MCAPI_LINK?=`mcapi-config --libs`
+MRAPI_LINK?=`mrapi-config --libs`
+
 # Add some flags to previously ones, if any:
 SMECY_FLAGS+=$(SMECY_DEBUG) -I$(SMECY_INC)
 CFLAGS+=--std=c99 -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
+
+# More flags to compile with MCAPI on the host side
+CFLAGS_MCAPI=-DSMECY_MCAPI -DSMECY_MCAPI_HOST
+# More flags to compile with MCAPI on the accelerator side
+CFLAGS_MCAPI_ACCEL=-DSMECY_MCAPI
+
 LDFLAGS+=-fopenmp
 CXXFLAGS+=--std=c++0x -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
 LDLIBS+=$(MCAPI_LINK) $(MRAPI_LINK)
@@ -56,29 +69,37 @@ accel_smecy_%.C: %.C
 	smecc -smecy -smecy-accel -rose:skipfinalCompileStep \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.C $@
-	# Append the automatically generated dispatch system on the PEs
-	cat $*.C-smecy_dispatch >> $@
+	# Post process the output:
+	smecc_post_processor $@
+	# Append the automatically generated dispatch system on the PEs to
+	# the post processed version back into the target file:
+	cat $@.smecc_pp $*.C-smecy_dispatch > $@
 
 accel_smecy_%.c: %.c
 	smecc -smecy -smecy-accel --std=c99 -rose:C99_only \
 		-rose:skipfinalCompileStep -rose:C_output_language \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.c $@
-	# Append the automatically generated dispatch system on the PEs
-	cat $*.c-smecy_dispatch >> $@
+	# Post process the output:
+	smecc_post_processor $@
+	# Append the automatically generated dispatch system on the PEs to
+	# the post processed version back into the target file:
+	cat $@.smecc_pp $*.c-smecy_dispatch > $@
 
 run_%: %
 	./$<
 
-# Produce a specialized MCAPI expansion for host side:
+# Produce a specialized MCAPI expansion for host side smecy_... source files:
 %_host.E: %.[cC]
 	# Keep comments in the output
-	$(CPP) -CC $(CFLAGS) -DSMECY_MCAPI -DSMECY_MCAPI_HOST $< > $@
+	$(CPP) -CC $(CFLAGS) $(CFLAGS_MCAPI) $< > $@
 
-# Produce a specialized MCAPI expansion for fabric side:
+# Produce a specialized MCAPI expansion for fabric side accel_smecy_... source files:
 %_fabric.E: %.[cC]
 	# Keep comments in the output
-	$(CPP) -CC $(CFLAGS) -DSMECY_MCAPI -DSMECY_MCAPI_PE $< > $@
+	$(CPP) -CC $(CFLAGS) $(CFLAGS_MCAPI_ACCEL) $< > $@
+
+accel_%: CFLAGS += $(CFLAGS_MCAPI_ACCEL)
 
 # Produce a CPP output to help debugging
 %.E: %.[cC]
@@ -93,4 +114,4 @@ run_%: %
 clean::
 	rm -f $(LOCAL_SMECY) $(LOCAL_BIN) $(LOCAL_SMECY_BIN) \
 		$(LOCAL_SMECY_DOT) $(LOCAL_SMECY_PDF) rose_transformation_* \
-		*.o *.E *-smecy_dispatch
+		*.o *.E *-smecy_dispatch *.smecc_pp
