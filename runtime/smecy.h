@@ -84,7 +84,7 @@
          9,8,7,6,5,4,3,2,1,0
 
 /** When the number of arguments is known, automatic call by
-    concatenation to the function SMECY_argn, where n is the number of
+    concatenation to the function SMECY_arg<n>, where n is the number of
     arguments.
  */
 #define SMECY_argN(...) SMECY_CONCATN(SMECY_arg,SMECY_NARG(__VA_ARGS__))(0,__VA_ARGS__)

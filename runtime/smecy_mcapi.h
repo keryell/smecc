@@ -30,6 +30,20 @@ void mcapi_display_state (void* handle) {
 */
 
 
+enum {
+  /* The STHORM geometry */
+  SMECY_CLUSTER_NB = 4,
+  SMECY_PE_NB = 32,
+  /* The localization of the host inside the MCAPI realm */
+  SMECY_MCAPI_HOST_DOMAIN = 5,
+  SMECY_MCAPI_HOST_NODE = 0,
+  /* The port numbers to connect the host and the PE */
+  SMECY_MCAPI_HOST_TX_PORT = 1,
+  SMECY_MCAPI_HOST_RX_PORT = 2,
+  SMECY_MCAPI_PE_TX_PORT = 3,
+  SMECY_MCAPI_PE_RX_PORT = 4,
+};
+
 
 /* Test error code.
 
@@ -149,17 +163,6 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
   return send_gate;
 }
 
-enum {
-  /* The localization of the host inside the MCAPI realm */
-  SMECY_MCAPI_HOST_DOMAIN = 5,
-  SMECY_MCAPI_HOST_NODE = 0,
-  /* The port numbers to connect the host and the PE */
-  SMECY_MCAPI_HOST_TX_PORT = 1,
-  SMECY_MCAPI_HOST_RX_PORT = 2,
-  SMECY_MCAPI_PE_TX_PORT = 3,
-  SMECY_MCAPI_PE_RX_PORT = 4,
-};
-
 /* Analyze the PE type and coordinates by redirect to the function that
    knows about the "pe" accelerator */
 #define SMECY_MCAPI_PARSE_PE(pe, ...)                                   \
@@ -180,7 +183,12 @@ enum {
   mcapi_node_t node = SMECY_MCAPI_HOST_NODE
 
 #ifdef SMECY_MCAPI_HOST
-#define SMECY_IMP_set(func, pe, ...)                                    \
+/* Open some MCAPI connections with the requested node
+
+   The current implementation does not work if called many times with
+   different PE because it caches the connection.
+ */
+#define SMECY_IMP_set(func, instance, pe, ...)                          \
   SMECY_LBRACE /* To have local variable
                 */                                                      \
   mcapi_status_t SMECY_MCAPI_status; /*
@@ -208,47 +216,46 @@ enum {
     P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_HOST_RX_PORT);/*
                                                                          */ \
   }                                                                     \
+  /* Send the function name to run to the remode dispatcher,
+     including the final '\0' */
+  size_t length = strlen(#func) + 1;                                    \
+  mcapi_pktchan_send(P4A_transmit,                                      \
+                     #func,                                             \
+                     length,                                            \
+                     &SMECY_MCAPI_status);                              \
+  /* Check the correct execution
+   */                                                                   \
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);
   /* The size of some received data
    */                                                                   \
   size_t P4A_received_size
 #else
-/* This is on the accelerator side */
-#define SMECY_IMP_set(func, pe, ...)                                    \
+/* This is on the accelerator side, directed here by the dispatcher.
+
+   If it is necessary to call this PE at the same time from different
+   caller threads, one need to use different ports...
+*/
+#define SMECY_IMP_set(func, instance, pe, ...)                          \
   SMECY_LBRACE /* <- '{' To have local variables
                 */                                                      \
-  mcapi_status_t SMECY_MCAPI_status;    /* Do it in this order compared
-     with the host to avoid dead-locks on opening: first wait from the
-     host a connection to receive data to the PE
+    mcapi_status_t SMECY_MCAPI_status;    /* Do it in this order compared
+      with the host to avoid dead-locks on opening: first wait from the
+      host a connection to receive data to the PE
                                         */                              \
-  mcapi_pktchan_recv_hndl_t P4A_receive =                               \
-    SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PE_RX_PORT); /*
-                                                              */        \
-  mcapi_pktchan_send_hndl_t P4A_transmit =                              \
-    SMECY_MCAPI_send_gate_create(SMECY_MCAPI_PE_TX_PORT,                \
-                                 SMECY_MCAPI_HOST_DOMAIN,               \
-                                 SMECY_MCAPI_HOST_NODE,                 \
-                                 SMECY_MCAPI_HOST_RX_PORT);             \
-  /* Enter the infinite service loop on the PE
-   */                                                                   \
-  for(;;) SMECY_LBRACE                                                  \
-    /* The size of some received data
-     */                                                                 \
     size_t P4A_received_size
 #endif
 
 
 #ifdef SMECY_MCAPI_HOST
-#define SMECY_IMP_accelerator_end(func, pe, ...)        \
-  /* End of the accelerated part */                     \
+#define SMECY_IMP_accelerator_end(func, instance, pe, ...)        \
+            /* End of the accelerated part
+             */                                 \
   SMECY_RBRACE
 #else
 /* This is on the accelerator side */
-#define SMECY_IMP_accelerator_end(func, pe, ...)        \
-  /* End of the accelerator service loop
-   */                                           \
-  SMECY_RBRACE /*
-                 End of the accelerated part */ \
-  SMECY_RBRACE
+#define SMECY_IMP_accelerator_end(func, instance, pe, ...)        \
+  SMECY_RBRACE                                                    \
+  /* End of the accelerated part: go back to the dispatcher */
 #endif
 
 
@@ -485,6 +492,131 @@ enum {
 #define SMECY_IMP_launch_12(func, pe, ...)                               \
   SMECY_IMP_LAUNCH_WRAPPER(func(SMECY_IMP_ARG_launch_12(func, pe, __VA_ARGS__)))
 
+
+/* Dispatching code */
+
+/* Initialize MCAPI on an accelerator node.
+*/
+void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
+  mcapi_param_t parameters;
+  mcapi_info_t info;
+
+  mcapi_status_t status;
+  mcapi_initialize(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE,
+		   &parameters, &info, &status);
+  SMECY_MCAPI_CHECK_STATUS(status);
+}
+
+#define SMECY_begin_accel_function_dispatch                             \
+  /* The dispatch function to be run on a PE
+   */                                                                   \
+  void SMECY_accel_function_dispatch(int smecy_cluster, int smecy_pe) SMECY_LBRACE \
+    /* Create the channels to communicate with the host using global
+       variables
+     */                                                                   \
+    mcapi_pktchan_send_hndl_t P4A_receive =                               \
+      SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PE_RX_PORT); /*         \
+                                                                */        \
+    mcapi_pktchan_send_hndl_t P4A_transmit =                              \
+      SMECY_MCAPI_send_gate_create(SMECY_MCAPI_PE_TX_PORT,                \
+                                   SMECY_MCAPI_HOST_DOMAIN,               \
+                                   SMECY_MCAPI_HOST_NODE,                 \
+                                   SMECY_MCAPI_HOST_RX_PORT);             \
+    /* Enter the infinite service loop on the PE
+     */                                                                   \
+    for(;;) SMECY_LBRACE                                                  \
+      SMECY_PRINT_VERBOSE("PE %d %d is waiting for a job\n",              \
+                           smecy_cluster, smecy_pe)                       \
+      /* Wait for the function name to run:
+       */                                                                 \
+      char *function_name;                                                \
+      size_t P4A_received_size;                                           \
+      mcapi_status_t SMECY_MCAPI_status;                                  \
+      mcapi_pktchan_recv(P4A_receive,                                     \
+                        (void **)&function_name,                          \
+                        &P4A_received_size,                               \
+                        &SMECY_MCAPI_status);                             \
+      /* Check the correct execution
+       */                                                                 \
+      SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                       \
+      do SMECY_LBRACE                                                     \
+        /* Find the right function to run
+         */
+
+
+#define SMECY_end_accel_function_dispatch                               \
+        /* If we get here, we did not encounter a break and so nothing  \
+           matches the requested function */                            \
+        fprintf(stderr,"No candidate function to execute \"%s\" on PE %d %d\n", \
+                function_name, smecy_cluster, smecy_pe);                \
+        exit(-1);                                                       \
+      SMECY_RBRACE while (0);                                           \
+      mcapi_pktchan_release(function_name,                              \
+                            &SMECY_MCAPI_status);                       \
+      /* Check the correct execution                                    \
+       */                                                               \
+      SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                     \
+      /* End of the PE accelerator polling loop.                        \
+       */                                                               \
+    SMECY_RBRACE                                                        \
+  /* There is no finalize because of the infinite loop in               \
+     smecy_accel_function_dispatch                                      \
+  */                                                                    \
+  SMECY_RBRACE
+
+
+#define SMECY_dispatch_accel_func(function, instance)                   \
+  /* If we receive a message to activate this function
+     launch it!
+
+     Of course in a final implementation, do not use this linear search
+     with string comparisons...
+  */                                                                    \
+  if (strcmp(function_name, #function) == 0) {                          \
+    /* Call the accelerator function without any parameter
+       since the parameter as indeed used as only local variables
+       inside
+    */                                                                  \
+    SMECY_PRINT_VERBOSE("PE %d %d is executing instance " #instance     \
+                        " of function \"" #function "\"\n",             \
+                        smecy_cluster, smecy_pe)                        \
+    smecy_accel_##function##_##instance(P4A_transmit, P4A_receive);     \
+    /* Wait for next job to do
+     */                                                                 \
+    break;                                                              \
+  }
+
+#ifdef SMECY_MCAPI_HOST
+/* Main function that start all the MCAPI threads that runs on the
+   accelerator */
+#define SMECY_start_PEs_dispatch /* Nothing since we inline the main */
+/* On the host, wrap the old main into a new one to start MCAPI before
+   and stop it after */
+int main(int argc, char *argv[]) {
+  SMECY_init_mcapi_node(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE);
+  int error_code = smecy_old_main(argc, argv);
+  /* Release the API use */
+  mcapi_status_t status;
+  mcapi_finalize(&status);
+  SMECY_MCAPI_CHECK_STATUS(status);
+}
+#else
+#define SMECY_start_PEs_dispatch                                        \
+  /* Main function that starts all the MCAPI threads that runs on the
+     accelerator */                                                     \
+  int main() {                                                          \
+    /* Create OpenMP threads to launch all MCAPI nodes instead of running
+       the old main
+    */                                                                  \
+    _Pragma("omp parallel for num_threads(SMECY_CLUSTER_NB)")           \
+    for(int smecy_cluster = 0; smecy_cluster < SMECY_CLUSTER_NB; ++smecy_cluster) { \
+      _Pragma("omp parallel for num_threads(SMECY_PE_NB)")              \
+      for(int smecy_pe = 0; smecy_pe < SMECY_PE_NB; ++smecy_pe)         \
+        SMECY_accel_function_dispatch(smecy_cluster, smecy_pe);         \
+    }                                                                   \
+    return 0;                                                           \
+  }
+#endif
 /* Implementation macros to deal with streaming */
 
 /* Not implemented yet in MCAPI */

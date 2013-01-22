@@ -32,11 +32,11 @@
 #define SMECY_IMP_LAUNCH_WRAPPER(func_call) func_call
 
 // Implementations for the SMECY library
-#define SMECY_IMP_set(func, pe, ...)
+#define SMECY_IMP_set(func, instance, pe, ...) \
+  /* Start of the accelerated part */
 
-
-#define SMECY_IMP_accelerator_end(func, pe, ...)        \
-  /* End of the accelerated part */                     \
+#define SMECY_IMP_accelerator_end(func, instance, pe, ...)      \
+  /* End of the accelerated part */
 
 
 #define SMECY_IMP_send_arg(func, arg, type, value, pe, ...)        \
