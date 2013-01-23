@@ -71,9 +71,14 @@ accel_smecy_%.C: %.C
 	mv rose_$*.C $@
 	# Post process the output:
 	smecc_post_processor $@
-	# Append the automatically generated dispatch system on the PEs to
-	# the post processed version back into the target file:
-	cat $@.smecc_pp $*.C-smecy_dispatch > $@
+	# Append the automatically generated file (if any) with the
+	# dispatch system on the PEs to the post-processed version back
+	# into the target file:
+	if [ -r $*.C-smecy_dispatch ]; then \
+	   cat $@.smecc_pp $*.C-smecy_dispatch > $@ ; \
+	else \
+	   mv $@.smecc_pp $@ ; \
+	fi
 
 accel_smecy_%.c: %.c
 	smecc -smecy -smecy-accel --std=c99 -rose:C99_only \
@@ -82,9 +87,14 @@ accel_smecy_%.c: %.c
 	mv rose_$*.c $@
 	# Post process the output:
 	smecc_post_processor $@
-	# Append the automatically generated dispatch system on the PEs to
-	# the post processed version back into the target file:
-	cat $@.smecc_pp $*.c-smecy_dispatch > $@
+	# Append the automatically generated file (if any) with the
+	# dispatch system on the PEs to the post-processed version back
+	# into the target file:
+	if [ -r $*.c-smecy_dispatch ]; then \
+	   cat $@.smecc_pp $*.c-smecy_dispatch > $@ ; \
+	else \
+	   mv $@.smecc_pp $@ ; \
+	fi
 
 run_%: %
 	./$<
