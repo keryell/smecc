@@ -34,12 +34,6 @@ The organization of the directories:
 - runtime : the function helpers to adapt to the various software and
   hardware targets
 
-- unknown : to be still sorted...
-
-
-Currently there is no outlining of some mapped functions to other files
-since it seems that ROSE Compiler does not support it.
-
 
 OpenMP back-end:
 ================
