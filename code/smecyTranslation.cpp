@@ -1086,6 +1086,33 @@ namespace smecy {
     }
   }
 
+
+  /** \brief Add inside the main() of a project an initializer at the
+      beginning and a finalizer at the end.
+
+      Since the main may end with an exit() or a return anywhere, rely on
+      the cool atexit() function from the stdlib to delegate a function
+      call at the end of the execution in the back-end runtime
+  */
+  void insertInitializerFinalizerInMain(SgProject *p) {
+    auto main_func = SageInterface::findMain(p);
+    if (main_func) {
+      auto body = main_func->get_definition()->get_body();
+      auto scope = SageInterface::getScope(body);
+
+      auto first = SageInterface::getFirstStatement(scope);
+      // Building the function call itself
+      SageInterface::insertStatement
+        (first,
+         SageBuilder::buildFunctionCallStmt("SMECY_initialize_then_finalize",
+                                            SageBuilder::buildVoidType(),
+                                            SageBuilder::buildExprListExp(),
+                                            scope),
+         true /* = before */);
+    }
+  }
+
+
   /* \brief Generate code for the mapping #pragma
    *
    */
@@ -1168,30 +1195,36 @@ namespace smecy {
       // Change the name of main() function so we can generate a new one without
       // any conflict
       SgFunctionDeclaration* main_func = SageInterface::findMain(p);
-      main_func->set_name("smecy_old_main");
-
-      // Now generate a new main that will dispatch the call
-      // to all the accelerated functions.
-      // This is done textually in a file named from the main file
-      // with "-smecy_dispatch" because I'm in a rush
-
-      std::ofstream main_file { SageInterface::getEnclosingFileNode(main_func)->getFileName() + "-smecy_dispatch" };
-      main_file << std::endl << std::endl
-                << "/* The dispatch loop on the accelerator side for one PE */" << std::endl
-                << "SMECY_begin_accel_function_dispatch" << std::endl;
-      for(const auto &f: generated_functions) {
-        main_file << "  SMECY_dispatch_accel_func("
-                  // The function name
-                  << f.first
-                  // and the instance number
-                  << ", " << f.second << ")" << std::endl;
+      // If there is a main() function...
+      if (main_func) {
+        main_func->set_name("smecy_old_main");
+        // Now generate a new main that will dispatch the call
+        // to all the accelerated functions.
+        // This is done textually in a file named from the main file
+        // with "-smecy_dispatch" because I'm in a rush
+        std::ofstream main_file { SageInterface::getEnclosingFileNode(main_func)->getFileName() + "-smecy_dispatch" };
+        main_file << std::endl << std::endl
+                  << "/* The dispatch loop on the accelerator side for one PE */" << std::endl
+                  << "SMECY_begin_accel_function_dispatch" << std::endl;
+        for(const auto &f: generated_functions) {
+          main_file << "  SMECY_dispatch_accel_func("
+            // The function name
+                    << f.first
+            // and the instance number
+                    << ", " << f.second << ")" << std::endl;
+        }
+        main_file << "SMECY_end_accel_function_dispatch" << std::endl
+                  << std::endl
+                  << "/* The hook to start the PEs */" << std::endl
+                  << "SMECY_start_PEs_dispatch" << std::endl;
       }
-      main_file << "SMECY_end_accel_function_dispatch" << std::endl
-                << std::endl
-                << "/* The hook to start the PEs */" << std::endl
-                << "SMECY_start_PEs_dispatch" << std::endl;
     }
+    else
+      /* On the host size, since we keep the original main, inject some
+         code to initialize and finalize the runtime */
+      insertInitializerFinalizerInMain(p);
   }
+
 
 	// If directive has a map clause, translates it in corresponding calls to SMECY API
 	void translateMap(SgStatement* target, Attribute* attribute,
@@ -1399,3 +1432,5 @@ namespace smecy {
   }
 
 } //namespace smecy
+
+//  LocalWords:  exprList
