@@ -5,7 +5,7 @@
 
 /* For the final pause() */
 #include <unistd.h>
-/* For malloc() */
+/* For malloc() and atexit() */
 #include <stdlib.h>
 /* For memcpy() */
 #include <string.h>
@@ -181,6 +181,35 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
   mcapi_domain_t domain = SMECY_MCAPI_HOST_DOMAIN;/*
                                                    */   \
   mcapi_node_t node = SMECY_MCAPI_HOST_NODE
+
+
+static void SMECY_IMP_finalize() {
+  mcapi_status_t status;
+  /* Release the API use */
+  mcapi_finalize(&status);
+  SMECY_MCAPI_CHECK_STATUS(status);
+}
+
+static void SMECY_IMP_initialize_then_finalize() {
+  //mcapi_node_attributes_t node_attributes;
+  mcapi_param_t parameters;
+  mcapi_info_t info;
+  mcapi_status_t status;
+
+  // init node attributes. Not clear in which MCAPI version it is needed...
+  //mcapi_node_init_attributes(&node_attributes, &status);
+  //MCAPI_CHECK_STATUS(status);
+  //mcapi_initialize(SMECY_DOMAIN, PRODUCER_NODE, &node_attributes,
+  //		   &parameters, &info, &status);
+  mcapi_initialize(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE,
+		   &parameters, &info, &status);
+  SMECY_MCAPI_CHECK_STATUS(status);
+
+  /* And the register the finalization for an execution at the end of the
+     program execution */
+  atexit(SMECY_IMP_finalize);
+}
+
 
 #ifdef SMECY_MCAPI_HOST
 /* Open some MCAPI connections with the requested node

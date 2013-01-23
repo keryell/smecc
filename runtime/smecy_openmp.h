@@ -32,6 +32,12 @@
 #define SMECY_IMP_LAUNCH_WRAPPER(func_call) func_call
 
 // Implementations for the SMECY library
+
+#define SMECY_IMP_initialize_then_finalize() \
+  /* No specific initialization or finalization for the OpenMP
+     implementation */
+
+
 #define SMECY_IMP_set(func, instance, pe, ...) \
   /* Start of the accelerated part */
 

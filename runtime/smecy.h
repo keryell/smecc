@@ -134,6 +134,11 @@
 /* According to the targets, the PE coordinates have 0 or more dimension,
    so use __VA_ARGS__ for them at the end of the macros */
 
+#define SMECY_initialize_then_finalize()                              \
+  SMECY_PRINT_VERBOSE("Calling SMECY_initialize_then_finalize()\n")   \
+  SMECY_IMP_initialize_then_finalize()
+
+
 #define SMECY_set(func, instance, pe, ...)                              \
   SMECY_PRINT_VERBOSE("Preparing to launch instance %d of function "    \
                       "\"%s\" on processor \"%s\" n° \"%s\"\n",         \
