@@ -43,6 +43,8 @@ LDLIBS+=$(MCAPI_LINK) $(MRAPI_LINK)
 # host and accelerator sides respectively:
 LOCAL_SMECY=$(addprefix smecy_,$(LOCAL_SRC))
 LOCAL_ACCEL_SMECY=$(addprefix accel_smecy_,$(LOCAL_SRC))
+LOCAL_SMECY_MCAPI=$(patsubst %.c,%_host.c,$(patsubst %.C,%_host.C,$(LOCAL_SMECY)))
+LOCAL_ACCEL_SMECY_MCAPI==$(patsubst %.c,%_fabric.c,$(patsubst %.C,%_fabric.C,$(LOCAL_ACCEL_SMECY)))
 LOCAL_DOT=$(addsuffix .dot,$(LOCAL_SRC))
 LOCAL_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
 
@@ -52,6 +54,8 @@ LOCAL_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
 
 
 LOCAL_SMECY_BIN=$(addprefix smecy_,$(LOCAL_BIN))
+LOCAL_SMECY_MCAPI_BIN=$(addsuffix _host,$(LOCAL_SMECY_BIN))
+LOCAL_ACCEL_SMECY_MCAPI_BIN=$(addprefix accel_,$(addsuffix _fabric,$(LOCAL_SMECY_BIN)))
 
 # Some high-level convenience targets:
 
@@ -64,6 +68,12 @@ raw: $(LOCAL_BIN)
 
 openmp: $(LOCAL_SMECY_BIN)
 
+mcapi_host: $(LOCAL_SMECY_MCAPI_BIN)
+
+mcapi_fabric: $(LOCAL_ACCEL_SMECY_MCAPI_BIN)
+
+mcapi: mcapi_host mcapi_fabric
+
 smecy: $(LOCAL_SMECY)
 
 accel_smecy: $(LOCAL_ACCEL_SMECY)
@@ -72,24 +82,29 @@ bin: raw openmp mcapi
 
 # Use :: so that a user of this Makefile can extend this rule
 clean::
-	rm -f $(LOCAL_SMECY) $(LOCAL_ACCEL_SMECY) $(LOCAL_BIN)		  \
-		$(LOCAL_SMECY_BIN) $(LOCAL_DOT) $(LOCAL_PDF)		  \
-		rose_transformation_* *.o *.E *-smecy_dispatch *.smecc_pp
+	rm -f $(LOCAL_SMECY) $(LOCAL_ACCEL_SMECY) $(LOCAL_SMECY_MCAPI)	\
+	   $(LOCAL_ACCEL_SMECY_MCAPI) $(LOCAL_BIN) $(LOCAL_SMECY_BIN)	\
+	   $(LOCAL_SMECY_MCAPI_BIN) $(LOCAL_ACCEL_SMECY_MCAPI_BIN)	\
+	   $(LOCAL_DOT) $(LOCAL_PDF) rose_transformation_* *.o *.E	\
+	   *-smecy_dispatch *.smecc_pp
 
 
 # Detailed targets
 
-smecy_%.C: %.C
+# Generate the normal and MCAPI _host versions with the same rule
+smecy_%.C smecy_%_host.C: %.C
 	smecc -smecy -rose:skipfinalCompileStep $(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.C $@
 
-smecy_%.c: %.c
+smecy_%.c smecy_%_host.c: %.c
 	smecc -smecy --std=c99 -rose:C99_only \
 		-rose:skipfinalCompileStep -rose:C_output_language \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.c $@
 
-accel_smecy_%.C: %.C
+# Generate the normal and MCAPI _fabric (accelerator) versions with the
+# same rule
+accel_smecy_%.C accel_smecy_%_fabric.C: %.C
 	smecc -smecy -smecy-accel -rose:skipfinalCompileStep \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.C $@
@@ -104,7 +119,7 @@ accel_smecy_%.C: %.C
 	   mv $@.smecc_pp $@ ; \
 	fi
 
-accel_smecy_%.c: %.c
+accel_smecy_%.c accel_smecy_%_fabric.c: %.c
 	smecc -smecy -smecy-accel --std=c99 -rose:C99_only \
 		-rose:skipfinalCompileStep -rose:C_output_language \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
