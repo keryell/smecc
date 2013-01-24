@@ -30,10 +30,10 @@ include $(SMECY_INC)/use.mk
 #SMECY_DEBUG=
 
 multiple_compilation_unit_a: multiple_compilation_unit_b.o
-rose_multiple_compilation_unit_a: rose_multiple_compilation_unit_b.o
+smecy_multiple_compilation_unit_a: smecy_multiple_compilation_unit_b.o
 
 multiple_compilation_unit_a_cpp: multiple_compilation_unit_b_cpp.o
-rose_multiple_compilation_unit_a_cpp: rose_multiple_compilation_unit_b_cpp.o
+smecy_multiple_compilation_unit_a_cpp: smecy_multiple_compilation_unit_b_cpp.o
 
 
 #rose_multiple_compilation_unit_a.c + rose_multiple_compilation_unit_b.c: multiple_compilation_unit_a.c multiple_compilation_unit_b.c multiple_compilation_unit.h
