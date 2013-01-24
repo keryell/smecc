@@ -8,8 +8,9 @@
 
 #ifdef SMECY_VERBOSE
 #include <stdio.h>
+/* Prefix all the debug messages with "SMECY: " to ease filtering */
 #define SMECY_PRINT_VERBOSE_RAW(...)                                    \
-  fprintf(stderr, __VA_ARGS__)
+  fprintf(stderr, "SMECY: " __VA_ARGS__)
 /* With a ; to allow a statement or a declaration afterards
 
    The comment on 2 lines at the end is to force a poor-man formating of
