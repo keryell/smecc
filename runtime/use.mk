@@ -41,19 +41,43 @@ LDLIBS+=$(MCAPI_LINK) $(MRAPI_LINK)
 
 # smecc generate file beginning with "smecy_" and "smecy_accel_" for the
 # host and accelerator sides respectively:
-LOCAL_SMECY=$(addprefix smecy_,$(LOCAL_SRC)) \
-	$(addprefix accel_smecy_,$(LOCAL_SRC))
-LOCAL_SMECY_DOT=$(addsuffix .dot,$(LOCAL_SRC))
-LOCAL_SMECY_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
+LOCAL_SMECY=$(addprefix smecy_,$(LOCAL_SRC))
+LOCAL_ACCEL_SMECY=$(addprefix accel_smecy_,$(LOCAL_SRC))
+LOCAL_DOT=$(addsuffix .dot,$(LOCAL_SRC))
+LOCAL_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
 
 # Remove .c and .C extension to have executable names:
 #LOCAL_ROSE_BIN:=$(LOCAL_ROSE:.c=)
 #LOCAL_ROSE_BIN:=$(LOCAL_ROSE_BIN:.C=)
+
+
 LOCAL_SMECY_BIN=$(addprefix smecy_,$(LOCAL_BIN))
 
-all: $(LOCAL_SMECY)
+# Some high-level convenience targets:
 
-bin: $(LOCAL_BIN) $(LOCAL_SMECY_BIN)
+# By default, display the doc after figuring out where we are:
+THIS_MAKEFILE_DIR:=$(abspath $(shell dirname $(lastword $(MAKEFILE_LIST))))
+readme:
+	cat $(THIS_MAKEFILE_DIR)/README.txt
+
+raw: $(LOCAL_BIN)
+
+openmp: $(LOCAL_SMECY_BIN)
+
+smecy: $(LOCAL_SMECY)
+
+accel_smecy: $(LOCAL_ACCEL_SMECY)
+
+bin: raw openmp mcapi
+
+# Use :: so that a user of this Makefile can extend this rule
+clean::
+	rm -f $(LOCAL_SMECY) $(LOCAL_ACCEL_SMECY) $(LOCAL_BIN)		  \
+		$(LOCAL_SMECY_BIN) $(LOCAL_DOT) $(LOCAL_PDF)		  \
+		rose_transformation_* *.o *.E *-smecy_dispatch *.smecc_pp
+
+
+# Detailed targets
 
 smecy_%.C: %.C
 	smecc -smecy -rose:skipfinalCompileStep $(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
@@ -118,10 +142,3 @@ accel_%: CFLAGS += $(CFLAGS_MCAPI_ACCEL)
 
 %.E: %.x
 	$(CPP) -CC $(CFLAGS) $< > $@
-
-
-# Use :: so that a user of this Makefile can extend this rule
-clean::
-	rm -f $(LOCAL_SMECY) $(LOCAL_BIN) $(LOCAL_SMECY_BIN) \
-		$(LOCAL_SMECY_DOT) $(LOCAL_SMECY_PDF) rose_transformation_* \
-		*.o *.E *-smecy_dispatch *.smecc_pp
