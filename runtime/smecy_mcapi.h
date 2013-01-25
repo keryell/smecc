@@ -526,13 +526,12 @@ static void SMECY_IMP_initialize_then_finalize() {
 
 /* Initialize MCAPI on an accelerator node.
 */
-void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
+static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   mcapi_param_t parameters;
   mcapi_info_t info;
 
   mcapi_status_t status;
-  mcapi_initialize(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE,
-		   &parameters, &info, &status);
+  mcapi_initialize(smecy_cluster, smecy_pe, &parameters, &info, &status);
   SMECY_MCAPI_CHECK_STATUS(status);
 }
 
@@ -540,6 +539,10 @@ void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   /* The dispatch function to be run on a PE
    */                                                                   \
   void SMECY_accel_function_dispatch(int smecy_cluster, int smecy_pe) SMECY_LBRACE \
+    /*
+     Initialize MCAPI
+     */                                                                   \
+    SMECY_init_mcapi_node(smecy_cluster, smecy_pe);                       \
     /* Create the channels to communicate with the host using global
        variables
      */                                                                   \
