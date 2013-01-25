@@ -91,20 +91,29 @@ clean::
 
 # Detailed targets
 
+# Produce a specialized MCAPI expansion for fabric side accel_smecy_... source files:
+accel_%: CFLAGS += $(CFLAGS_MCAPI) $(CFLAGS_MCAPI_ACCEL)
+# Produce a specialized MCAPI expansion for host side smecy_... source files:
+%_host %_host.E: CFLAGS += $(CFLAGS_MCAPI)
+
 # Generate the normal and MCAPI _host versions with the same rule
-smecy_%.C smecy_%_host.C: %.C
+smecy_%.C: %.C
 	smecc -smecy -rose:skipfinalCompileStep $(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.C $@
 
-smecy_%.c smecy_%_host.c: %.c
+smecy_%.c: %.c
 	smecc -smecy --std=c99 -rose:C99_only \
 		-rose:skipfinalCompileStep -rose:C_output_language \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.c $@
 
+smecy_%_host.c: smecy_%.c
+	# They are the same file indeed
+	cp -a $< $@
+
 # Generate the normal and MCAPI _fabric (accelerator) versions with the
 # same rule
-accel_smecy_%.C accel_smecy_%_fabric.C: %.C
+accel_smecy_%.C: %.C
 	smecc -smecy -smecy-accel -rose:skipfinalCompileStep \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
 	mv rose_$*.C $@
@@ -119,7 +128,15 @@ accel_smecy_%.C accel_smecy_%_fabric.C: %.C
 	   mv $@.smecc_pp $@ ; \
 	fi
 
-accel_smecy_%.c accel_smecy_%_fabric.c: %.c
+smecy_%_host.C: smecy_%.C
+	# They are the same file indeed
+	cp -a $< $@
+
+accel_smecy_%_fabric.C: accel_smecy_%.C
+	# They are the same file indeed
+	cp -a $< $@
+
+accel_smecy_%.c: %.c
 	smecc -smecy -smecy-accel --std=c99 -rose:C99_only \
 		-rose:skipfinalCompileStep -rose:C_output_language \
 		$(ROSE_FLAGS) $(SMECY_FLAGS) $(MORE_FLAGS) $<
@@ -135,20 +152,12 @@ accel_smecy_%.c accel_smecy_%_fabric.c: %.c
 	   mv $@.smecc_pp $@ ; \
 	fi
 
+accel_smecy_%_fabric.c: accel_smecy_%.c
+	# They are the same file indeed
+	cp -a $< $@
+
 run_%: %
 	./$<
-
-# Produce a specialized MCAPI expansion for host side smecy_... source files:
-%_host.E: %.[cC]
-	# Keep comments in the output
-	$(CPP) -CC $(CFLAGS) $(CFLAGS_MCAPI) $< > $@
-
-# Produce a specialized MCAPI expansion for fabric side accel_smecy_... source files:
-%_fabric.E: %.[cC]
-	# Keep comments in the output
-	$(CPP) -CC $(CFLAGS) $(CFLAGS_MCAPI_ACCEL) $< > $@
-
-accel_%: CFLAGS += $(CFLAGS_MCAPI_ACCEL)
 
 # Produce a CPP output to help debugging
 %.E: %.[cC]
