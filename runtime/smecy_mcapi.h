@@ -246,7 +246,7 @@ static void SMECY_IMP_initialize_then_finalize() {
                                                                          */ \
   }                                                                     \
   /* Send the function name to run to the remode dispatcher,
-     including the final '\0' */
+     including the final '\0' */                                        \
   size_t length = strlen(#func) + 1;                                    \
   mcapi_pktchan_send(P4A_transmit,                                      \
                      #func,                                             \
@@ -254,7 +254,7 @@ static void SMECY_IMP_initialize_then_finalize() {
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);
+  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                         \
   /* The size of some received data
    */                                                                   \
   size_t P4A_received_size
