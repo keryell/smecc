@@ -92,7 +92,7 @@ clean::
 # Detailed targets
 
 # Produce a specialized MCAPI expansion for fabric side accel_smecy_... source files:
-accel_%: CFLAGS += $(CFLAGS_MCAPI) $(CFLAGS_MCAPI_ACCEL)
+accel_%: CFLAGS += $(CFLAGS_MCAPI_ACCEL)
 # Produce a specialized MCAPI expansion for host side smecy_... source files:
 %_host %_host.E: CFLAGS += $(CFLAGS_MCAPI)
 
