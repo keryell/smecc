@@ -616,19 +616,10 @@ void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   }
 
 #ifdef SMECY_MCAPI_HOST
-/* Main function that start all the MCAPI threads that runs on the
-   accelerator */
-#define SMECY_start_PEs_dispatch /* Nothing since we inline the main */
-/* On the host, wrap the old main into a new one to start MCAPI before
-   and stop it after */
-int main(int argc, char *argv[]) {
-  SMECY_init_mcapi_node(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE);
-  int error_code = smecy_old_main(argc, argv);
-  /* Release the API use */
-  mcapi_status_t status;
-  mcapi_finalize(&status);
-  SMECY_MCAPI_CHECK_STATUS(status);
-}
+/* Nothing to do here since smecc should have injected at the begining of
+   the main() function a call to SMECY_initialize_then_finalize that
+   initialize MCAPI on the host at the begining and finilize MCAPI at the
+   end of the program. */
 #else
 #define SMECY_start_PEs_dispatch                                        \
   /* Main function that starts all the MCAPI threads that runs on the
