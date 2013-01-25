@@ -15,7 +15,7 @@
 # To put more flags, use make MORE_FLAGS=...
 
 # To skip debug, use "make SMECY_DEBUG="
-SMECY_DEBUG=-DSMECY_VERBOSE
+SMECY_DEBUG=-DSMECY_VERBOSE -DSMECY_MCAPI_CHECK_TRACE
 
 # By default use MCA API reference implementation
 MCA_INCLUDE?=`mcapi-config --cflags`

@@ -11,6 +11,8 @@
 #include <string.h>
 /* For... assert() :-) */
 #include <assert.h>
+/* Needed to display verbose MCAPI error messages: */
+#include <stdarg.h>
 
 /* To use MCAPI from the MultiCore Association */
 #include<mcapi.h>
@@ -52,9 +54,26 @@ enum {
 void static SMECY_MCAPI_check_status(mcapi_status_t status,
                                      char file[],
                                      const char function[],
-                                     int line) {
+                                     int line,
+                                     const char *format,
+                                     ...) {
+#ifndef SMECY_MCAPI_CHECK_TRACE
   if (status != MCAPI_SUCCESS) {
     /* Something went wrong */
+#endif
+  /* If SMECY_MCAPI_CHECK_TRACE is set for asking trace mode, display
+     verbose status message even without any error */
+  if (format[0] != '\0') {
+    /* We have a message to display */
+    va_list ap;
+    va_start(ap, format);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+  }
+#ifdef SMECY_MCAPI_CHECK_TRACE
+  if (status != MCAPI_SUCCESS) {
+    /* Something went wrong */
+#endif
 #ifdef SMECY_VERBOSE
     /* Use a function from Linux MCAPI implementation to get a string
        translation of the status: */
@@ -74,9 +93,11 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
 
 /* The wrapping macro for MCAPI_check_status to capture the call site
    information */
-#define SMECY_MCAPI_CHECK_STATUS(status)                          \
-  SMECY_MCAPI_check_status(status, __FILE__, __func__, __LINE__)
+#define SMECY_MCAPI_CHECK_STATUS(status)                                \
+  SMECY_MCAPI_check_status(status, __FILE__, __func__, __LINE__, "")
 
+#define SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, ...)                   \
+  SMECY_MCAPI_check_status(status, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 
 
@@ -111,7 +132,9 @@ SMECY_MCAPI_receive_gate_create(mcapi_port_t receive_port) {
   /* Create the local endpoint for reception */
   mcapi_endpoint_t pkt_receive = mcapi_endpoint_create(receive_port,
 						       &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initialization of pkt_receive"
+                                   " with receive_port %#x\n",
+                                   (intptr_t)receive_port);
 
   mcapi_pktchan_recv_hndl_t receive_gate;
   mcapi_request_t handle;
@@ -187,7 +210,7 @@ static void SMECY_IMP_finalize() {
   mcapi_status_t status;
   /* Release the API use */
   mcapi_finalize(&status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Finalizing MCAPI\n");
 }
 
 static void SMECY_IMP_initialize_then_finalize() {
@@ -203,8 +226,10 @@ static void SMECY_IMP_initialize_then_finalize() {
   //		   &parameters, &info, &status);
   mcapi_initialize(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE,
 		   &parameters, &info, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
-
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initializing MCAPI on domain"
+                                   " %#x and node %#x\n",
+                                   (intptr_t) SMECY_MCAPI_HOST_DOMAIN,
+                                   (intptr_t) SMECY_MCAPI_HOST_NODE);
   /* And the register the finalization for an execution at the end of the
      program execution */
   atexit(SMECY_IMP_finalize);
@@ -532,7 +557,9 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
 
   mcapi_status_t status;
   mcapi_initialize(smecy_cluster, smecy_pe, &parameters, &info, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initialization of smecy_cluster"
+                                   " %d, smecy_pe %d\n",
+                                   smecy_cluster, smecy_pe);
 }
 
 #define SMECY_begin_accel_function_dispatch                             \
@@ -547,7 +574,7 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
        variables
      */                                                                   \
     mcapi_pktchan_send_hndl_t P4A_receive =                               \
-      SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PE_RX_PORT); /*         \
+      SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PE_RX_PORT); /*
                                                                 */        \
     mcapi_pktchan_send_hndl_t P4A_transmit =                              \
       SMECY_MCAPI_send_gate_create(SMECY_MCAPI_PE_TX_PORT,                \
