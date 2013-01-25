@@ -11,18 +11,21 @@ SMECY_INC=../runtime
 
 # All the sources to compile:
 # Skip map-tab_cpp.C.bug
-LOCAL_SRC= hello_world.c input.c input_cpp.C map-tab.c \
+LOCAL_SRC= hello_world.c input.c map-tab.c \
 	multiple_compilation_unit_a.c multiple_compilation_unit_b.c \
-	multiple_compilation_unit_a_cpp.C multiple_compilation_unit_b_cpp.C \
-	simple_map.c simple_map_cpp.C
+	simple_map.c
+# There is a link issue in the Makefile that use the C linker instead of C++:
+# input_cpp.C simple_map_cpp.C
+# multiple_compilation_unit_a_cpp.C multiple_compilation_unit_b_cpp.C
+
 
 ## Remove .c and .C extension to have executable names:
 #LOCAL_BIN:=$(LOCAL_SRC:.c=)
 #LOCAL_BIN:=$(LOCAL_BIN:.C=)
-LOCAL_BIN= hello_world input input_cpp map-tab \
+LOCAL_BIN= hello_world input map-tab \
 	multiple_compilation_unit_a \
-	multiple_compilation_unit_a_cpp \
-	simple_map simple_map_cpp
+	simple_map
+# input_cpp simple_map_cpp multiple_compilation_unit_a_cpp
 
 include $(SMECY_INC)/use.mk
 
