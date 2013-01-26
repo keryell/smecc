@@ -16,6 +16,9 @@
 
 # To skip debug, use "make SMECY_DEBUG="
 SMECY_DEBUG=-DSMECY_VERBOSE -DSMECY_MCAPI_CHECK_TRACE
+# You can add for internal MCAPI tracing
+# -DSMECY_MCA_API_DEBUG_LEVEL=1
+# up to 7
 
 # By default use MCA API reference implementation
 MCA_INCLUDE?=`mcapi-config --cflags`

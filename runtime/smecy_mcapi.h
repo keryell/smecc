@@ -224,6 +224,10 @@ static void SMECY_IMP_initialize_then_finalize() {
   //MCAPI_CHECK_STATUS(status);
   //mcapi_initialize(SMECY_DOMAIN, PRODUCER_NODE, &node_attributes,
   //		   &parameters, &info, &status);
+#ifdef SMECY_MCA_API_DEBUG_LEVEL
+  /* Set the requested debug level of the MCA API itself */
+  mcapi_set_debug_level(SMECY_MCA_API_DEBUG_LEVEL);
+#endif
   mcapi_initialize(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE,
 		   &parameters, &info, &status);
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initializing MCAPI on domain"
@@ -556,10 +560,20 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   mcapi_info_t info;
 
   mcapi_status_t status;
-  mcapi_initialize(smecy_cluster, smecy_pe, &parameters, &info, &status);
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initialization of smecy_cluster"
-                                   " %d, smecy_pe %d\n",
-                                   smecy_cluster, smecy_pe);
+#ifdef SMECY_MCA_API_DEBUG_LEVEL
+  /* Set the requested debug level of the MCA API itself */
+  mcapi_set_debug_level(SMECY_MCA_API_DEBUG_LEVEL);
+#endif
+  /* The MCA API may not be thread-safe, so try to sequentialize the
+     initialization a least */
+  _Pragma("omp critical(MCA_API)")
+    {
+      mcapi_initialize(smecy_cluster, smecy_pe, &parameters, &info, &status);
+      SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initialization of smecy_cluster"
+                                       " %d, smecy_pe %d\n",
+                                       smecy_cluster, smecy_pe);
+    }
+    //_Pragma("omp barrier")
 }
 
 #define SMECY_begin_accel_function_dispatch                             \
