@@ -72,12 +72,26 @@ smecy/runtime/tests
 Linux reference implementation of the MCA API:
 ----------------------------------------------
 
-* Compiling the Linux implementation of the MCA API:
+* Compiling and installing the Linux implementation of the MCA API:
 
-MCAPI_MRAPI_2.0.1_example/mca-2.0.1
-To compile on Debian/unstable 64 bit x86, gcc version 4.7.1 (Debian 4.7.1-5):
+Get the MCAPI_MRAPI_2.0.1_example/mca-2.0.1 from http://www.multicore-association.org/request_mcapi.php?what=MCAPI
 
-./configure --prefix=/usr/local/mca-api --enable-debug
+To compile on Debian/unstable 64 bit x86, gcc version 4.7.2 (Debian 4.7.2-5):
+
+Compared to the original source distribution, increase some hard-coded
+limitations in mca-2.0.1/mrapi/src/mrapi_impl/mrapi_impl_spec.h:
+#define MRAPI_MAX_SEMS 200
+#define MRAPI_MAX_SHMEMS 200
+#define MRAPI_MAX_RMEMS 200
+#define MRAPI_MAX_LOCKS 200
+#define MRAPI_MAX_SHARED_LOCKS 320
+
+
+./configure --prefix=/usr/local/mca-api --enable-debug --with-max_domains=6 --with-max_nodes=32
+
+(There are many other default parameters to tweak according to the
+application to run. Look by running ./configure --help)
+
 make CFLAGS="-ggdb -Wall"
 
 This CFLAGS is used to remove -Werror to avoid this compilation error:
@@ -86,6 +100,8 @@ libtool: compile:  gcc -DHAVE_CONFIG_H -I. -I. -I../../../.. -I ../../../.. -I..
 ../../mrapi.c:3166:19: error: variable ‘get_success’ set but not used [-Werror=unused-but-set-variable]
 
 The --enable-debug is to be able to play with mcapi_set_debug_level()
+
+make install
 
 
 * Using the Linux implementation of the MCA API:
