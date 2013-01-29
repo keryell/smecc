@@ -638,6 +638,11 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   SMECY_RBRACE
 
 
+/* The parameter given to the accelerator function */
+#define SMECY_accel_func_args                           \
+           mcapi_pktchan_send_hndl_t P4A_transmit,      \
+           mcapi_pktchan_recv_hndl_t P4A_receive
+
 #define SMECY_dispatch_accel_func(function, instance)                   \
   /* If we receive a message to activate this function
      launch it!
@@ -653,7 +658,7 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
     SMECY_PRINT_VERBOSE("PE %d %d is executing instance " #instance     \
                         " of function \"" #function "\"\n",             \
                         smecy_cluster, smecy_pe)                        \
-    smecy_accel_##function##_##instance(P4A_transmit, P4A_receive);     \
+    smecy_func_##function##_##instance(P4A_transmit, P4A_receive);      \
     /* Wait for next job to do
      */                                                                 \
     break;                                                              \
