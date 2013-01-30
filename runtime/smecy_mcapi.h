@@ -34,7 +34,8 @@ void mcapi_display_state (void* handle) {
 
 enum {
   /* The STHORM geometry */
-  SMECY_CLUSTER_NB = 4,
+  //SMECY_CLUSTER_NB = 4,
+  SMECY_CLUSTER_NB = 1,
   SMECY_PE_NB = 32,
   /* The localization of the host inside the MCAPI realm */
   SMECY_MCAPI_HOST_DOMAIN = 5,
@@ -132,19 +133,25 @@ SMECY_MCAPI_receive_gate_create(mcapi_port_t receive_port) {
   /* Create the local endpoint for reception */
   mcapi_endpoint_t pkt_receive = mcapi_endpoint_create(receive_port,
 						       &status);
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initialization of pkt_receive"
-                                   " with receive_port %#x\n",
-                                   (intptr_t)receive_port);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_create"
+                                   " with receive_port %#x returns "
+                                   " pkt_receive %#x\n",
+                                   (intptr_t)receive_port,
+                                   pkt_receive);
 
   mcapi_pktchan_recv_hndl_t receive_gate;
   mcapi_request_t handle;
   /* Let the sender do the connection and open for receive */
   mcapi_pktchan_recv_open_i(&receive_gate, pkt_receive, &handle, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_recv_open_i "
+                                   "on receive port %#x on gate %p and "
+                                   "handle %p\n", pkt_receive, &receive_gate,
+                                   &handle);
   size_t size;
   /* Wait for the completion of opening */
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %p "
+                                   "returned size %#x\n", &handle, size);
   return receive_gate;
 }
 
@@ -157,7 +164,9 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
   mcapi_status_t status;
   /* Create the local port to send the data */
   mcapi_endpoint_t pkt_send = mcapi_endpoint_create(send_port, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_create "
+                                   "on send port %#x returns pkt_send %p\n",
+                                   send_port, pkt_send);
 
   /* Get the remote end point. Wait if it is not created at the receive
      side */
@@ -165,24 +174,36 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
 						    receive_node,
 						    receive_port,
 						    MCA_INFINITE, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_get "
+                                   "on receive domain %#x, node %#x and "
+                                   "port %#x returns pkt_receive %#x\n",
+                                   receive_domain, receive_node,
+                                   receive_port, pkt_receive);
 
   mcapi_request_t handle;
   /* Start a connection request... */
   mcapi_pktchan_connect_i(pkt_send, pkt_receive, &handle, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_connect_i "
+                                   "on send endpoint %#x from receive "
+                                   "endpoint %#x with handle %#x\n",
+                                   pkt_send, pkt_receive, handle);
   /* ...and wait for its completion */
   size_t size;
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %#x "
+                                   "returned size %#x\n", handle, size);
 
   mcapi_pktchan_send_hndl_t send_gate;
   /* Open this side of the channel for sending... */
   mcapi_pktchan_send_open_i(&send_gate, pkt_send, &handle, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_send_open_i "
+                                   "send gate %p, send endpoint %#x "
+                                   "with handle %#x\n",
+                                   &send_gate, pkt_send, handle);
   /* And wait for the opening */
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
-  SMECY_MCAPI_CHECK_STATUS(status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %#x "
+                                   "returned size %#x\n", handle, size);
   return send_gate;
 }
 
@@ -283,7 +304,9 @@ static void SMECY_IMP_initialize_then_finalize() {
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                         \
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
+                                   "to send gate %#x '%s' of length %#x\n", \
+                                   P4A_transmit, #func, length);        \
   /* The size of some received data
    */                                                                   \
   size_t P4A_received_size
@@ -324,13 +347,15 @@ static void SMECY_IMP_initialize_then_finalize() {
   type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = value;           \
   /* Send the scalar data to the PE
    */                                                                   \
-  mcapi_pktchan_send(P4A_transmit,                                        \
+  mcapi_pktchan_send(P4A_transmit,                                      \
                      &SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__),    \
                      sizeof(type),                                      \
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
+                                   "to send gate %#x %p of length %#x\n", \
+                                   P4A_transmit, &SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__), sizeof(type));
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_send_arg(func, arg, type, value, pe, ...)             \
@@ -344,7 +369,11 @@ static void SMECY_IMP_initialize_then_finalize() {
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                        \
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_recv " \
+                                   "from receive gate %#x %p of length %#x\n", \
+                                   P4A_receive,                         \
+                                   (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
+                                   P4A_received_size);                  \
   /* Store the value in the argument to be given to the function
      call */                                                            \
   type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) =                  \
@@ -364,7 +393,9 @@ static void SMECY_IMP_initialize_then_finalize() {
                         &SMECY_MCAPI_status);                           \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status,                  \
+                                   "mcapi_pktchan_release %p\n",        \
+                                   SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__))
 #endif
 
 
@@ -375,7 +406,9 @@ static void SMECY_IMP_initialize_then_finalize() {
   mcapi_pktchan_send(P4A_transmit, addr, size, &SMECY_MCAPI_status);    \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
+                                   "to send gate %#x %p of length %#x\n", \
+                                   P4A_transmit, addr, size);
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
@@ -390,7 +423,11 @@ static void SMECY_IMP_initialize_then_finalize() {
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                         \
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_recv " \
+                                   "from receive gate %#x %p of length %#x\n", \
+                                   P4A_receive,                         \
+                                   (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
+                                   P4A_received_size);                  \
   /* Store the address if the vector into the argument to be given
      to the function call */                                            \
   type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) =                 \
@@ -410,7 +447,9 @@ static void SMECY_IMP_initialize_then_finalize() {
                         &SMECY_MCAPI_status);                           \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status,                  \
+                                   "mcapi_pktchan_release %p\n",        \
+                                   SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__))
 #endif
 
 
@@ -456,7 +495,11 @@ static void SMECY_IMP_initialize_then_finalize() {
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                         \
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_recv " \
+                                   "from receive gate %#x %p of length %#x\n", \
+                                   P4A_receive,                         \
+                                   (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
+                                   P4A_received_size);                  \
   /* Store the received vector into the destination vector
    */                                                                   \
   memcpy(addr,                                                          \
@@ -468,7 +511,9 @@ static void SMECY_IMP_initialize_then_finalize() {
                         &SMECY_MCAPI_status);                           \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status,                  \
+                                   "mcapi_pktchan_release %p\n",        \
+                                   SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__))
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...)  \
@@ -480,7 +525,11 @@ static void SMECY_IMP_initialize_then_finalize() {
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status)
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
+                                   "to send gate %#x %p of length %#x\n", \
+                                   P4A_transmit,                        \
+                                   SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__), \
+                                   size*sizeof(type));
 #endif
 
 
@@ -606,12 +655,17 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
       size_t P4A_received_size;                                           \
       mcapi_status_t SMECY_MCAPI_status;                                  \
       mcapi_pktchan_recv(P4A_receive,                                     \
-                        (void **)&function_name,                          \
-                        &P4A_received_size,                               \
-                        &SMECY_MCAPI_status);                             \
+                         (void **)&function_name,                         \
+                         &P4A_received_size,                              \
+                         &SMECY_MCAPI_status);                            \
       /* Check the correct execution
        */                                                                 \
-      SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                       \
+      SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status,                \
+                                       "mcapi_pktchan_recv from receive " \
+                                       "gate %#x '%s' of length %#x\n",   \
+                                       P4A_receive,                       \
+                                       function_name,                     \
+                                       P4A_received_size);                \
       do SMECY_LBRACE                                                     \
         /* Find the right function to run
          */
@@ -628,6 +682,9 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
                             &SMECY_MCAPI_status);                       \
       /* Check the correct execution                                    \
        */                                                               \
+      SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status,              \
+                                       "mcapi_pktchan_release %p\n",    \
+                                       function_name);                  \
       SMECY_MCAPI_CHECK_STATUS(SMECY_MCAPI_status);                     \
       /* End of the PE accelerator polling loop.                        \
        */                                                               \
