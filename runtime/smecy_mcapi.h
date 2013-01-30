@@ -14,6 +14,11 @@
 /* Needed to display verbose MCAPI error messages: */
 #include <stdarg.h>
 
+#ifdef SMECY_MCAPI_HOST
+/* For SMECY_MCAPI_connection */
+#include <stdbool.h>
+#endif
+
 /* To use MCAPI from the MultiCore Association */
 #include<mcapi.h>
 #include<mca.h>
@@ -226,6 +231,21 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
                                                    */   \
   mcapi_node_t node = SMECY_MCAPI_HOST_NODE
 
+#ifdef SMECY_MCAPI_HOST
+/* Scoreboard used to keep the status of a connection between the host
+   and each PE.
+
+   Since it is a global array, it is default-initialized to 0, which is good.
+
+   TODO: use a bitmask instead of a char array to save memory. But more
+   complex to insure atomicity at the bit level...
+*/
+struct {
+    bool opened;
+    mcapi_pktchan_send_hndl_t transmit;
+    mcapi_pktchan_recv_hndl_t receive;
+  } SMECY_MCAPI_connection[SMECY_CLUSTER_NB][SMECY_PE_NB];
+#endif
 
 static void SMECY_IMP_finalize() {
   mcapi_status_t status;
@@ -264,8 +284,8 @@ static void SMECY_IMP_initialize_then_finalize() {
 #ifdef SMECY_MCAPI_HOST
 /* Open some MCAPI connections with the requested node
 
-   The current implementation does not work if called many times with
-   different PE because it caches the connection.
+   Only create a connection once by using a scoreboard to keep connection
+   status to each PE.
  */
 #define SMECY_IMP_set(func, instance, pe, ...)                          \
   SMECY_LBRACE /* To have local variable
@@ -275,15 +295,18 @@ static void SMECY_IMP_initialize_then_finalize() {
   SMECY_MCAPI_PARSE_PE(pe, __VA_ARGS__);                                \
   /* The handle to sending packets
    */                                                                   \
-  static mcapi_pktchan_send_hndl_t P4A_transmit = -1;                   \
+  mcapi_pktchan_send_hndl_t P4A_transmit;                               \
   /* The handle to receiving packets
    */                                                                   \
-  static mcapi_pktchan_recv_hndl_t P4A_receive = -1;                    \
-  /* Since the host part may be used in a loop, only set-up the         \
-     connection once by testing this flag */                            \
-  static char already_initialized = 0; /*
-                                        */                              \
-  if (!already_initialized) { /*
+  mcapi_pktchan_recv_hndl_t P4A_receive;                                \
+  fprintf(stderr, "Cluster = %d, Node = %d\n", domain, node);           \
+  if (SMECY_MCAPI_connection[domain][node].opened) {                    \
+    P4A_transmit = SMECY_MCAPI_connection[domain][node].transmit;       \
+    P4A_receive = SMECY_MCAPI_connection[domain][node].receive;         \
+  }                                                                     \
+  else {                                                                \
+  /* This is not already opened, create the connections.
+
                                 Do it in this order compared with the PE
                                 to avoid dead-locks on opening: first open
                                 a connection to send data to the PE */  \
@@ -294,6 +317,7 @@ static void SMECY_IMP_initialize_then_finalize() {
                   Then open a connection to receive data from the PE */ \
     P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_HOST_RX_PORT);/*
                                                                          */ \
+    SMECY_MCAPI_connection[domain][node].opened = true;                 \
   }                                                                     \
   /* Send the function name to run to the remode dispatcher,
      including the final '\0' */                                        \
