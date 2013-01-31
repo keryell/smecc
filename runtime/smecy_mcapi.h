@@ -280,7 +280,6 @@ static void SMECY_IMP_initialize_then_finalize() {
   atexit(SMECY_IMP_finalize);
 }
 
-
 #ifdef SMECY_MCAPI_HOST
 /* Open some MCAPI connections with the requested node
 
@@ -299,25 +298,29 @@ static void SMECY_IMP_initialize_then_finalize() {
   /* The handle to receiving packets
    */                                                                   \
   mcapi_pktchan_recv_hndl_t P4A_receive;                                \
-  fprintf(stderr, "Cluster = %d, Node = %d\n", domain, node);           \
-  if (SMECY_MCAPI_connection[domain][node].opened) {                    \
+  /* To be thread safe on the caching system
+   */                                                                   \
+  _Pragma("omp critical(SMECY_IMP_set)")                                \
+  {                                                                     \
+    fprintf(stderr, "Cluster = %d, Node = %d\n", domain, node);         \
+    if (SMECY_MCAPI_connection[domain][node].opened) {                  \
     P4A_transmit = SMECY_MCAPI_connection[domain][node].transmit;       \
     P4A_receive = SMECY_MCAPI_connection[domain][node].receive;         \
-  }                                                                     \
-  else {                                                                \
-  /* This is not already opened, create the connections.
+    }                                                                   \
+    else {                                                              \
+      /* This is not already opened, create the connections.
 
                                 Do it in this order compared with the PE
                                 to avoid dead-locks on opening: first open
                                 a connection to send data to the PE */  \
-    P4A_transmit = SMECY_MCAPI_send_gate_create(SMECY_MCAPI_HOST_TX_PORT, \
-                                                domain,                 \
-                                                node,                   \
-                                                SMECY_MCAPI_PE_RX_PORT); /*
+      P4A_transmit = SMECY_MCAPI_send_gate_create(SMECY_MCAPI_HOST_TX_PORT, \
+                                                  domain,               \
+                                                  node,                 \
+                                                  SMECY_MCAPI_PE_RX_PORT); /*
                   Then open a connection to receive data from the PE */ \
-    P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_HOST_RX_PORT);/*
+      P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_HOST_RX_PORT);/*
                                                                          */ \
-    SMECY_MCAPI_connection[domain][node].opened = true;                 \
+      SMECY_MCAPI_connection[domain][node].opened = true;               \
   }                                                                     \
   /* Send the function name to run to the remode dispatcher,
      including the final '\0' */                                        \
