@@ -36,7 +36,12 @@ void mcapi_display_state (void* handle) {
 
 */
 
+/* Compute the port used used on the host side to communicate for RX or TX
+   on MCAPI domain node*/
+#define SMECY_MCAPI_PORT(TX_or_RX,domain,node) \
+  (SMECY_MCAPI_HOST_##TX_or_RX##_STARTING_PORT + SMECY_PE_NB*domain + node)
 
+/* Machine description */
 enum {
   /* The STHORM geometry */
   //SMECY_CLUSTER_NB = 4,
@@ -45,14 +50,16 @@ enum {
   /* The localization of the host inside the MCAPI realm */
   SMECY_MCAPI_HOST_DOMAIN = 5,
   SMECY_MCAPI_HOST_NODE = 0,
-  /* The port numbers to connect the host and the PE */
-  SMECY_MCAPI_PE_TX_PORT = 3,
-  SMECY_MCAPI_PE_RX_PORT = 4,
+  /* The port numbers to connect a PE to a host. Since a PE is only
+     connected to the host, only to endpoints and thus ports are needed */
+  SMECY_MCAPI_PE_TX_PORT = 1,
+  SMECY_MCAPI_PE_RX_PORT = 2,
   /* Since MCAPI does not allow multiple connections on a same port, use
      on the host a different port to connect to each PE */
-  SMECY_MCAPI_HOST_TX_STARTING_PORT = 1,
-  SMECY_MCAPI_HOST_RX_STARTING_PORT = SMECY_MCAPI_HOST_TX_STARTING_PORT
-    + SMECY_CLUSTER_NB*SMECY_PE_NB,
+  SMECY_MCAPI_HOST_TX_STARTING_PORT = 0x1000,
+  /* Allocate the reception ports just after the transmission ones */
+  SMECY_MCAPI_HOST_RX_STARTING_PORT =
+    SMECY_MCAPI_PORT(TX,SMECY_CLUSTER_NB,SMECY_PE_NB),
 };
 
 
@@ -148,56 +155,52 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
 
 /* Create a packet channel for reception listening on receive_port */
 mcapi_pktchan_recv_hndl_t static
-SMECY_MCAPI_receive_gate_create(mcapi_port_t receive_port) {
+SMECY_MCAPI_receive_gate_create(mcapi_port_t receive_port,
+                                mcapi_domain_t send_domain,
+                                mcapi_node_t send_node,
+                                mcapi_port_t send_port) {
   mcapi_status_t status;
   /* Create the local endpoint for reception */
+  mcapi_endpoint_t pkt_receive = mcapi_endpoint_create(receive_port, &status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_create"
+                                   " with receive_port %#x returns "
+                                   " pkt_receive %#x\n",
+                                   (intptr_t)receive_port,
+                                   pkt_receive);
+  mcapi_request_t handle;
+
 #ifdef SMECY_MCAPI_HOST
-  /* On the host the receive port is unique, so use a simplistic cache
-     structure */
-  static bool endpoint_created = false;
-  static mcapi_endpoint_t pkt_receive;
-  static mcapi_port_t previous_receive_port = MCAPI_NULL;
-  if (endpoint_created) {
-    /* The pkt_receive has already been initialized, but double-check the
-       hypothesis, that is the receive_port is invariant */
-    SMECY_PRINT_VERBOSE("SMECY_MCAPI_receive_gate_create: cache hit on "
-                        "host receive endpoint creation with receive_port "
-                        "%#x returns pkt_receive %#x\n",
-                        (intptr_t)receive_port,
-                        pkt_receive);
-    assert(receive_port == previous_receive_port);
-  }
-  else {
-#else
-    mcapi_endpoint_t
-#endif
-    /* Create the endpoint */
-    pkt_receive = mcapi_endpoint_create(receive_port, &status);
-    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_create"
-                                     " with receive_port %#x returns "
-                                     " pkt_receive %#x\n",
-                                     (intptr_t)receive_port,
-                                     pkt_receive);
-#ifdef SMECY_MCAPI_HOST
-    previous_receive_port = pkt_receive;
-  }
+  /* Choose to do the connection request on the host size to spare
+     resources on the accelerator side */
+
+  /* Get the remote end point. Wait if it is not created at the receive
+     side */
+  mcapi_endpoint_t pkt_send = mcapi_endpoint_get(send_domain,
+                                                 send_node,
+                                                 send_port,
+                                                 MCA_INFINITE, &status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_get "
+                                   "on send domain %#x, node %#x and "
+                                   "port %#x returns pkt_send %#x\n",
+                                   send_domain, send_node,
+                                   send_port, pkt_send);
 #endif
 
   mcapi_pktchan_recv_hndl_t receive_gate;
-  mcapi_request_t handle;
-  /* Let the sender do the connection and open for receive */
+  /* Start a connection request... */
   mcapi_pktchan_recv_open_i(&receive_gate, pkt_receive, &handle, &status);
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_recv_open_i "
                                    "on receive port %#x on gate %p and "
                                    "handle %p\n", pkt_receive, &receive_gate,
                                    &handle);
+  /* ...and wait for its completion */
   size_t size;
-  /* Wait for the completion of opening */
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %p "
                                    "returned size %#x\n", &handle, size);
   return receive_gate;
 }
+
 
 /* Create a packet channel for transmission */
 mcapi_pktchan_send_hndl_t static
@@ -211,6 +214,12 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_create "
                                    "on send port %#x returns pkt_send %p\n",
                                    send_port, pkt_send);
+  mcapi_request_t handle;
+  size_t size;
+
+#ifdef SMECY_MCAPI_HOST
+  /* Choose to do the connection request on the host size to spare
+     resources on the accelerator side */
 
   /* Get the remote end point. Wait if it is not created at the receive
      side */
@@ -224,7 +233,6 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
                                    receive_domain, receive_node,
                                    receive_port, pkt_receive);
 
-  mcapi_request_t handle;
   /* Start a connection request... */
   mcapi_pktchan_connect_i(pkt_send, pkt_receive, &handle, &status);
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_connect_i "
@@ -232,10 +240,10 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
                                    "endpoint %#x with handle %#x\n",
                                    pkt_send, pkt_receive, handle);
   /* ...and wait for its completion */
-  size_t size;
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %#x "
                                    "returned size %#x\n", handle, size);
+#endif
 
   mcapi_pktchan_send_hndl_t send_gate;
   /* Open this side of the channel for sending... */
@@ -250,6 +258,7 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
                                    "returned size %#x\n", handle, size);
   return send_gate;
 }
+
 
 /* Analyze the PE type and coordinates by redirect to the function that
    knows about the "pe" accelerator */
@@ -324,6 +333,8 @@ static void SMECY_IMP_initialize_then_finalize() {
 
    Only create a connection once by using a scoreboard to keep connection
    status to each PE.
+
+   TODO: split this macro with sub-functions
  */
 #define SMECY_IMP_set(func, instance, pe, ...)                          \
   SMECY_LBRACE /* To have local variable
@@ -337,14 +348,23 @@ static void SMECY_IMP_initialize_then_finalize() {
   /* The handle to receiving packets
    */                                                                   \
   mcapi_pktchan_recv_hndl_t P4A_receive;                                \
-  /* To be thread safe on the caching system
+  /* To be thread safe on the caching system.
+
+     That means a lot of code in this critical section, in case there are
+     different SMECY_IMP_set at the same time.  A bit overkill, to be
+     streamlined some day...
    */                                                                   \
   _Pragma("omp critical(SMECY_IMP_set)")                                \
   {                                                                     \
     fprintf(stderr, "Cluster = %d, Node = %d\n", domain, node);         \
+    /* No need for an OpenMP flush because of the critical section */   \
     if (SMECY_MCAPI_connection[domain][node].opened) {                  \
-    P4A_transmit = SMECY_MCAPI_connection[domain][node].transmit;       \
-    P4A_receive = SMECY_MCAPI_connection[domain][node].receive;         \
+      P4A_transmit = SMECY_MCAPI_connection[domain][node].transmit;     \
+      P4A_receive = SMECY_MCAPI_connection[domain][node].receive;       \
+      SMECY_PRINT_VERBOSE("SMECY_IMP_set: cache hit for domain %d, "    \
+                          "node %d: P4A_transmit = %#x, P4A_receive = %#x\n", \
+                          domain, node, (intptr_t)P4A_transmit,         \
+                          (intptr_t)P4A_receive);                       \
     }                                                                   \
     else {                                                              \
       /* This is not already opened, create the connections.
@@ -352,14 +372,19 @@ static void SMECY_IMP_initialize_then_finalize() {
                                 Do it in this order compared with the PE
                                 to avoid dead-locks on opening: first open
                                 a connection to send data to the PE */  \
-      P4A_transmit = SMECY_MCAPI_send_gate_create(SMECY_MCAPI_HOST_TX_PORT, \
+      P4A_transmit = SMECY_MCAPI_send_gate_create(SMECY_MCAPI_PORT(TX,domain,node), \
                                                   domain,               \
                                                   node,                 \
                                                   SMECY_MCAPI_PE_RX_PORT); /*
                   Then open a connection to receive data from the PE */ \
-      P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_HOST_RX_PORT);/*
+      P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PORT(RX,domain,node), \
+                                                    domain,             \
+                                                    node,               \
+                                                    SMECY_MCAPI_PE_TX_PORT);/*
                                                                          */ \
+      /* No need for an OpenMP flush because of the critical section */ \
       SMECY_MCAPI_connection[domain][node].opened = true;               \
+    }                                                                   \
   }                                                                     \
   /* Send the function name to run to the remode dispatcher,
      including the final '\0' */                                        \
@@ -700,19 +725,21 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
      Initialize MCAPI
      */                                                                   \
     SMECY_init_mcapi_node(smecy_cluster, smecy_pe);                       \
-    /* Create the channels to communicate with the host using global
-       variables
+    /* Create the channels to communicate with the host
      */                                                                   \
     mcapi_pktchan_send_hndl_t P4A_receive =                               \
-      SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PE_RX_PORT); /*
+      SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PE_RX_PORT,             \
+                                      SMECY_MCAPI_HOST_DOMAIN,            \
+                                      SMECY_MCAPI_HOST_NODE,              \
+                                      SMECY_MCAPI_PORT(TX,smecy_cluster,smecy_pe)); /*
                                                                 */        \
     mcapi_pktchan_send_hndl_t P4A_transmit =                              \
       SMECY_MCAPI_send_gate_create(SMECY_MCAPI_PE_TX_PORT,                \
                                    SMECY_MCAPI_HOST_DOMAIN,               \
                                    SMECY_MCAPI_HOST_NODE,                 \
-                                   SMECY_MCAPI_HOST_RX_PORT);             \
-    /* Enter the infinite service loop on the PE
-     */                                                                   \
+                                   SMECY_MCAPI_PORT(RX,smecy_cluster,smecy_pe)); /*
+      Enter the infinite service loop on the PE
+    */                                                                    \
     for(;;) SMECY_LBRACE                                                  \
       SMECY_PRINT_VERBOSE("PE %d %d is waiting for a job\n",              \
                            smecy_cluster, smecy_pe)                       \
