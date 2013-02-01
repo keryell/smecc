@@ -46,10 +46,13 @@ enum {
   SMECY_MCAPI_HOST_DOMAIN = 5,
   SMECY_MCAPI_HOST_NODE = 0,
   /* The port numbers to connect the host and the PE */
-  SMECY_MCAPI_HOST_TX_PORT = 1,
-  SMECY_MCAPI_HOST_RX_PORT = 2,
   SMECY_MCAPI_PE_TX_PORT = 3,
   SMECY_MCAPI_PE_RX_PORT = 4,
+  /* Since MCAPI does not allow multiple connections on a same port, use
+     on the host a different port to connect to each PE */
+  SMECY_MCAPI_HOST_TX_STARTING_PORT = 1,
+  SMECY_MCAPI_HOST_RX_STARTING_PORT = SMECY_MCAPI_HOST_TX_STARTING_PORT
+    + SMECY_CLUSTER_NB*SMECY_PE_NB,
 };
 
 
@@ -130,19 +133,55 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
 
 // Implementations for the SMECY library on MCAPI
 
+/*
+  Communications are based on MCAPI packet channels, the MCAPI
+  connected-mode connections.
+
+  The host open connections on-demand to the accelerator PEs and cache the
+  connections to avoid spending time every-time.
+
+  A PE tries to open a connection with the host and is blocked until the
+  host need it. The the PE enter an infinite dispatching loop so there is
+  no caching needed here (hopefuly, since the accelerators are not that
+  memory proficient...).
+ */
 
 /* Create a packet channel for reception listening on receive_port */
 mcapi_pktchan_recv_hndl_t static
 SMECY_MCAPI_receive_gate_create(mcapi_port_t receive_port) {
   mcapi_status_t status;
   /* Create the local endpoint for reception */
-  mcapi_endpoint_t pkt_receive = mcapi_endpoint_create(receive_port,
-						       &status);
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_create"
-                                   " with receive_port %#x returns "
-                                   " pkt_receive %#x\n",
-                                   (intptr_t)receive_port,
-                                   pkt_receive);
+#ifdef SMECY_MCAPI_HOST
+  /* On the host the receive port is unique, so use a simplistic cache
+     structure */
+  static bool endpoint_created = false;
+  static mcapi_endpoint_t pkt_receive;
+  static mcapi_port_t previous_receive_port = MCAPI_NULL;
+  if (endpoint_created) {
+    /* The pkt_receive has already been initialized, but double-check the
+       hypothesis, that is the receive_port is invariant */
+    SMECY_PRINT_VERBOSE("SMECY_MCAPI_receive_gate_create: cache hit on "
+                        "host receive endpoint creation with receive_port "
+                        "%#x returns pkt_receive %#x\n",
+                        (intptr_t)receive_port,
+                        pkt_receive);
+    assert(receive_port == previous_receive_port);
+  }
+  else {
+#else
+    mcapi_endpoint_t
+#endif
+    /* Create the endpoint */
+    pkt_receive = mcapi_endpoint_create(receive_port, &status);
+    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_create"
+                                     " with receive_port %#x returns "
+                                     " pkt_receive %#x\n",
+                                     (intptr_t)receive_port,
+                                     pkt_receive);
+#ifdef SMECY_MCAPI_HOST
+    previous_receive_port = pkt_receive;
+  }
+#endif
 
   mcapi_pktchan_recv_hndl_t receive_gate;
   mcapi_request_t handle;
@@ -640,8 +679,9 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   /* Set the requested debug level of the MCA API itself */
   mcapi_set_debug_level(SMECY_MCA_API_DEBUG_LEVEL);
 #endif
-  /* The MCA API may not be thread-safe, so try to sequentialize the
-     initialization a least */
+  /* In case the MCA API is not thread-safe (well, a correct
+     implementation must be thread safe according to the norm), try to
+     sequentialize the initialization a least */
   _Pragma("omp critical(MCA_API)")
     {
       mcapi_initialize(smecy_cluster, smecy_pe, &parameters, &info, &status);
