@@ -60,7 +60,7 @@ enum {
   SMECY_MCAPI_HOST_TX_STARTING_PORT = 0x1000,
   /* Allocate the reception ports just after the transmission ones */
   SMECY_MCAPI_HOST_RX_STARTING_PORT =
-    SMECY_MCAPI_PORT(TX,SMECY_CLUSTER_NB,SMECY_PE_NB),
+    SMECY_MCAPI_PORT(TX,SMECY_CLUSTER_NB,0),
 };
 
 
@@ -154,6 +154,28 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
   memory proficient...).
  */
 
+
+/* Start a connection request */
+static void
+SMECY_MCAPI_connect(mcapi_endpoint_t pkt_send, mcapi_endpoint_t pkt_receive) {
+  mcapi_request_t handle;
+  mcapi_status_t status;
+  size_t size;
+  /* Connect both ends */
+  mcapi_pktchan_connect_i(pkt_send, pkt_receive, &handle, &status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_connect_i "
+                                   "on send endpoint %#jx from receive "
+                                   "endpoint %#jx with handle %#jx\n",
+                                   (intptr_t)pkt_send, (intptr_t)pkt_receive,
+                                   (intptr_t)handle);
+  /* ...and wait for its completion */
+  mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %#jx "
+                                   "returned size %zx\n", (intptr_t)handle,
+                                   size);
+}
+
+
 /* Create a packet channel for reception listening on receive_port */
 mcapi_pktchan_recv_hndl_t static
 SMECY_MCAPI_receive_gate_create(mcapi_port_t receive_port,
@@ -185,20 +207,22 @@ SMECY_MCAPI_receive_gate_create(mcapi_port_t receive_port,
                                    "port %#jx returns pkt_send %#jx\n",
                                    (intptr_t)send_domain, (intptr_t)send_node,
                                    (intptr_t)send_port, (intptr_t)pkt_send);
+
+  SMECY_MCAPI_connect(pkt_send, pkt_receive);
 #endif
 
   mcapi_pktchan_recv_hndl_t receive_gate;
   /* Start a connection request... */
   mcapi_pktchan_recv_open_i(&receive_gate, pkt_receive, &handle, &status);
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_recv_open_i "
-                                   "on receive port %#jx on gate %p and "
-                                   "handle %p\n", (intptr_t)pkt_receive,
-                                   &receive_gate, &handle);
+                                   "on receive port %#jx on gate %#jx and "
+                                   "handle %#jx\n", (intptr_t)pkt_receive,
+                                   (intptr_t)receive_gate, (intptr_t)handle);
   /* ...and wait for its completion */
   size_t size;
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %p "
-                                   "returned size %zx\n", &handle, size);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %#jx "
+                                   "returned size %zx\n", (intptr_t)handle, size);
   return receive_gate;
 }
 
@@ -234,27 +258,16 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
                                    (intptr_t)receive_domain, (intptr_t)receive_node,
                                    (intptr_t)receive_port, (intptr_t)pkt_receive);
 
-  /* Start a connection request... */
-  mcapi_pktchan_connect_i(pkt_send, pkt_receive, &handle, &status);
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_connect_i "
-                                   "on send endpoint %#jx from receive "
-                                   "endpoint %#jx with handle %#jx\n",
-                                   (intptr_t)pkt_send, (intptr_t)pkt_receive,
-                                   (intptr_t)handle);
-  /* ...and wait for its completion */
-  mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_wait on handle %#jx "
-                                   "returned size %zx\n", (intptr_t)handle,
-                                   size);
+  SMECY_MCAPI_connect(pkt_send, pkt_receive);
 #endif
 
   mcapi_pktchan_send_hndl_t send_gate;
   /* Open this side of the channel for sending... */
   mcapi_pktchan_send_open_i(&send_gate, pkt_send, &handle, &status);
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_send_open_i "
-                                   "send gate %p, send endpoint %#jx "
+                                   "send gate %#jx, send endpoint %#jx "
                                    "with handle %#jx\n",
-                                   &send_gate, (intptr_t)pkt_send,
+                                   (intptr_t)send_gate, (intptr_t)pkt_send,
                                    (intptr_t)handle);
   /* And wait for the opening */
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
