@@ -88,21 +88,29 @@ void process(const char file_name[]) {
                                                m->position() - previous_match_end);
     // For next loop, think to copy the input from the end of this match
     previous_match_end = m->position() + m->length();
-    /* If there is a ';' after the (parameter list), this is a function
-       definition */
+    /* If there is a ';' after the (parameter list), this is only a
+       function declaration. */
     if ((*m)[4] == ";") {
-      /* We remove all the parameters of the function and replace them
-         with "void" */
-      transformed_content += (*m)[1] + "void);\n";
+      /* So replace it by a declaration with an empty body only to have
+         the old code using this function to compile. It will not be run
+         on the accelerator side anyway */
+      transformed_content += "\n/* Dummy function to have the old remaining "
+        "code still compiling.\n"
+        "    The smecy_accel_" + (*m)[2] + "() will be called instead.\n */\n"
+        + (*m)[1] + (*m)[3] + ") {\n}\n";
     }
     else {
       /* This is a declaration, transform the parameter list into
          automatic variables so that the MCAPI runtime have stack
          allocation to store what it receives.
 
+         Change also the function name to smecy_accel_... to avoid
+         conflicts with the old code.
+
          First the declaration header:
       */
-      transformed_content += (*m)[1] + "void)\n{\n"
+      transformed_content += "/* Code to be executed on the accelerator */\n"
+        "void smecy_accel_" + (*m)[2] + "(SMECY_accel_func_args) {\n"
         "  /* On-stack storage to send/receive address parameters\n"
         "     to/from the host: */\n";
       /* Then the new automatic variables: */
@@ -121,7 +129,7 @@ void process(const char file_name[]) {
 
 /** Process a list of files given as arguments to the command
  */
-int main(int argc, char *argv[]) {
+int main(const int argc, const char * const argv[]) {
 
   for (auto arg = &argv[1]; arg != &argv[argc]; ++arg)
     process(*arg);

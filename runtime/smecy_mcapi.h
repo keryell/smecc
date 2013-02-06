@@ -46,8 +46,7 @@ enum {
   /* The STHORM geometry */
   //SMECY_CLUSTER_NB = 4,
   SMECY_CLUSTER_NB = 1,
-  //SMECY_PE_NB = 32,
-  SMECY_PE_NB = 1,
+  SMECY_PE_NB = 32,
   /* The localization of the host inside the MCAPI realm */
   SMECY_MCAPI_HOST_DOMAIN = 5,
   SMECY_MCAPI_HOST_NODE = 0,
@@ -827,7 +826,7 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
     SMECY_PRINT_VERBOSE("PE %d %d is executing instance " #instance     \
                         " of function \"" #function "\"\n",             \
                         smecy_cluster, smecy_pe)                        \
-    smecy_func_##function##_##instance(P4A_transmit, P4A_receive);      \
+    smecy_accel_##function##_##instance(P4A_transmit, P4A_receive);      \
     /* Wait for next job to do
      */                                                                 \
     break;                                                              \

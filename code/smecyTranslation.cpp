@@ -1259,6 +1259,9 @@ namespace smecy {
                   << "/* The hook to start the PEs */" << std::endl
                   << "SMECY_start_PEs_dispatch" << std::endl;
       }
+#if 0
+      // Do not use it. Rely on the post-processor instead.
+
       /* Clone anyway all the accelerated functions so that we can change
          their arguments with the processor without compromising the
          compilation of the code that used to call this function. The code
@@ -1269,6 +1272,7 @@ namespace smecy {
                       "smecy_func_" + f.first + "_" + std::to_string(f.second),
                       "smecy_accel_" + f.first + "_" + std::to_string(f.second));
       }
+#endif
     }
     else
       /* On the host size, since we keep the original main, inject some
