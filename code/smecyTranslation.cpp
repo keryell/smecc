@@ -102,6 +102,46 @@ namespace smecy {
   }
 
 
+  /* Clone a function with a new name
+
+     This is mainly the code published on the ROSE mailing list by Chunhua
+     (Leo) Liao on Sat Apr 23 07:51:06 PDT 2011 with some typos corrected
+
+     See also
+     http://en.wikibooks.org/wiki/ROSE_Compiler_Framework/FAQ#How_to_copy.2Fclone_a_function.3F
+
+     But strangely, only the declaration is cloned, not the definition.
+
+     TODO
+
+     Well, deal this with the post-processor afterwards...
+  */
+  void
+  functionClone(SgProject * project,
+                const std::string &old_name,
+                const std::string &new_name) {
+    SgFunctionDeclaration * func = SageInterface::findDeclarationStatement
+      <SgFunctionDeclaration>(project, old_name, NULL, true);
+    // Make a copy and set it to the new name
+    SgFunctionDeclaration * func_copy =
+      isSgFunctionDeclaration(SageInterface::copyStatement(func));
+    func_copy->set_name(new_name);
+
+    // Insert it to the global scope
+    SgGlobal * glb = SageInterface::getFirstGlobalScope(project);
+    SageInterface::appendStatement(func_copy, glb);
+
+#if 1  // fix up the missing symbol
+    SgFunctionSymbol * func_symbol =
+      glb->lookup_function_symbol(new_name, func_copy->get_type());
+    if (func_symbol == NULL) {
+      func_symbol = new SgFunctionSymbol { func_copy };
+      glb->insert_symbol(new_name, func_symbol);
+    }
+#endif
+  }
+
+
   /* \brief First steps : attaching attributes and parsing expressions
      from pragmas.
 
@@ -1204,7 +1244,8 @@ namespace smecy {
         // with "-smecy_dispatch" because I'm in a rush
         std::ofstream main_file { SageInterface::getEnclosingFileNode(main_func)->getFileName() + "-smecy_dispatch" };
         main_file << std::endl << std::endl
-                  << "/* The dispatch loop on the accelerator side for one PE */" << std::endl
+                  << "/* The dispatch loop on the accelerator side for one PE */"
+                  << std::endl
                   << "SMECY_begin_accel_function_dispatch" << std::endl;
         for(const auto &f: generated_functions) {
           main_file << "  SMECY_dispatch_accel_func("
@@ -1217,6 +1258,16 @@ namespace smecy {
                   << std::endl
                   << "/* The hook to start the PEs */" << std::endl
                   << "SMECY_start_PEs_dispatch" << std::endl;
+      }
+      /* Clone anyway all the accelerated functions so that we can change
+         their arguments with the processor without compromising the
+         compilation of the code that used to call this function. The code
+         is no longer called since it is replaced by a new main that use
+         the dispatcher to follow the host directions. */
+      for(const auto &f: generated_functions) {
+        functionClone(p,
+                      "smecy_func_" + f.first + "_" + std::to_string(f.second),
+                      "smecy_accel_" + f.first + "_" + std::to_string(f.second));
       }
     }
     else
