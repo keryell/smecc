@@ -44,8 +44,7 @@ void mcapi_display_state (void* handle) {
 /* Machine description */
 enum {
   /* The STHORM geometry */
-  //SMECY_CLUSTER_NB = 4,
-  SMECY_CLUSTER_NB = 1,
+  SMECY_CLUSTER_NB = 4,
   SMECY_PE_NB = 32,
   /* The localization of the host inside the MCAPI realm */
   SMECY_MCAPI_HOST_DOMAIN = 5,
@@ -721,17 +720,10 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   /* Set the requested debug level of the MCA API itself */
   mcapi_set_debug_level(SMECY_MCA_API_DEBUG_LEVEL);
 #endif
-  /* In case the MCA API is not thread-safe (well, a correct
-     implementation must be thread safe according to the norm), try to
-     sequentialize the initialization a least */
-  _Pragma("omp critical(MCA_API)")
-    {
-      mcapi_initialize(smecy_cluster, smecy_pe, &parameters, &info, &status);
-      SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initialization of smecy_cluster"
-                                       " %d, smecy_pe %d\n",
-                                       smecy_cluster, smecy_pe);
-    }
-    //_Pragma("omp barrier")
+  mcapi_initialize(smecy_cluster, smecy_pe, &parameters, &info, &status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initialization of smecy_cluster"
+                                   " %d, smecy_pe %d\n",
+                                   smecy_cluster, smecy_pe);
 }
 
 #define SMECY_begin_accel_function_dispatch                             \
