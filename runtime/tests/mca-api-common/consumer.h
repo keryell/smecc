@@ -1,5 +1,5 @@
-/* Receive messages from node <SMECY_DOMAIN, PRODUCER_NODE, SEND_PORT> into
-   <SMECY_DOMAIN, CONSUMER_NODE, RECEIVE_PORT>
+/* Receive messages from node <PRODUCER_DOMAIN, PRODUCER_NODE, SEND_PORT> into
+   <CONSUMER_DOMAIN, CONSUMER_NODE, RECEIVE_PORT>
 */
 
 void consumer() {
@@ -12,7 +12,7 @@ void consumer() {
   mcapi_endpoint_t data_receive_endpoint;
 
   mcapi_status_t status;
-  mcapi_initialize(SMECY_DOMAIN, CONSUMER_NODE,
+  mcapi_initialize(CONSUMER_DOMAIN, CONSUMER_NODE,
 		   &parameters, &info, &status);
   MCAPI_CHECK_STATUS(status);
 

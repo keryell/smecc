@@ -1,5 +1,5 @@
-/* Send messages from node <SMECY_DOMAIN, PRODUCER_NODE, SEND_PORT> to
-   <SMECY_DOMAIN, CONSUMER_NODE, RECEIVE_PORT>
+/* Send messages from node <PRODUCER_DOMAIN, PRODUCER_NODE, SEND_PORT> to
+   <CONSUMER_DOMAIN, CONSUMER_NODE, RECEIVE_PORT>
 */
 
 void producer() {
@@ -20,7 +20,7 @@ void producer() {
   //MCAPI_CHECK_STATUS(status);
   //mcapi_initialize(SMECY_DOMAIN, PRODUCER_NODE, &node_attributes,
   //		   &parameters, &info, &status);
-  mcapi_initialize(SMECY_DOMAIN, PRODUCER_NODE,
+  mcapi_initialize(PRODUCER_DOMAIN, PRODUCER_NODE,
 		   &parameters, &info, &status);
   MCAPI_CHECK_STATUS(status);
 
@@ -30,7 +30,7 @@ void producer() {
   mcapi_endpoint_t msg_send = mcapi_endpoint_create(SEND_MSG_PORT, &status);
   MCAPI_CHECK_STATUS(status);
 
-  mcapi_endpoint_t msg_receive = mcapi_endpoint_get(SMECY_DOMAIN,
+  mcapi_endpoint_t msg_receive = mcapi_endpoint_get(CONSUMER_DOMAIN,
 						    CONSUMER_NODE,
 						    RECEIVE_MSG_PORT,
 						    MCA_INFINITE, &status);
@@ -59,7 +59,7 @@ void producer() {
   mcapi_endpoint_t pkt_send = mcapi_endpoint_create(SEND_PKT_PORT, &status);
   MCAPI_CHECK_STATUS(status);
 
-  mcapi_endpoint_t pkt_receive = mcapi_endpoint_get(SMECY_DOMAIN,
+  mcapi_endpoint_t pkt_receive = mcapi_endpoint_get(CONSUMER_DOMAIN,
 						    CONSUMER_NODE,
 						    RECEIVE_PKT_PORT,
 						    MCA_INFINITE, &status);
