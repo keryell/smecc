@@ -1,10 +1,7 @@
 /* Send messages from node <PRODUCER_DOMAIN, PRODUCER_NODE, SEND_PORT> to
    <CONSUMER_DOMAIN, CONSUMER_NODE, RECEIVE_PORT>
 */
-
-void producer() {
-  //mcapi_node_attributes_t node_attributes;
-  mcapi_param_t parameters;
+void producer(mcapi_param_t *parameters) {
   mcapi_info_t info;
   mcapi_endpoint_t data_transmit_endpoint;
   mcapi_endpoint_t data_receive_endpoint;
@@ -16,14 +13,21 @@ void producer() {
 #endif
 
   // init node attributes. Not clear in which MCAPI version it is needed...
-  //mcapi_node_init_attributes(&node_attributes, &status);
-  //MCAPI_CHECK_STATUS(status);
-  //mcapi_initialize(SMECY_DOMAIN, PRODUCER_NODE, &node_attributes,
-  //		   &parameters, &info, &status);
-  mcapi_initialize(PRODUCER_DOMAIN, PRODUCER_NODE,
-		   &parameters, &info, &status);
+  /* It looks like in the Linux MCAPI implementation reference from MCA,
+     even the 2.015 version looks like a V1 interface... */
+#if (MCAPI_VERSION >= 2000)
+  mcapi_node_attributes_t node_attributes;
+  mcapi_node_init_attributes(&node_attributes, &status);
   MCAPI_CHECK_STATUS(status);
-
+  /* 6 arguments in V.2 */
+  mcapi_initialize(PRODUCER_DOMAIN, PRODUCER_NODE, &node_attributes,
+  		   parameters, &info, &status);
+#else
+  /* 5 arguments in V.1 */
+  mcapi_initialize(PRODUCER_DOMAIN, PRODUCER_NODE,
+		   parameters, &info, &status);
+  MCAPI_CHECK_STATUS(status);
+#endif
 
   /* First use communications with messages (connection-less mode) */
 

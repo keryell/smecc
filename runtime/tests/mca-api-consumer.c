@@ -13,6 +13,6 @@ int main() {
   /* Increase the level to trace down MCA things */
   mcapi_set_debug_level(0);
 
-  consumer();
+  consumer(NULL);
   return EXIT_SUCCESS;
 }

@@ -2,19 +2,31 @@
    <CONSUMER_DOMAIN, CONSUMER_NODE, RECEIVE_PORT>
 */
 
-void consumer() {
+void consumer(mcapi_param_t *parameters) {
 #ifdef SMECY_VERBOSE
     fputs("Entering the consumer\n", stderr);
 #endif
-  mcapi_param_t parameters;
   mcapi_info_t info;
   mcapi_endpoint_t data_transmit_endpoint;
   mcapi_endpoint_t data_receive_endpoint;
 
   mcapi_status_t status;
-  mcapi_initialize(CONSUMER_DOMAIN, CONSUMER_NODE,
-		   &parameters, &info, &status);
+  // init node attributes. Not clear in which MCAPI version it is needed...
+  /* It looks like in the Linux MCAPI implementation reference from MCA,
+     even the 2.015 version looks like a V1 interface... */
+#if (MCAPI_VERSION >= 2000)
+  mcapi_node_attributes_t node_attributes;
+  mcapi_node_init_attributes(&node_attributes, &status);
   MCAPI_CHECK_STATUS(status);
+  /* 6 arguments in V.2 */
+  mcapi_initialize(CONSUMER_DOMAIN, CONSUMER_NODE, &node_attributes,
+  		   parameters, &info, &status);
+#else
+  /* 5 arguments in V.1 */
+  mcapi_initialize(CONSUMER_DOMAIN, CONSUMER_NODE,
+		   parameters, &info, &status);
+  MCAPI_CHECK_STATUS(status);
+#endif
 
   /* First use communications with messages (connection-less mode) */
 

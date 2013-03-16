@@ -38,11 +38,11 @@ int main() {
     {
       /* Execute producer() in a new task */
 #pragma omp task
-      producer();
+      producer(NULL);
       /* We can keep consumer() in the current task, so no need for the
 	 following pragma */
       //#pragma omp task
-      consumer();
+      consumer(NULL);
     }
   }
   return EXIT_SUCCESS;
