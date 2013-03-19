@@ -21,12 +21,14 @@ void consumer(mcapi_param_t *parameters) {
   /* 6 arguments in V.2 */
   mcapi_initialize(CONSUMER_DOMAIN, CONSUMER_NODE, &node_attributes,
   		   parameters, &info, &status);
+  MCAPI_TRACE_C("Host initialization V.2 done");
 #else
   /* 5 arguments in V.1 */
   mcapi_initialize(CONSUMER_DOMAIN, CONSUMER_NODE,
 		   parameters, &info, &status);
-  MCAPI_CHECK_STATUS(status);
+  MCAPI_TRACE_C("Host initialization V.1 done");
 #endif
+  MCAPI_CHECK_STATUS(status);
 
   /* First use communications with messages (connection-less mode) */
 
@@ -51,6 +53,7 @@ void consumer(mcapi_param_t *parameters) {
   MCAPI_CHECK_STATUS(status);
 
 
+  MCAPI_TRACE_C("Communications with packets (connected mode)");
   /* Then use communications with packets (connected mode) */
 
   mcapi_endpoint_t pkt_receive = mcapi_endpoint_create(RECEIVE_PKT_PORT,
@@ -66,6 +69,7 @@ void consumer(mcapi_param_t *parameters) {
   // Wait for the completion of opening
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
   MCAPI_CHECK_STATUS(status);
+  MCAPI_TRACE_C("Channel connected");
 
   for (int i = 0; i < N_MSG; i++) {
     char *message;
@@ -81,16 +85,20 @@ void consumer(mcapi_param_t *parameters) {
   }
 
   // Now we can close the receive side of the channel
+  MCAPI_TRACE_C("Closing the consumer channel");
   mcapi_pktchan_recv_close_i(receive_gate, &handle, &status);
   MCAPI_CHECK_STATUS(status);
+  MCAPI_TRACE_C("Waiting for the closing");
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
   MCAPI_CHECK_STATUS(status);
 
   // Remove useless the receiving endpoint
+  MCAPI_TRACE_C("Delete the end point");
   mcapi_endpoint_delete(pkt_receive, &status);
   MCAPI_CHECK_STATUS(status);
 
   /* Release the API use */
+  MCAPI_TRACE_C("Finalizing...");
   mcapi_finalize(&status);
   MCAPI_CHECK_STATUS(status);
 #ifdef SMECY_VERBOSE

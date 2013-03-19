@@ -57,11 +57,23 @@ void producer(mcapi_param_t *parameters) {
   mcapi_endpoint_delete(msg_send, &status);
   MCAPI_CHECK_STATUS(status);
 
-
+  MCAPI_TRACE_C("Communications with packets (connected mode)");
   /* Then use communications with packets (connection mode) */
 
   mcapi_endpoint_t pkt_send = mcapi_endpoint_create(SEND_PKT_PORT, &status);
   MCAPI_CHECK_STATUS(status);
+
+#ifdef MCAPI_STHORM
+  /* On STHORM, it looks like we need to precise this attribute to have a
+     connection with the host working */
+  mcapi_endp_attr_memory_type_t memtype = MCAPI_ENDP_ATTR_REMOTE_MEMORY;
+  mcapi_endpoint_set_attribute(pkt_send,
+                               MCAPI_ENDP_ATTR_MEMORY_TYPE,
+                               &memtype,
+                               sizeof(mcapi_endp_attr_memory_type_t),
+                               &status);
+  MCAPI_CHECK_STATUS(status);
+#endif
 
   mcapi_endpoint_t pkt_receive = mcapi_endpoint_get(CONSUMER_DOMAIN,
 						    CONSUMER_NODE,
@@ -70,9 +82,15 @@ void producer(mcapi_param_t *parameters) {
   MCAPI_CHECK_STATUS(status);
 
   mcapi_request_t handle;
-  // Start a connection request...
-  mcapi_pktchan_connect_i(pkt_send, pkt_receive, &handle, &status);
+  // In an example from STHORM MCAPI they use a loop like this one
+  // but it seems working without it here
+  //// Connect & wait for the connection
+  //do {
+    // Start a connection request...
+    mcapi_pktchan_connect_i(pkt_send, pkt_receive, &handle, &status);
+  //} while (status==MCAPI_ERR_ATTR_INCOMPATIBLE);
   MCAPI_CHECK_STATUS(status);
+
   // ...and wait for its completion
   size_t size;
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
@@ -94,15 +112,19 @@ void producer(mcapi_param_t *parameters) {
   }
 
   // Close the send side of the channel
+  MCAPI_TRACE_C("Closing the producer channel");
   mcapi_pktchan_send_close_i(send_gate, &handle, &status);
   MCAPI_CHECK_STATUS(status);
+  MCAPI_TRACE_C("Waiting for the closing");
   mcapi_wait(&handle, &size, MCAPI_TIMEOUT_INFINITE, &status);
   MCAPI_CHECK_STATUS(status);
 
   // Remove useless the sending endpoint
+  MCAPI_TRACE_C("Delete the end point");
   mcapi_endpoint_delete(pkt_send, &status);
   MCAPI_CHECK_STATUS(status);
 
+  MCAPI_TRACE_C("Finalizing...");
   /* Release the API use */
   mcapi_finalize(&status);
   MCAPI_CHECK_STATUS(status);
