@@ -52,7 +52,6 @@ void consumer(mcapi_param_t *parameters) {
   mcapi_endpoint_delete(msg_receive, &status);
   MCAPI_CHECK_STATUS(status);
 
-
   MCAPI_TRACE_C("Communications with packets (connected mode)");
   /* Then use communications with packets (connected mode) */
 

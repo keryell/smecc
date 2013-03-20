@@ -43,8 +43,14 @@ void producer(mcapi_param_t *parameters) {
   for (int i = 0; i < N_MSG; i++) {
     /* Messages (ie for connection-less communications) have to be
        provided by the user in MCAPI: */
+#ifndef MCAPI_STHORM
     char message[100];
     snprintf(message, sizeof(message), "Message: Salut %d", i);
+#else
+    /* There is no snprintf() on STHORM */
+    char message[] = "Message: Salut @";
+    message[sizeof(message) - 2] = '0' + i;
+#endif
     /* There is no control flow, so we could reach a memory limit here
        (MCAPI_ERR_MEM_LIMIT).  Not to be done this way in real life, but
        here it is just for testing. We hope N_MSG is low enough to avoid
@@ -104,8 +110,14 @@ void producer(mcapi_param_t *parameters) {
   MCAPI_CHECK_STATUS(status);
 
   for (int i = 0; i < N_MSG; i++) {
+#ifndef MCAPI_STHORM
     char message[100];
     snprintf(message, sizeof(message), "Packet: Mont a ra mat %d", i);
+#else
+    /* There is no snprintf() on STHORM */
+    char message[] = "Packet: Mont a ra mat @";
+    message[sizeof(message) - 2] = '0' + i;
+#endif
     // Send a packet
     mcapi_pktchan_send(send_gate, message, sizeof(message), &status);
     MCAPI_CHECK_STATUS(status);
