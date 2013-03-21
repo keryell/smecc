@@ -445,9 +445,10 @@ static void SMECY_IMP_initialize_then_finalize() {
       P4A_transmit = SMECY_MCAPI_connection[domain][node].transmit;     \
       P4A_receive = SMECY_MCAPI_connection[domain][node].receive;       \
       SMECY_PRINT_VERBOSE("SMECY_IMP_set: cache hit for domain %d, "    \
-                          "node %d: P4A_transmit = %#tx, P4A_receive = %#tx\n", \
-                          domain, node, (intptr_t)P4A_transmit,         \
-                          (intptr_t)P4A_receive);                       \
+                          "node %d: P4A_transmit = %#tx,"               \
+                          " P4A_receive = %#tx\n",                      \
+                          domain, node, SMECY_CHAN_INFO(P4A_transmit),  \
+                          SMECY_CHAN_INFO(P4A_receive));                \
     }                                                                   \
     else {                                                              \
       /* This is not already opened, create the connections.
@@ -478,9 +479,11 @@ static void SMECY_IMP_initialize_then_finalize() {
                      &SMECY_MCAPI_status);                              \
   /* Check the correct execution
    */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
-                                   "to send gate %#tx '%s' of length %#tx\n", \
-                                   (intptr_t) P4A_transmit, #func, length); \
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status,                  \
+                                   "mcapi_pktchan_send to send gate"    \
+                                   " %#tx '%s' of length %#tx\n",       \
+                                   SMECY_CHAN_INFO(P4A_transmit),       \
+                                   #func, length);                      \
   /* The size of some received data
    */                                                                   \
   size_t P4A_received_size
@@ -529,7 +532,8 @@ static void SMECY_IMP_initialize_then_finalize() {
    */                                                                   \
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
                                    "to send gate %#tx %p of length %zx\n", \
-                                   (intptr_t)P4A_transmit, &SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__), sizeof(type));
+                                   SMECY_CHAN_INFO(P4A_transmit),       \
+                                   &SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__), sizeof(type));
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_send_arg(func, arg, type, value, pe, ...)             \
@@ -582,7 +586,7 @@ static void SMECY_IMP_initialize_then_finalize() {
    */                                                                   \
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
                                    "to send gate %#tx %p of length %zx\n", \
-                                   (intptr_t)P4A_transmit, addr, size);
+                                   SMECY_CHAN_INFO(P4A_transmit), addr, size);
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
@@ -599,7 +603,7 @@ static void SMECY_IMP_initialize_then_finalize() {
    */                                                                   \
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_recv " \
                                    "from receive gate %#tx %p of length %zx\n", \
-                                   (intptr_t)P4A_receive,               \
+                                   SMECY_CHAN_INFO(P4A_receive),        \
                                    (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
                                    P4A_received_size);                  \
   /* Store the address if the vector into the argument to be given
@@ -671,7 +675,7 @@ static void SMECY_IMP_initialize_then_finalize() {
    */                                                                   \
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_recv " \
                                    "from receive gate %#tx %p of length %zx\n", \
-                                   (intptr_t)P4A_receive,               \
+                                   SMECY_CHAN_INFO(P4A_receive),        \
                                    (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
                                    P4A_received_size);                  \
   /* Store the received vector into the destination vector
@@ -701,7 +705,7 @@ static void SMECY_IMP_initialize_then_finalize() {
    */                                                                   \
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
                                    "to send gate %#tx %p of length %zx\n", \
-                                   (intptr_t)P4A_transmit,              \
+                                   SMECY_CHAN_INFO(P4A_transmit),       \
                                    SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__), \
                                    size*sizeof(type));
 #endif
