@@ -73,20 +73,6 @@ static mcapi_param_t SMECY_mcapi_param_init = "libsmecy_accel_fabric.so";
 #define SMECY_CHAN_INFO(handle) ((intptr_t)handle)
 #endif
 
-#ifdef MCAPI_STHORM_FALSE
-/* On STHORM, accelerator threads are launched outside of MCAPI but with
-   some IDs to be given to MCAPI. So we have to pass them back to the
-   MCAPI initialization function through this data structure. */
-typedef struct {
-  mcapi_domain_t domain_id;
-  mcapi_node_t node_id
-} SMECY_STHORM_fabric_id;
-                       /* Keep track of the MCAPI coordinate to use. Not
-                          really a memory leak since the thread using it
-                          will run up to the end of the program */
-                       SMECY_STHORM_fabric_id * id = malloc(sizeof(*id));
-                       id = { }
-#endif
 
 /* Compute the port used used on the host side to communicate for RX or TX
    on MCAPI domain node*/
@@ -98,17 +84,19 @@ enum {
   /* The STHORM geometry */
   SMECY_CLUSTER_NB = 4,
   SMECY_PE_NB = 16,
-  /* The localization of the host inside the MCAPI realm */
+  /* The localization of the host inside the MCAPI realm: */
   SMECY_MCAPI_HOST_DOMAIN = 5,
   SMECY_MCAPI_HOST_NODE = 0,
   /* The port numbers to connect a PE to a host. Since a PE is only
-     connected to the host, only to endpoints and thus ports are needed */
+     connected to the host, only to endpoints and thus ports are needed. */
   SMECY_MCAPI_PE_TX_PORT = 1,
   SMECY_MCAPI_PE_RX_PORT = 2,
   /* Since MCAPI does not allow multiple connections on a same port, use
-     on the host a different port to connect to each PE */
-  SMECY_MCAPI_HOST_TX_STARTING_PORT = 0x1000,
-  /* Allocate the reception ports just after the transmission ones */
+     on the host a different port to connect to each PE. */
+  /* There are not a lot of ports on STHORM, so use the lower number to
+     start: */
+  SMECY_MCAPI_HOST_TX_STARTING_PORT = 0x0,
+  /* Allocate the reception ports just after the transmission ones: */
   SMECY_MCAPI_HOST_RX_STARTING_PORT =
     SMECY_MCAPI_PORT(TX,SMECY_CLUSTER_NB,0),
 };
@@ -158,7 +146,9 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
 	    file, function, line, message);
 #ifdef MCAPI_STHORM
     /* Rely on the STHORM MCAPI tracing API to display the status */
-    MCAPI_TRACE_CS("", status);
+    MCAPI_TRACE_C(format);
+    MCAPI_TRACE_CS(function, status);
+    MCAPI_TRACE_CI(file, line);
 #endif
 #endif
     /* Well, there is no exit() on STHORM, so simply go on... */
@@ -926,16 +916,14 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
 #ifdef MCAPI_STHORM
 
 #define SMECY_start_PEs_dispatch                                        \
-  /* Register the local accelerator thread to MCAPI and
-     start the dispatch of the host function calls */                   \
+  /* Get the MCAPI coordinates before registering to MCAPI */           \
   void SMECY_thread_entry(void *args) {                                 \
     MCAPI_TRACE_C("Local PE thread started");                           \
     mcapi_status_t status;                                              \
     mcapi_domain_t domain_id = mcapi_domain_id_get(&status);            \
-    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Get the domain id");      \
+    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Get the domain id\n");    \
     mcapi_node_t node_id = mcapi_node_id_get(&status);                  \
-    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Get the node id");        \
-    SMECY_init_mcapi_node(domain_id, node_id);                          \
+    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Get the node id\n");      \
     SMECY_accel_function_dispatch(domain_id, node_id);                  \
   }                                                                     \
                                                                         \
