@@ -87,7 +87,7 @@ bin: raw openmp mcapi
 
 # Use :: so that a user of this Makefile can extend this rule
 clean::
-	rm -f $(LOCAL_SMECY) $(LOCAL_ACCEL_SMECY) $(LOCAL_SMECY_MCAPI)	\
+	rm -rf $(LOCAL_SMECY) $(LOCAL_ACCEL_SMECY) $(LOCAL_SMECY_MCAPI)	\
 	   $(LOCAL_ACCEL_SMECY_MCAPI) $(LOCAL_BIN) $(LOCAL_SMECY_BIN)	\
 	   $(LOCAL_SMECY_MCAPI_BIN) $(LOCAL_ACCEL_SMECY_MCAPI_BIN)	\
 	   $(LOCAL_DOT) $(LOCAL_PDF) rose_transformation_* *.o *.E	\
@@ -165,11 +165,13 @@ accel_smecy_%_fabric.c: accel_smecy_%.c
 ifeq ($(TARGET),STHORM)
   MAKE_FOR_STHORM=$(MAKE) -f $(P12MCAPI)/examples/rules.mk
   # The variables we want to communicate to the MCAPI STHORM makefile:
-  export CFLAGS+=-DMCAPI_STHORM
+  export FABRIC_CFLAGS:=$(CFLAGS) -DMCAPI_STHORM $(CFLAGS_MCAPI_ACCEL)
+  export CFLAGS+=-DMCAPI_STHORM $(CFLAGS_MCAPI)
   export CXXFLAGS+=-DMCAPI_STHORM
-  export FABRIC_CFLAGS=$(CFLAGS) $(CFLAGS_MCAPI_ACCEL)
   export LDFLAGS
   export LDLIBS
+  # The name of the library our runtime expect to load on the STHORM fabric:
+  export FABRIC_LIB=smecy_accel_fabric
   # By default, forward any target to the MCAPI STHORM Makefile, for
   # example for the distclean target:
   .DEFAULT:
@@ -177,8 +179,18 @@ ifeq ($(TARGET),STHORM)
 
   # On STHORM, we invoke the MCAPI STHORM makefiles to compile and run the
   # application by setting the variables defined in the STHORM... variable:
-  run_%: %
-	$(MAKE_FOR_STHORM) $(STHORM_$<) run
+  run_%_host:
+	# Since we have to build some dependences with different variable
+	# values for host and fabric side, use sub-make to build them,
+	# after evaluation the environment variables to get the source
+	# lists. Since the variable values are available only inside a
+	# process, use "sh -c", with simple quotes to avoid evaluation of
+	# the variable at the top level:
+	$(STHORM_$*_host) sh -c '$(MAKE) $(MAKEFLAGS) $$HOST_SRC'
+	$(STHORM_$*_host) sh -c '$(MAKE) $(MAKEFLAGS) $$FABRIC_SRC'
+	# Rely on the MCAPI STHORM makefile to compile for and run on the
+	# target:
+	$(MAKE_FOR_STHORM) $(STHORM_$*_host) run
 else
   run_%: %
 	./$<
