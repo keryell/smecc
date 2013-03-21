@@ -20,10 +20,12 @@ SMECY_DEBUG=-DSMECY_VERBOSE -DSMECY_MCAPI_CHECK_TRACE
 # -DSMECY_MCA_API_DEBUG_LEVEL=1
 # up to 7
 
-# By default use MCA API reference implementation
-MCA_INCLUDE?=`mcapi-config --cflags`
-MCAPI_LINK?=`mcapi-config --libs`
-MRAPI_LINK?=`mrapi-config --libs`
+ifneq ($(TARGET),STHORM)
+  # By default use MCA API reference implementation
+  MCA_INCLUDE?=`mcapi-config --cflags`
+  MCAPI_LINK?=`mcapi-config --libs`
+  MRAPI_LINK?=`mrapi-config --libs`
+endif
 
 # Add some flags to previously ones, if any:
 SMECY_FLAGS+=$(SMECY_DEBUG) -I$(SMECY_INC)
@@ -89,7 +91,8 @@ clean::
 	   $(LOCAL_ACCEL_SMECY_MCAPI) $(LOCAL_BIN) $(LOCAL_SMECY_BIN)	\
 	   $(LOCAL_SMECY_MCAPI_BIN) $(LOCAL_ACCEL_SMECY_MCAPI_BIN)	\
 	   $(LOCAL_DOT) $(LOCAL_PDF) rose_transformation_* *.o *.E	\
-	   *-smecy_dispatch *.smecc_pp
+	   *-smecy_dispatch *.smecc_pp \
+	   build
 
 
 # Detailed targets
@@ -159,8 +162,27 @@ accel_smecy_%_fabric.c: accel_smecy_%.c
 	# They are the same file indeed
 	cp -a $< $@
 
-run_%: %
+ifeq ($(TARGET),STHORM)
+  MAKE_FOR_STHORM=$(MAKE) -f $(P12MCAPI)/examples/rules.mk
+  # The variables we want to communicate to the MCAPI STHORM makefile:
+  export CFLAGS+=-DMCAPI_STHORM
+  export CXXFLAGS+=-DMCAPI_STHORM
+  export FABRIC_CFLAGS=$(CFLAGS) $(CFLAGS_MCAPI_ACCEL)
+  export LDFLAGS
+  export LDLIBS
+  # By default, forward any target to the MCAPI STHORM Makefile, for
+  # example for the distclean target:
+  .DEFAULT:
+	$(MAKE_FOR_STHORM) $(MAKEFLAGS) $(MAKECMDGOALS)
+
+  # On STHORM, we invoke the MCAPI STHORM makefiles to compile and run the
+  # application by setting the variables defined in the STHORM... variable:
+  run_%: %
+	$(MAKE_FOR_STHORM) $(STHORM_$<) run
+else
+  run_%: %
 	./$<
+endif
 
 # Produce a CPP output to help debugging
 %.E: %.[cC]
