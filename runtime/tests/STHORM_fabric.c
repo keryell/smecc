@@ -24,7 +24,7 @@ void mcapi_domain_entry() {
   if (MCAPI_SUCCESS == status)  {
     if (PRODUCER_DOMAIN == domain_id) {
        MCAPI_TRACE_CI("Creating the producer: domain_id = #", domain_id);
-       create_node(PRODUCER_DOMAIN, producer, NULL, NULL, NULL);
+       create_node(PRODUCER_NODE, producer, NULL, NULL, NULL);
     }
     else
       MCAPI_TRACE_CI("Fabric cluster not used: domain_id = #", domain_id);

@@ -52,18 +52,21 @@ void static MCAPI_check_status(mcapi_status_t status,
     char *message = "";
 #else
     char message[MCAPI_MAX_STATUS_SIZE];
-#endif
     mcapi_display_status(status, message, MCAPI_MAX_STATUS_SIZE);
+#endif
     fprintf(stderr,"API call fails in file '%s', function '%s',"
 	    " line %d with error:\n\t%s\n",
 	    file, function, line, message);
 #ifdef MCAPI_STHORM
-    /* Rely on the STHORM to display the status */
+    /* Rely on the STHORM MCAPI tracing API to display the status */
     MCAPI_TRACE_CS("", status);
 #endif
 #endif
+    /* Well, there is no exit() on STHORM, so simply go on... */
+#ifndef MCAPI_STHORM
     /* Exit and forward the error code to the OS: */
     exit(status);
+#endif
   }
   /* Go on, no error */
   return;
