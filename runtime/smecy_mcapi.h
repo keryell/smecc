@@ -244,6 +244,20 @@ SMECY_MCAPI_receive_gate_create(mcapi_port_t receive_port,
                                    " pkt_receive %#tx\n",
                                    (intptr_t)receive_port,
                                    (intptr_t)pkt_receive);
+
+#if defined(MCAPI_STHORM) && !defined(SMECY_MCAPI_HOST)
+  /* On STHORM fabric side, it looks like we need to precise this
+     attribute to have a connection with the host working */
+  mcapi_endp_attr_memory_type_t memtype = MCAPI_ENDP_ATTR_REMOTE_MEMORY;
+  mcapi_endpoint_set_attribute(pkt_receive,
+                               MCAPI_ENDP_ATTR_MEMORY_TYPE,
+                               &memtype,
+                               sizeof(mcapi_endp_attr_memory_type_t),
+                               &status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_set_attribute "
+                                   "MCAPI_ENDP_ATTR_REMOTE_MEMORY\n");
+#endif
+
   mcapi_request_t handle;
 
 #ifdef SMECY_MCAPI_HOST
@@ -294,6 +308,20 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_create "
                                    "on send port %#tx returns pkt_send %#tx\n",
                                    (intptr_t)send_port, (intptr_t)pkt_send);
+
+#if defined(MCAPI_STHORM) && !defined(SMECY_MCAPI_HOST)
+  /* On STHORM fabric side, it looks like we need to precise this
+     attribute to have a connection with the host working */
+  mcapi_endp_attr_memory_type_t memtype = MCAPI_ENDP_ATTR_REMOTE_MEMORY;
+  mcapi_endpoint_set_attribute(pkt_send,
+                               MCAPI_ENDP_ATTR_MEMORY_TYPE,
+                               &memtype,
+                               sizeof(mcapi_endp_attr_memory_type_t),
+                               &status);
+  SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_endpoint_set_attribute "
+                                   "MCAPI_ENDP_ATTR_REMOTE_MEMORY\n");
+#endif
+
   mcapi_request_t handle;
   size_t size;
 
