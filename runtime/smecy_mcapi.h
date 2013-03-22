@@ -37,6 +37,10 @@ void mcapi_display_state (void* handle) {
 */
 
 #ifdef MCAPI_STHORM
+/* Use the API to deal with threads on the fabric: */
+#include "mcapi_fabric_helper.h"
+/* For some timing functions */
+//#include "mcapi_time_helper.h"
 /* Use the STHORM tracing API... */
 #include "mcapi_trace_helper.h"
 #else
@@ -151,10 +155,14 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
     MCAPI_TRACE_CI(file, line);
 #endif
 #endif
-    /* Well, there is no exit() on STHORM, so simply go on... */
 #ifndef MCAPI_STHORM
     /* Exit and forward the error code to the OS: */
     exit(status);
+#else
+    /* Well, there is no exit() on STHORM, so loop around instead of going
+       on with nasty side effects... */
+    MCAPI_TRACE_C("This thread is waiting for ever because of an error.\n");
+    for(;;) ;
 #endif
   }
   /* Go on, no error */
