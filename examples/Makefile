@@ -21,6 +21,7 @@ LOCAL_SRC= hello_world.c map-tab.c \
 # Describe how to compile the smecc generated versions on STHORM:
 STHORM_smecy_hello_world_host=HOST_SRC='smecy_hello_world_host.c' HOST_EXE='smecy_hello_world_host'  FABRIC_SRC='accel_smecy_hello_world.c'
 
+STHORM_smecy_simple_map_host=HOST_SRC='smecy_simple_map_host.c' HOST_EXE='smecy_simple_map_host'  FABRIC_SRC='accel_smecy_simple_map.c'
 
 ## Remove .c and .C extension to have executable names:
 #LOCAL_BIN:=$(LOCAL_SRC:.c=)
