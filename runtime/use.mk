@@ -191,6 +191,10 @@ ifeq ($(TARGET),STHORM)
 	# Rely on the MCAPI STHORM makefile to compile for and run on the
 	# target:
 	$(MAKE_FOR_STHORM) $(STHORM_$*_host) run
+
+  debug_%_host:
+	# Think to do a "handle SIGUSR1 noprint nostop" in GDB
+	$(MAKE_FOR_STHORM) $(STHORM_$*_host) debug
 else
   run_%: %
 	./$<
