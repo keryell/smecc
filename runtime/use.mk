@@ -163,7 +163,15 @@ accel_smecy_%_fabric.c: accel_smecy_%.c
 	cp -a $< $@
 
 ifeq ($(TARGET),STHORM)
+  # To use the Makefile provided with STHORM MCAPI:
   MAKE_FOR_STHORM=$(MAKE) -f $(P12MCAPI)/examples/rules.mk
+
+  # The STxP70 compiler has an option to select C99 with a '-' less
+  # than with GCC:
+  CFLAGS:=$(subst --std=c99,-std=c99,$(CFLAGS))
+  # There is no OpenMP support on the accelerator:
+  CFLAGS:=$(filter-out -fopenmp,$(CFLAGS))
+
   # The variables we want to communicate to the MCAPI STHORM makefile:
   export FABRIC_CFLAGS:=$(CFLAGS) -DMCAPI_STHORM $(CFLAGS_MCAPI_ACCEL)
   export CFLAGS+=-DMCAPI_STHORM $(CFLAGS_MCAPI)
