@@ -49,7 +49,7 @@ LDLIBS+=$(MCAPI_LINK) $(MRAPI_LINK)
 LOCAL_SMECY=$(addprefix smecy_,$(LOCAL_SRC))
 LOCAL_ACCEL_SMECY=$(addprefix accel_smecy_,$(LOCAL_SRC))
 LOCAL_SMECY_MCAPI=$(patsubst %.c,%_host.c,$(patsubst %.C,%_host.C,$(LOCAL_SMECY)))
-LOCAL_ACCEL_SMECY_MCAPI==$(patsubst %.c,%_fabric.c,$(patsubst %.C,%_fabric.C,$(LOCAL_ACCEL_SMECY)))
+LOCAL_ACCEL_SMECY_MCAPI=$(patsubst %.c,%_fabric.c,$(patsubst %.C,%_fabric.C,$(LOCAL_ACCEL_SMECY)))
 LOCAL_DOT=$(addsuffix .dot,$(LOCAL_SRC))
 LOCAL_PDF=$(addsuffix .pdf,$(LOCAL_SRC))
 
