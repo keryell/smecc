@@ -208,10 +208,8 @@
   SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
 
 #define SMECY_get_arg_vector(func, arg, type, addr, size, pe, ...)	\
-  SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address" \
-                      " %p from arg #%d of function \"%s\" on "         \
-                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
-                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
+  /* Delegate the verbose message to the implementation since the address
+     may not have any meaning for example on the accelerator side... */ \
   SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
 
 #define SMECY_get_return(func, type, pe, ...)				\

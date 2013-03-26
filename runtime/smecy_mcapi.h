@@ -706,13 +706,18 @@ static void SMECY_IMP_initialize_then_finalize() {
   SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "   \
                       "of %s at address %p from arg #%d of "             \
                       "function \"%s\" on processor \"%s\" n° \"%s\"\n", \
-                      (size_t) size, #type, SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__), arg,                  \
-                      #func, #pe, #__VA_ARGS__)
+                      (size_t) size, #type,                             \
+                      SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__),    \
+                      arg, #func, #pe, #__VA_ARGS__)
 #endif
 
 
 #ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...)  \
+  SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address" \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   /* Receive the vector result from the accelerator
    */                                                                   \
   mcapi_pktchan_recv(P4A_receive,                                       \
@@ -743,6 +748,11 @@ static void SMECY_IMP_initialize_then_finalize() {
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...)  \
+  SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address" \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      #type, SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__), \
+                      arg, #func, #pe, #__VA_ARGS__)                    \
   /* Send the vector data given by the function execution back to the host
    */                                                                   \
   mcapi_pktchan_send(P4A_transmit,                                      \
