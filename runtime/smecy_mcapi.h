@@ -687,6 +687,11 @@ static void SMECY_IMP_initialize_then_finalize() {
 
 #ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
+  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
+                      "of %s at address %p from arg #%d of "            \
+                      "function \"%s\" on processor \"%s\" n° \"%s\"\n", \
+                      (size_t) size, #type, addr, arg,                  \
+                      #func, #pe, #__VA_ARGS__)                         \
   /* The pointer to the packet received from the PE by MCAPI
    */                                                           \
   type* SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__)
@@ -694,8 +699,15 @@ static void SMECY_IMP_initialize_then_finalize() {
 /* This is on the accelerator side */
 #define SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
   /* Allocate the memory given to the function to receive the data
-     from the execution */                                      \
-  type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__)[size]
+     from the execution */                                               \
+  type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__)[size];              \
+  /* Display the address only now since it is defined by the previous
+     allocation.  */                                                     \
+  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "   \
+                      "of %s at address %p from arg #%d of "             \
+                      "function \"%s\" on processor \"%s\" n° \"%s\"\n", \
+                      (size_t) size, #type, SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__), arg,                  \
+                      #func, #pe, #__VA_ARGS__)
 #endif
 
 
