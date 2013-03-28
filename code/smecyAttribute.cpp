@@ -446,19 +446,35 @@ namespace smecy
 		return this->argList[argIndex].argSize;
 	}
 
-	void Attribute::print()
-	{
-		std::cout << "Attribute with " << this->argList.size() << " argument clauses." << std::endl;
-		std::cout << "\tMapped to " << this->mapName<< " n°(";
-		for (auto e: this->mapCoordinates)
-		  std::cout << e << ',';
-		std::cout << ")." << std::endl;
-		for (unsigned int i=0; i<this->argList.size(); i++)
-		{
-			std::cout << "\t" ;
-			this->argList[i].print();
-		}
-	}
+  void Attribute::print() {
+    std::cout << "Attribute with " << this->argList.size() << " argument clauses." << std::endl;
+    std::cout << "\tMapped to " << this->mapName<< " n°(";
+
+    for (auto e: this->mapCoordinates)
+      std::cout << e << ',';
+    std::cout << ")." << std::endl;
+
+    for (unsigned int i=0; i<this->argList.size(); i++) {
+        std::cout << "\t" ;
+        this->argList[i].print();
+    }
+
+    std::cout << "Parent = " << parent->unparseToString();
+
+    std::cout << "expressionList:" << std::endl;
+    for (auto e: this->expressionList)
+      std::cout << e << std::endl;
+    std::cout << ")." << std::endl;
+
+    std::cout << "sgExpressionList:" << std::endl;
+    for (auto e: this->sgExpressionList)
+      std::cout << e->unparseToString() << std::endl;
+    std::cout << ")." << std::endl;
+  }
+        //    IntExpr condition; //condition if if clause
+        //    int streamLoop; //number of stream loop or -1 if not a stream loop
+        //    int stage; //stage number or -1 if nor a stage in a pipelined stream loop
+        //    int label; //number of label or -1 if no label
 
 //==========================================================================//
 // Arg
