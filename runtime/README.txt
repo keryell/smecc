@@ -1,3 +1,15 @@
+SME-C compilation with smecc:
+=============================
+Have a look to the global README.txt to have information about the
+configuration of the environment to run them.
+
+Basically the local Makefile can be run with TARGET=MCA or STHORM to
+select the MCAPI implementation to compile and run with: respectively the
+MultiCore Association reference implementation and the implementation from
+CEA for ST STHORM.
+
+
+
 The use.mk Makefile can produce basically many different targets
 
 If we have for example a <local>.c C99 or <local>.C C++ source file in the
@@ -53,3 +65,43 @@ This Makefile defines also some convenient global targets:
   MCAPI;
 
 - bin: generate all possible kinds of binaries.
+
+
+By default it is compiled in verbose and tracing mode.
+Add "SMECY_DEBUG=" to the make line to cancel these modes.
+
+
+ST STHORM platform:
+-------------------
+
+It uses the $P12MCAPI/examples/rules.mk Makefile. Look at the STHORM MCAPI
+documentation in $P12MCAPI/doc/p12mcapi.pdf for more details.
+You have to initialize the STHORM SDK environment, for example with:
+export JAVA_HOME=/usr/lib/jvm/default-java
+source ~/sthorm-sdk-2013.1/setup.sh
+export P12MCAPI=.../P2012-MCAPI-v0.4-2013.1
+
+Then you have also to set the variable:
+
+
+You can choose the target for the host and the accelerator fabric with
+the HOST_TYPE (posix [default] or arm) and FABRIC_TYPE (posix [default]
+or iss) variables.
+
+For example, to compile and run this application in emulation mode with
+pthreads on your local Linux, use:
+make TARGET=STHORM run_smecy_<local>_host
+
+and to compile and run on the Encore Intruction Set Simulator (ISS), use:
+make TARGET=STHORM FABRIC_TYPE=iss run_smecy_<local>_host
+
+To run it in the debugger, use:
+make TARGET=STHORM FABRIC_TYPE=iss debug_smecy_<local>_host
+
+The applications are compiled into the "build" directory.
+
+Use
+make TARGET=STHORM FABRIC_TYPE=posix distclean
+or
+make TARGET=STHORM FABRIC_TYPE=iss distclean
+to remove the given application.

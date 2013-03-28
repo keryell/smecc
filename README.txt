@@ -142,9 +142,11 @@ Get the CEA MCAPI for P2012 Release V0.2 (18th September 2012).
 Initialize the environment variable SMECC_STHORM_MCAPI to point to where
 the STORM MCA API is installed, for example with:
 export SMECC_STHORM_MCAPI=~/p2012-SDK-release-2012.2/modules/P2012-MCAPI
+(utilisé ^^^ ?)
 
 Initialize the STHORM SDK environment, for example with:
-source ~/p2012-SDK-release-2012.2/setup.sh
+export JAVA_HOME=/usr/lib/jvm/default-java
+source ~/sthorm-sdk-2013.1/setup.sh
 
 
 # Some Emacs stuff:
