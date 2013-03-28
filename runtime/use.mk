@@ -163,6 +163,10 @@ accel_smecy_%_fabric.c: accel_smecy_%.c
 	cp -a $< $@
 
 ifeq ($(TARGET),STHORM)
+  ifndef P12MCAPI
+    $(error You have to set the P12MCAPI environment variable to point to the STHORM MCAPI directory and source the SDK setup.sh as explained in the README.txt)
+  endif
+
   # To use the Makefile provided with STHORM MCAPI:
   MAKE_FOR_STHORM=$(MAKE) -f $(P12MCAPI)/examples/rules.mk
 

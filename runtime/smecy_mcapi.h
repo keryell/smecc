@@ -36,11 +36,15 @@ void mcapi_display_state (void* handle) {
 
 */
 
+
 #ifdef MCAPI_STHORM
 /* Use the API to deal with threads on the fabric: */
 #include "mcapi_fabric_helper.h"
 /* For some timing functions */
 //#include "mcapi_time_helper.h"
+#endif
+
+#if defined(MCAPI_STHORM) && defined(SMECY_MCAPI_CHECK_TRACE)
 /* Use the STHORM tracing API... */
 #include "mcapi_trace_helper.h"
 #else
@@ -140,6 +144,7 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
 #define MCAPI_MAX_STATUS_SIZE 250
 #endif
 #ifdef MCAPI_STHORM
+    //#define puts(...)
     char *message = "";
 #else
     char message[MCAPI_MAX_STATUS_SIZE];
@@ -188,11 +193,11 @@ void static SMECY_MCAPI_check_status(mcapi_status_t status,
 
 // Create a unique variable name used to pass an argument to function
 #define SMECY_IMP_VAR_ARG(func, arg, pe, ...)	\
-  SMECY_CONCATN(SMECY_CONCATN(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),_##func##_##arg)
+  p4a_##pe##_##func##_##arg
 
 // Create a unique variable name for a message
 #define SMECY_IMP_VAR_MSG(func, arg, pe, ...)	\
-  SMECY_CONCATN(SMECY_CONCATN(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),_##func##_##arg##_msg)
+  p4a_##pe##_##func##_##arg##_msg
 
 //  SMECY_CONCAT(SMECY_CONCAT(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),##_##func##_##arg)
 
@@ -412,6 +417,7 @@ static void SMECY_IMP_finalize() {
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Finalizing MCAPI\n");
 }
 
+
 static void SMECY_IMP_initialize_then_finalize() {
   //mcapi_node_attributes_t node_attributes;
   mcapi_info_t info;
@@ -475,7 +481,6 @@ static void SMECY_IMP_initialize_then_finalize() {
    */                                                                   \
   _Pragma("omp critical(SMECY_IMP_set)")                                \
   {                                                                     \
-    fprintf(stderr, "Cluster = %d, Node = %d\n", domain, node);         \
     /* No need for an OpenMP flush because of the critical section */   \
     if (SMECY_MCAPI_connection[domain][node].opened) {                  \
       P4A_transmit = SMECY_MCAPI_connection[domain][node].transmit;     \
