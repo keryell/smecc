@@ -451,7 +451,7 @@ namespace smecy
 		std::cout << "Attribute with " << this->argList.size() << " argument clauses." << std::endl;
 		std::cout << "\tMapped to " << this->mapName<< " n°(";
 		for (auto e: this->mapCoordinates)
-		  std::cout << e;
+		  std::cout << e << ',';
 		std::cout << ")." << std::endl;
 		for (unsigned int i=0; i<this->argList.size(); i++)
 		{
