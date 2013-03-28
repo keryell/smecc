@@ -90,7 +90,6 @@ namespace smecy
 	std::vector<IntExpr> Attribute::args;
 	std::vector<std::pair<IntExpr,IntExpr> > Attribute::argRange;
 	int Attribute::argNumber;
-	int Attribute::isExprMode = 0;
 	std::stringstream Attribute::expr;
 	std::pair<IntExpr,IntExpr> Attribute::currentPair;
 	IntExpr Attribute::currentIntExpr;

@@ -131,7 +131,6 @@ namespace smecy
 		static std::vector<std::pair<IntExpr,IntExpr> > argRange;
 		static std::pair<IntExpr,IntExpr> currentPair;
 		static int argNumber;
-		static int isExprMode;
 		static std::stringstream expr;
 		static IntExpr currentIntExpr;
 		static std::vector<std::string> currentExpressionList;
@@ -140,5 +139,10 @@ namespace smecy
 }//namespace smecy
 
 std::ostream& operator<<(std::ostream& os, smecy::IntExpr& ie);
+
+void smecyLexerStartINITAL();
+void smecyLexerPushExpressions();
+void smecyLexerPushExpressionsWithoutColon();
+void smecyLexerPushExpressionsWithoutComma();
 
 #endif //SMECY_ATTRIBUTE_H
