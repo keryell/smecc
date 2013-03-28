@@ -95,8 +95,6 @@ namespace smecy
 		void addStreamLoop();
 		void addStage();
         void addLabel(int number);
-		static int streamLoopTotal;
-        static int currentStreamStage;
 
 		//get and set methods
 		void addParsedExpression(SgExpression* expr);
@@ -125,16 +123,18 @@ namespace smecy
 		int argDimension(int arg);	//returns effective dimension, taking range into account
 		std::vector<IntExpr>& getSize(int arg); //FIXME FIXME FIXME
 
-		//static attributes needed for parsing #pragma
+		// static attributes declaration needed for parsing
+		// #pragma. They must be defined somewhere else outside of
+		// the class declaration
 		static Attribute *currentAttribute ;
 		static std::vector<IntExpr> args;
 		static std::vector<std::pair<IntExpr,IntExpr> > argRange;
 		static std::pair<IntExpr,IntExpr> currentPair;
 		static int argNumber;
-		static std::stringstream expr;
+                static std::stringstream expr;
 		static IntExpr currentIntExpr;
 		static std::vector<std::string> currentExpressionList;
-		static SgNode* currentParent;
+                static SgNode* currentParent;
 	};
 }//namespace smecy
 

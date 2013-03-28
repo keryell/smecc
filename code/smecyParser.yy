@@ -32,21 +32,45 @@ int _yyparse();
 /* a SME-C directive is a list of clauses
 
    The static attribute object that will be used to store the result of
-   the parsing is initialized
+   the parsing is initialized.
 
    A list meant to contain all C expressions contained in the directive is
-   also initialized
+   also initialized.
 
    All this parser should be reworked to be in the classic style, using $$
    to build data structures on the flight and be reentrant instead of
    using a lot of static data structures
+
+
+   The design ideas:
+
+   - the pragma is parsed from attachAttributes() into a new
+     Attribute::currentAttribute which is allocated here
+
+   - Attribute::currentAttribute are filled with the various components
+
+   - a string version of each expression is kept into
+     Attribute::expressionList
+
+   - this Attribute::expressionList is later parsed from
+     parseExpressions() by ROSE in the program context to
+     Attribute::sgExpressionList so that each expression is an AST object
+     and can be used in the code generation process
 */
 
 smecy_directive          : SMECY
-                           { Attribute::currentExpressionList.clear();
-                             Attribute::currentAttribute = new Attribute(Attribute::currentParent); }
+                           { /* Reset the list of the expressions
+                                associated to this pragme */
+                             Attribute::currentExpressionList.clear();
+                             /* This pragma is associated to the statement
+                                we deal with */
+                             Attribute::currentAttribute = new Attribute(Attribute::currentParent);
+                           }
                            clause_list
-                           { Attribute::currentAttribute->setExpressionList(Attribute::currentExpressionList); }
+                           { /* Keep the list of each individual top
+                                expression to parse it later in the
+                                context of the whole program */
+                             Attribute::currentAttribute->setExpressionList(Attribute::currentExpressionList); }
                          ;
 
 
@@ -164,15 +188,14 @@ size_list                : /*empty*/
                          | '['
                            { smecyLexerPushExpressionsWithoutColon(); }
                            expression ']'
-                           { Attribute::args.push_back(Attribute::currentIntExpr);
-                           }
+                           { Attribute::args.push_back(Attribute::currentIntExpr); }
                            size_list
                          ;
 
 
 optional_expression_list : /*empty*/
                            { Attribute::args.clear(); }
-                           | ',' expression_list;
+                         | ',' expression_list;
 
 
 // Parse into args a list of integer expressions separated by ',':
@@ -180,8 +203,7 @@ expression_list          : expression {
                              // Clear the current list of
                              // arguments
                              Attribute::args.clear();
-                             // and initialize with the
-                             // first int expression
+                             // Initialize with the first expression
                              Attribute::args.push_back(Attribute::currentIntExpr);
                            }
                            more_expression_list
@@ -194,12 +216,15 @@ more_expression_list     : /*empty*/
                            more_expression_list
                          ;
 
-/* range is divided in several parts to cover the different cases ([], [n] and [n:m])
-a range is made of pairs of intExpr with the following correspondance :
-[] -> (-1,-1)
-[n] -> (n,-1)
-[n:m] -> (n,m)
-  FIXME Simplify the following
+/* A range is divided in several parts to cover the different cases ([],
+   [n] and [n:m]).
+
+   A range is made of pairs of intExpr with the following matching :
+   - [] -> (-1,-1)
+   - [n] -> (n,-1)
+   - [n:m] -> (n,m)
+
+   FIXME Simplify the following
 */
 range                    : '/' '['
                            { smecyLexerPushExpressionsWithoutColon();
@@ -214,7 +239,8 @@ range_begin              : expression
                            range_mid
                          | ']'
                            {
-                             Attribute::argRange.push_back(std::pair<IntExpr,IntExpr>(IntExpr(-1),IntExpr(-1)));
+                             /* Empty range found */
+                             Attribute::argRange.push_back(std::pair<IntExpr,IntExpr> {-1, -1});
                            }
                            range_open
                          ;
@@ -226,7 +252,8 @@ range_mid                : ':' expression
                            }
                            ']' range_open
                          | ']'
-                           { Attribute::currentPair.second = IntExpr(-1);
+                           { /* No ":m" */
+                             Attribute::currentPair.second = { -1 };
                              Attribute::argRange.push_back(Attribute::currentPair);
                            }
                            range_open
@@ -234,9 +261,13 @@ range_mid                : ':' expression
 
 
 range_open               : /*empty*/
-                           { Attribute::currentAttribute->addArg(Attribute::argNumber,Attribute::argRange);}
+                           { /* Keep track of the current range that has
+                                been parsed */
+                             Attribute::currentAttribute->addArg(Attribute::argNumber,Attribute::argRange); }
                          | '['
-                           { smecyLexerPushExpressionsWithoutColon(); }
+                           { smecyLexerPushExpressionsWithoutColon();
+                             /* Parse the next [...] */
+                           }
                            range_begin
                          ;
 
@@ -255,13 +286,19 @@ range_open               : /*empty*/
 expression               : { Attribute::expr.str(""); }
                            expr
                            { /* Set the current internal expression to
-                                what we parsed in this expression: */
+                                what we parsed in this expression so that
+                                it can be used later by other rules: */
                              Attribute::currentIntExpr = IntExpr(Attribute::expr.str());
+                             /* Add the current string expression to the
+                                list of expressions to be parsed by ROSE
+                                in the program context later */
+                             Attribute::currentExpressionList.push_back(Attribute::expr.str());
                            }
                          ;
 
 
-/* To verify the matching ( ) */
+/* To verify the matching ( ) and gather the expression into
+   Attribute::expr */
 expr                     : expr expr
                          | EXPRESSION
                            { Attribute::expr << $1; }

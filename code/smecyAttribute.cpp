@@ -85,20 +85,21 @@ namespace smecy
 	{
 	}
 
-	//static attributes used in parsing
-	Attribute* Attribute::currentAttribute ;
-	std::vector<IntExpr> Attribute::args;
-	std::vector<std::pair<IntExpr,IntExpr> > Attribute::argRange;
-	int Attribute::argNumber;
-	std::stringstream Attribute::expr;
-	std::pair<IntExpr,IntExpr> Attribute::currentPair;
-	IntExpr Attribute::currentIntExpr;
-	std::vector<std::string> Attribute::currentExpressionList;
-	SgNode* Attribute::currentParent = NULL;
+  // All the static attributes used in parsing
+  Attribute* Attribute::currentAttribute ;
+  std::vector<IntExpr> Attribute::args;
+  std::vector<std::pair<IntExpr,IntExpr> > Attribute::argRange;
+  int Attribute::argNumber;
+  std::stringstream Attribute::expr;
+  std::pair<IntExpr,IntExpr> Attribute::currentPair;
+  IntExpr Attribute::currentIntExpr;
+  std::vector<std::string> Attribute::currentExpressionList;
+  SgNode* Attribute::currentParent = NULL;
 
-	//static attribute used in counting the stream loops (smecy lowering part, see smecyTranslation)
-	int Attribute::streamLoopTotal = 0;
-    int Attribute::currentStreamStage;
+  /* static attribute used in counting the stream loops (smecy
+     lowering part, see smecyTranslation) */
+  static int streamLoopTotal = 0;
+  static int currentStreamStage;
 
 	//methods to add clauses
 	void Attribute::addMap(std::string mapName, std::vector<IntExpr> coordinates)
