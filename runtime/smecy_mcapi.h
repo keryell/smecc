@@ -439,6 +439,11 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
                              */                 \
   mcapi_node_t node = n
 
+/* Map a 1-dimension PE number on MCAPI */
+#define SMECY_MCAPI_PARSE_PE_PE(p)              \
+/* Just select domain 0 */                      \
+  SMECY_MCAPI_PARSE_PE_STHORM(0, p)
+
 #if 0
 /* Do not allow the map(Host...) since it leads to deadlocks (we are
    already on the host!) */
