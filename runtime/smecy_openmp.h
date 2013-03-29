@@ -47,14 +47,10 @@
 /* Implementation macros to deal with mapping and function executions */
 
 // Create a variable name used to pass an argument to function
-/* Unfortunately this simple naming does not work with non constant PE IDs...
-
-   FIXME
-*/
 #define SMECY_IMP_VAR_ARG(func, arg, pe, ...)	\
-  SMECY_CONCATN(SMECY_CONCATN(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),_##func##_##arg)
+  p4a_##pe##_##func##_##arg
 
-//  SMECY_CONCAT(SMECY_CONCAT(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),##_##func##_##arg)
+//  SMECY_CONCATN(SMECY_CONCAT(p4a_##pe##_,SMECY_CONCATENATE(__VA_ARGS__)),##_##func##_##arg)
 
 /* Wrapper that can be used for example to launch the function in another
    thread */
