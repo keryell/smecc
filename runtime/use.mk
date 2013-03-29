@@ -162,6 +162,11 @@ accel_smecy_%_fabric.c: accel_smecy_%.c
 	# They are the same file indeed
 	cp -a $< $@
 
+# Beautifying the ouput:
+%-format.c: %.E
+	grep -v '^#' $< > $@ ; astyle $@
+
+
 ifeq ($(TARGET),STHORM)
   ifndef P12MCAPI
     $(error You have to set the P12MCAPI environment variable to point to the STHORM MCAPI directory and source the SDK setup.sh as explained in the README.txt)
