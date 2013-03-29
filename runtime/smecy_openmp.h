@@ -15,6 +15,32 @@
 /* To avoid race conditions in stream loop pipeline: */
 #include "conditional_variable_openmp.h"
 
+#ifdef SMECY_VERBOSE
+#include <stdio.h>
+/* Prefix all the debug messages with "SMECY: " to ease filtering */
+#define SMECY_PRINT_VERBOSE_RAW(...)                                    \
+  fprintf(stderr, "SMECY: " __VA_ARGS__)
+/* With a ; to allow a statement or a declaration afterards
+
+   The comment on 2 lines at the end is to force a poor-man formating of
+   the output when using cpp -CC (preprocess but keep the comments) to
+   separate better the debug message from the real code
+*/
+#define SMECY_PRINT_VERBOSE(...) SMECY_PRINT_VERBOSE_RAW(__VA_ARGS__);/*
+*/
+#define SMECY_PRINT_VERBOSE_COMMA(...)                                  \
+  /* The , instead of ; is to have a single statement with the statement \
+     following this macro. It allows for example to have this verbose   \
+     macro between a #pragma omp section and the real statement. Do not \
+     work before a declaration... */                                    \
+  SMECY_PRINT_VERBOSE_RAW(__VA_ARGS__),/*
+*/
+#else
+#define SMECY_PRINT_VERBOSE(...)
+#define SMECY_PRINT_VERBOSE_COMMA(...)
+#endif
+
+
 /* SMECY_IMP_ are the real implementations doing the real work, to be
    defined somewhere else. */
 
