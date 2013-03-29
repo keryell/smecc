@@ -11,9 +11,9 @@ SMECY_INC=../runtime
 
 # All the sources to compile:
 # Skip map-tab_cpp.C.bug
-LOCAL_SRC= hello_world.c map-tab.c \
-	multiple_compilation_unit_a.c multiple_compilation_unit_b.c \
-	simple_map.c input.c
+LOCAL_SRC= hello_world.c simple_map.c many_transfers.c big_transfers.c input.c map-tab.c \
+	multiple_compilation_unit_a.c multiple_compilation_unit_b.c
+
 # There is a link issue in the Makefile that use the C linker instead of C++:
 # input_cpp.C simple_map_cpp.C
 # multiple_compilation_unit_a_cpp.C multiple_compilation_unit_b_cpp.C
@@ -21,14 +21,18 @@ LOCAL_SRC= hello_world.c map-tab.c \
 # Describe how to compile the smecc generated versions on STHORM:
 STHORM_smecy_hello_world_host=HOST_SRC='smecy_hello_world_host.c' HOST_EXE='smecy_hello_world_host'  FABRIC_SRC='accel_smecy_hello_world.c'
 
+STHORM_smecy_many_transfers_host=HOST_SRC='smecy_many_transfers_host.c' HOST_EXE='smecy_many_transfers_host'  FABRIC_SRC='accel_smecy_many_transfers.c'
+
+STHORM_smecy_big_transfers_host=HOST_SRC='smecy_big_transfers_host.c' HOST_EXE='smecy_big_transfers_host'  FABRIC_SRC='accel_smecy_big_transfers.c'
+
 STHORM_smecy_simple_map_host=HOST_SRC='smecy_simple_map_host.c' HOST_EXE='smecy_simple_map_host'  FABRIC_SRC='accel_smecy_simple_map.c'
 
 ## Remove .c and .C extension to have executable names:
 #LOCAL_BIN:=$(LOCAL_SRC:.c=)
 #LOCAL_BIN:=$(LOCAL_BIN:.C=)
-LOCAL_BIN= hello_world map-tab \
-	multiple_compilation_unit_a \
-	simple_map input
+LOCAL_BIN= hello_world simple_map many_transfers big_transfers input map-tab \
+	multiple_compilation_unit_a
+
 # input_cpp simple_map_cpp multiple_compilation_unit_a_cpp
 
 include $(SMECY_INC)/use.mk
