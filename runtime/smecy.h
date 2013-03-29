@@ -110,46 +110,46 @@
    so use __VA_ARGS__ for them at the end of the macros */
 
 #define SMECY_initialize_then_finalize()                              \
-  SMECY_PRINT_VERBOSE("Calling SMECY_initialize_then_finalize()\n")   \
+  SMECY_PRINT_VERBOSE("Calling SMECY_initialize_then_finalize()")     \
   SMECY_IMP_initialize_then_finalize()
 
 
 #define SMECY_set(func, instance, pe, ...)                              \
   SMECY_PRINT_VERBOSE("Preparing to launch instance %d of function "    \
-                      "\"%s\" on processor \"%s\" n° \"%s\"\n",         \
+                      "\"%s\" on processor \"%s\" n° \"%s\"",           \
                       instance, #func, #pe, #__VA_ARGS__)               \
   SMECY_IMP_set(func, instance, pe, __VA_ARGS__)
 
 #define SMECY_accelerator_end(func, instance, pe, ...)                  \
   SMECY_PRINT_VERBOSE("End accelerator section of instance %d of "      \
-                      "function \"%s\" on processor \"%s\" n° \"%s\"\n", \
+                      "function \"%s\" on processor \"%s\" n° \"%s\"",  \
                       instance, #func, #pe, #__VA_ARGS__)               \
   SMECY_IMP_accelerator_end(func, instance, pe, __VA_ARGS__)
 
 #define SMECY_send_arg(func, arg, type, value, pe, ...)             \
   SMECY_PRINT_VERBOSE("Sending %s as arg #%d to function \"%s\""    \
-                      " on processor \"%s\" n° \"%s\"\n",           \
+                      " on processor \"%s\" n° \"%s\"",             \
                       #type, arg, #func, #pe, #__VA_ARGS__)         \
   SMECY_IMP_send_arg(func, arg, type, value, pe, __VA_ARGS__)
 
 #define SMECY_cleanup_send_arg(func, arg, type, value, pe, ...)		\
   SMECY_PRINT_VERBOSE("Deal with post-sending %s as arg #%d"            \
                       " to function \"%s\" on processor \"%s\" n° "     \
-                      "\"%s\"\n", #type, arg, #func, #pe, #__VA_ARGS__) \
+                      "\"%s\"", #type, arg, #func, #pe, #__VA_ARGS__)   \
   SMECY_IMP_cleanup_send_arg(func, arg, type, value, pe, __VA_ARGS__)
 
 #define SMECY_send_arg_vector(func, arg, type, addr, size, pe, ...)	\
   SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s at address" \
                       " %p from arg #%d of function \"%s\" on "         \
-                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
                       #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
 
 #define SMECY_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...) \
   SMECY_PRINT_VERBOSE("Deal with post-sending vector "                  \
                       "of %zd elements of %s at address"                \
-                      " %p from arg #%d of function \"%s\" on "          \
-                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
                       #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr,              \
                                     size, pe, __VA_ARGS__)
@@ -158,7 +158,7 @@
   SMECY_PRINT_VERBOSE("Update by sending vector "                       \
                       "of %zd elements of %s at address"                \
                       " %p from arg #%d of function \"%s\" on "         \
-                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
                       #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   SMECY_IMP_update_arg_vector(func, arg, type, addr, size, pe, __VA_ARGS__)
 
@@ -166,13 +166,13 @@
   SMECY_PRINT_VERBOSE("Udate by receiving vector "                      \
                       "of %zd elements of %s at address"                \
                       " %p from arg #%d of function \"%s\" on "         \
-                      "processor \"%s\" n° \"%s\"\n",(size_t) size,     \
+                      "processor \"%s\" n° \"%s\"",(size_t) size,       \
                       #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   SMECY_IMP_cleanup_update_arg_vector(func, arg, type, addr, size, pe, ...)
 
 #define SMECY_launch(func, n_args, pe, ...)				\
   SMECY_PRINT_VERBOSE("Running function \"%s\" with %zd arguments on "  \
-                      "processor \"%s\" n° \"%s\"\n",                   \
+                      "processor \"%s\" n° \"%s\"",                     \
                       #func, (size_t) n_args, #pe, #__VA_ARGS__)	\
   SMECY_IMP_launch(func, n_args, pe, __VA_ARGS__)
 
@@ -188,7 +188,7 @@
 
 #define SMECY_get_return(func, type, pe, ...)				\
   SMECY_PRINT_VERBOSE("Returning %s from function \"%s\" on processor"  \
-                      " \"%s\" n° \"%s\"\n", #type, #func, #pe, #__VA_ARGS__) \
+                      " \"%s\" n° \"%s\"", #type, #func, #pe, #__VA_ARGS__) \
   SMECY_IMP_get_return(func, type, pe, __VA_ARGS__)
 
 
@@ -196,7 +196,7 @@
 /* Interface macros to deal with streaming */
 
 #define SMECY_stream_init(stream, nbstreams)                            \
-  SMECY_PRINT_VERBOSE("Init stream %d with %d stages\n", stream, nbstreams) \
+  SMECY_PRINT_VERBOSE("Init stream %d with %d stages", stream, nbstreams) \
   SMECY_IMP_stream_init(stream, nbstreams)
 
 #define SMECY_stream_launch(stream, stage)                              \
@@ -205,27 +205,27 @@
   SMECY_IMP_stream_launch(stream, stage)
 
 #define SMECY_stream_get_init_buf(stream, stage)                        \
-  SMECY_PRINT_VERBOSE("Init get buffer on stage %d of stream %d\n",     \
+  SMECY_PRINT_VERBOSE("Init get buffer on stage %d of stream %d",       \
                       stage, stream)                                    \
   SMECY_IMP_stream_get_init_buf(stream, stage)
 
 #define SMECY_stream_put_data(stream, stage)                            \
-  SMECY_PRINT_VERBOSE("Post data for next stage on stage %d of stream %d\n", \
+  SMECY_PRINT_VERBOSE("Post data for next stage on stage %d of stream %d", \
                       stage, stream)                                    \
   SMECY_IMP_stream_put_data(stream, stage);                             \
-  SMECY_PRINT_VERBOSE("Sent the data for next stage on stage %d of stream %d\n", \
+  SMECY_PRINT_VERBOSE("Sent the data for next stage on stage %d of stream %d", \
                       stage, stream)                                    \
 
 #define SMECY_stream_get_data(stream, stage)                            \
   SMECY_PRINT_VERBOSE("Get data from previous stage on stage %d"        \
-                      " of stream %d\n", stage, stream)                 \
+                      " of stream %d", stage, stream)                   \
   SMECY_IMP_stream_get_data(stream, stage);                             \
   SMECY_PRINT_VERBOSE("Got the data from previous stage on stage %d"    \
-                      " of stream %d\n", stage, stream)                 \
+                      " of stream %d", stage, stream)                   \
 
 #define SMECY_stream_copy_data(stream, stage)                           \
   SMECY_PRINT_VERBOSE("Copy data from previous stage to next stage unchanged" \
-                      " on stage %d of stream %d\n", stage, stream)     \
+                      " on stage %d of stream %d", stage, stream)       \
   SMECY_IMP_stream_copy_data(stream, stage)
 
 /* Wait for the end of the application with Unix system-call: */
