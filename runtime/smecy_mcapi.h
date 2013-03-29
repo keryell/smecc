@@ -387,12 +387,17 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
                              */                 \
   mcapi_node_t node = n
 
+#if 0
+/* Do not allow the map(Host...) since it leads to deadlocks (we are
+   already on the host!) */
+
 /* Analyze the Host coordinates, which are not specified in the pragma.
    Replace them with the host MCAPI node */
 #define SMECY_MCAPI_PARSE_PE_Host()                     \
   mcapi_domain_t domain = SMECY_MCAPI_HOST_DOMAIN;/*
                                                    */   \
   mcapi_node_t node = SMECY_MCAPI_HOST_NODE
+#endif
 
 #ifdef SMECY_MCAPI_HOST
 /* Scoreboard used to keep the status of a connection between the host
