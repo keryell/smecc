@@ -12,6 +12,7 @@
 /* For... assert() :-) */
 #include <assert.h>
 /* Needed to display verbose MCAPI error messages: */
+#include <stdio.h>
 #include <stdarg.h>
 
 #ifdef SMECY_MCAPI_HOST
@@ -115,18 +116,19 @@ enum {
    Since MCAPI_TRACE_C add a new line, add a "\n" to non MCAPI_STHORM case
    too
 */
-SMECY_printf_varargs(const char *format, va_list ap) {
+static SMECY_printf_varargs(const char *format, va_list ap) {
 #ifdef MCAPI_STHORM
   /* Well, cannot use asprintf on MCAPI... */
   static char big_message[1000];
   vsnprintf(big_message, sizeof(big_message), format, ap);
   MCAPI_TRACE_C(big_message);
 #else
-  vfprintf(stderr, format "\n", ap);
+  vfprintf(stderr, format, ap);
+  fprintf(stderr, "\n");
 #endif
 }
 
-SMECY_printf(const char *format,  ...) {
+static SMECY_printf(const char *format,  ...) {
   va_list ap;
   va_start(ap, format);
   SMECY_printf_varargs(format, ap);
