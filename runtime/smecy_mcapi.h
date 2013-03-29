@@ -513,6 +513,8 @@ static void SMECY_IMP_initialize_then_finalize() {
                                                     SMECY_MCAPI_PE_TX_PORT);/*
                                                                          */ \
       /* No need for an OpenMP flush because of the critical section */ \
+      SMECY_MCAPI_connection[domain][node].transmit = P4A_transmit;     \
+      SMECY_MCAPI_connection[domain][node].receive = P4A_receive;       \
       SMECY_MCAPI_connection[domain][node].opened = true;               \
     }                                                                   \
   }                                                                     \
