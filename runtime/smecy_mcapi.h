@@ -124,6 +124,8 @@ static SMECY_printf_varargs(const char *format, va_list ap) {
   MCAPI_TRACE_C(big_message);
 #else
   vfprintf(stderr, format, ap);
+  /* Note that the new line is not atomic because it is in another
+     printf... */
   fprintf(stderr, "\n");
 #endif
 }
@@ -524,7 +526,7 @@ static void SMECY_IMP_initialize_then_finalize() {
    TODO: split this macro with sub-functions
  */
 #define SMECY_IMP_set(func, instance, pe, ...)                          \
-  SMECY_LBRACE /* To have local variable
+  SMECY_LBRACE /* To have local variables
                 */                                                      \
   mcapi_status_t SMECY_MCAPI_status; /*
   Analyze the PE type and coordinates into domain & node */             \
@@ -540,6 +542,9 @@ static void SMECY_IMP_initialize_then_finalize() {
      That means a lot of code in this critical section, in case there are
      different SMECY_IMP_set at the same time.  A bit overkill, to be
      streamlined some day...
+
+     It is specially VERY slow in verbose mode since the message are
+     displayed inside the critical section.
    */                                                                   \
   _Pragma("omp critical(SMECY_IMP_set)")                                \
   {                                                                     \

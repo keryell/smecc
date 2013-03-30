@@ -19,7 +19,10 @@
 #include <stdio.h>
 /* Prefix all the debug messages with "SMECY: " to ease filtering */
 #define SMECY_PRINT_VERBOSE_RAW(...)                                    \
-  fprintf(stderr, "SMECY: " __VA_ARGS__)
+  fprintf(stderr, "SMECY: " __VA_ARGS__);                               \
+  /* Note that the new line is not atomic because it is in another
+     printf... */                                                       \
+  fprintf(stderr, "\n");
 /* With a ; to allow a statement or a declaration afterards
 
    The comment on 2 lines at the end is to force a poor-man formating of
@@ -91,7 +94,7 @@
 #define SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
   SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
                       "of %s at address %p from arg #%d of "            \
-                      "function \"%s\" on processor \"%s\" n° \"%s\"\n", \
+                      "function \"%s\" on processor \"%s\" n° \"%s\"", \
                       (size_t) size, #type, addr, arg,                  \
                       #func, #pe, #__VA_ARGS__)                         \
   type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr
@@ -99,7 +102,7 @@
 #define SMECY_IMP_get_arg_vector(func, arg, type, addr, size, pe, ...) \
   SMECY_PRINT_VERBOSE("Receiving vector of %zd elements of %s at address" \
                       " %p from arg #%d of function \"%s\" on "         \
-                      "processor \"%s\" n° \"%s\"\n", (size_t) size,    \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
                       #type, addr, arg, #func, #pe, #__VA_ARGS__)
 
 
@@ -261,7 +264,7 @@ SMECY_init_pipeline_buffers(int stream,
      constraints and use. Use a comma to have a single statement. Could be \
      a block, anyway... */                                              \
   SMECY_PRINT_VERBOSE_COMMA("Launched stage %d from stream %d, "        \
-                            "OpenMP thread %d of %d\n", stage, stream,  \
+                            "OpenMP thread %d of %d", stage, stream,    \
                             omp_get_thread_num(), omp_get_num_threads()) \
   smecy_stream_stage_##stream##_##stage()
 
@@ -271,7 +274,7 @@ SMECY_init_pipeline_buffers(int stream,
 #define SMECY_IMP_stream_get_init_buf(stream, stage)                    \
   /* Each stage will begin with the first buffer anyway */              \
   smecy_stream_buffer_out = &((struct smecy_stream_buffer_type_##stream*)smecy_stream_buffer_global[stream].stream_buffers)[0]; \
-  SMECY_PRINT_VERBOSE("\tStage %d of stream %d will use output buffer %p\n", \
+  SMECY_PRINT_VERBOSE("\tStage %d of stream %d will use output buffer %p", \
                       stage, stream, smecy_stream_buffer_out)
 
 
@@ -290,7 +293,7 @@ SMECY_init_pipeline_buffers(int stream,
                             smecy_stream_buffer_global[stream].current_indices[stage] = b; \
                             /* Next buffer address: */                  \
                             smecy_stream_buffer_out = &((struct smecy_stream_buffer_type_##stream*)smecy_stream_buffer_global[stream].stream_buffers)[b]; \
-                            SMECY_PRINT_VERBOSE("\tStage %d of stream %d will use output buffer %p\n", \
+                            SMECY_PRINT_VERBOSE("\tStage %d of stream %d will use output buffer %p", \
                                                 stage, stream, smecy_stream_buffer_out); \
                           })
 
@@ -305,7 +308,7 @@ SMECY_init_pipeline_buffers(int stream,
                         {                                               \
                           /* Work on the next buffer to be consumed: */     \
                           smecy_stream_buffer_in = &((struct smecy_stream_buffer_type_##stream*)smecy_stream_buffer_global[stream].stream_buffers)[smecy_stream_buffer_global[stream].current_indices[stage]]; \
-                          SMECY_PRINT_VERBOSE("\tStage %d of stream %d will use input buffer %p\n", \
+                          SMECY_PRINT_VERBOSE("\tStage %d of stream %d will use input buffer %p", \
                                               stage, stream, smecy_stream_buffer_in); \
                         })
 
@@ -322,5 +325,5 @@ SMECY_init_pipeline_buffers(int stream,
   SMECY_RBRACE                                                          \
   /* Insert debugging information here to avoid a parasitic statement in \
      the OpenMP section */                                              \
-  SMECY_PRINT_VERBOSE("Waiting the end of the program\n")               \
+  SMECY_PRINT_VERBOSE("Waiting for the end of the program")             \
   pause()
