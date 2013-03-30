@@ -679,7 +679,7 @@ static void SMECY_IMP_initialize_then_finalize() {
    */                                                                   \
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_recv " \
                                    "from receive gate %#tx %p of length %zx", \
-                                   P4A_receive,                         \
+                                   SMECY_CHAN_INFO(P4A_receive),        \
                                    (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
                                    P4A_received_size);                  \
   /* Store the value in the argument to be given to the function
