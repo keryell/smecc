@@ -79,7 +79,7 @@ documentation in $P12MCAPI/doc/p12mcapi.pdf for more details.
 You have to initialize the STHORM SDK environment, for example with:
 export JAVA_HOME=/usr/lib/jvm/default-java
 source ~/sthorm-sdk-2013.1/setup.sh
-export P12MCAPI=.../P2012-MCAPI-v0.4-2013.1
+export P12MCAPI=<where you untar-ed p12mcapi_V0.5_2013.1.tar.gz>/P2012-MCAPI-v0.5-2013.1
 
 Then you have also to set the variable:
 

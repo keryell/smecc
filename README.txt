@@ -137,17 +137,15 @@ fail.
 ST/CEA STHORM (ex-P2012) implementation of the MCA API:
 -------------------------------------------------------
 
-Get the CEA MCAPI for P2012 Release V0.2 (18th September 2012).
+Get the ST STHORM SDK: sthorm-sdk-2013.1-Linux-x86-Install
 
-Initialize the environment variable SMECC_STHORM_MCAPI to point to where
-the STORM MCA API is installed, for example with:
-export SMECC_STHORM_MCAPI=~/p2012-SDK-release-2012.2/modules/P2012-MCAPI
-(utilisé ^^^ ?)
+Get the CEA MCAPI for STHORM P2012-MCAPI-v0.5-2013.1 (21th February 2013)
+at least: p12mcapi_V0.5_2013.1.tar.gz
 
 Initialize the STHORM SDK environment, for example with:
 export JAVA_HOME=/usr/lib/jvm/default-java
 source ~/sthorm-sdk-2013.1/setup.sh
-
+export P12MCAPI=<where you untar-ed p12mcapi_V0.5_2013.1.tar.gz>/P2012-MCAPI-v0.5-2013.1
 
 # Some Emacs stuff:
 ### Local Variables:
