@@ -18,6 +18,9 @@
 #ifdef SMECY_MCAPI_HOST
 /* For SMECY_MCAPI_connection */
 #include <stdbool.h>
+/* To have a lock to protect against concurrent execution on the same
+   accelerator: */
+#include <omp.h>
 #endif
 
 /* To use MCAPI from the MultiCore Association */
@@ -468,9 +471,14 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
    complex to insure atomicity at the bit level...
 */
 struct {
+    /* Keep track of a connection between the host and a given
+       accelerator: */
     bool opened;
     mcapi_pktchan_send_hndl_t transmit;
     mcapi_pktchan_recv_hndl_t receive;
+    /* The lock to protect against concurrent execution on the same
+       accelerator: */
+    omp_lock_t accelerator_in_use;
   } SMECY_MCAPI_connection[SMECY_CLUSTER_NB][SMECY_PE_NB];
 #endif
 
@@ -482,6 +490,9 @@ static void SMECY_IMP_finalize() {
 }
 
 
+#ifdef SMECY_MCAPI_HOST
+/* Initialize all the MCAPI run-time on the host and register the
+   finalizing on program exit() */
 static void SMECY_IMP_initialize_then_finalize() {
   //mcapi_node_attributes_t node_attributes;
   mcapi_info_t info;
@@ -512,10 +523,19 @@ static void SMECY_IMP_initialize_then_finalize() {
                                    " %#tx and node %#tx",
                                    (intptr_t) SMECY_MCAPI_HOST_DOMAIN,
                                    (intptr_t) SMECY_MCAPI_HOST_NODE);
+
+  /* Note that every accelerator is free for execution: */
+  for(int smecy_cluster = 0;
+      smecy_cluster != SMECY_CLUSTER_NB;
+      ++smecy_cluster)
+    for(int smecy_pe = 0; smecy_pe != SMECY_PE_NB; ++smecy_pe)
+      omp_init_lock(&SMECY_MCAPI_connection[smecy_cluster][smecy_pe].accelerator_in_use);
   /* And the register the finalization for an execution at the end of the
      program execution */
   atexit(SMECY_IMP_finalize);
 }
+#endif
+
 
 #ifdef SMECY_MCAPI_HOST
 /* Open some MCAPI connections with the requested node
@@ -537,48 +557,45 @@ static void SMECY_IMP_initialize_then_finalize() {
   /* The handle to receiving packets
    */                                                                   \
   mcapi_pktchan_recv_hndl_t P4A_receive;                                \
-  /* To be thread safe on the caching system.
-
-     That means a lot of code in this critical section, in case there are
-     different SMECY_IMP_set at the same time.  A bit overkill, to be
-     streamlined some day...
-
-     It is specially VERY slow in verbose mode since the message are
-     displayed inside the critical section.
+  /* Do some per accelerator locking to be thread safe on the caching
+     system but also to be sure there are no more than one function
+     executed on an accelerator at a time.
    */                                                                   \
-  _Pragma("omp critical(SMECY_IMP_set)")                                \
-  {                                                                     \
-    /* No need for an OpenMP flush because of the critical section */   \
-    if (SMECY_MCAPI_connection[domain][node].opened) {                  \
-      P4A_transmit = SMECY_MCAPI_connection[domain][node].transmit;     \
-      P4A_receive = SMECY_MCAPI_connection[domain][node].receive;       \
-      SMECY_PRINT_VERBOSE("SMECY_IMP_set: cache hit for domain %d, "    \
-                          "node %d: P4A_transmit = %#tx,"               \
-                          " P4A_receive = %#tx",                        \
-                          domain, node, SMECY_CHAN_INFO(P4A_transmit),  \
-                          SMECY_CHAN_INFO(P4A_receive));                \
-    }                                                                   \
-    else {                                                              \
-      /* This is not already opened, create the connections.
+  omp_set_lock(&SMECY_MCAPI_connection[domain][node].accelerator_in_use); \
+  SMECY_PRINT_VERBOSE("SMECY_IMP_set: got the lock for this "           \
+                      "accelerator for instance %d of function "        \
+                      "\"%s\" on processor \"%s\" n° \"%s\"",           \
+                      instance, #func, #pe, #__VA_ARGS__);              \
+  /* No need for an OpenMP flush because of the critical section */     \
+  if (SMECY_MCAPI_connection[domain][node].opened) {                    \
+    P4A_transmit = SMECY_MCAPI_connection[domain][node].transmit;       \
+    P4A_receive = SMECY_MCAPI_connection[domain][node].receive;         \
+    SMECY_PRINT_VERBOSE("SMECY_IMP_set: connection cache hit for "      \
+                        "domain %d, node %d: P4A_transmit = %#tx,"      \
+                        " P4A_receive = %#tx",                          \
+                        domain, node, SMECY_CHAN_INFO(P4A_transmit),    \
+                        SMECY_CHAN_INFO(P4A_receive));                  \
+  }                                                                     \
+  else {                                                                \
+    /* This is not already opened, create the connections.
 
-                                Do it in this order compared with the PE
-                                to avoid dead-locks on opening: first open
-                                a connection to send data to the PE */  \
-      P4A_transmit = SMECY_MCAPI_send_gate_create(SMECY_MCAPI_PORT(TX,domain,node), \
+       Do it in this order compared with the PE
+       to avoid dead-locks on opening: first open
+       a connection to send data to the PE */                           \
+    P4A_transmit = SMECY_MCAPI_send_gate_create(SMECY_MCAPI_PORT(TX,domain,node), \
+                                                domain,                 \
+                                                node,                   \
+                                                SMECY_MCAPI_PE_RX_PORT); /*
+        Then open a connection to receive data from the PE */           \
+    P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PORT(RX,domain,node), \
                                                   domain,               \
                                                   node,                 \
-                                                  SMECY_MCAPI_PE_RX_PORT); /*
-                  Then open a connection to receive data from the PE */ \
-      P4A_receive = SMECY_MCAPI_receive_gate_create(SMECY_MCAPI_PORT(RX,domain,node), \
-                                                    domain,             \
-                                                    node,               \
-                                                    SMECY_MCAPI_PE_TX_PORT);/*
-                                                                         */ \
-      /* No need for an OpenMP flush because of the critical section */ \
-      SMECY_MCAPI_connection[domain][node].transmit = P4A_transmit;     \
-      SMECY_MCAPI_connection[domain][node].receive = P4A_receive;       \
-      SMECY_MCAPI_connection[domain][node].opened = true;               \
-    }                                                                   \
+                                                  SMECY_MCAPI_PE_TX_PORT);/*
+
+      No need for an OpenMP flush because of the lock around */         \
+    SMECY_MCAPI_connection[domain][node].transmit = P4A_transmit;       \
+    SMECY_MCAPI_connection[domain][node].receive = P4A_receive;         \
+    SMECY_MCAPI_connection[domain][node].opened = true;                 \
   }                                                                     \
   /* Send the function name to run to the remode dispatcher,
      including the final '\0' */                                        \
@@ -606,18 +623,21 @@ static void SMECY_IMP_initialize_then_finalize() {
 #define SMECY_IMP_set(func, instance, pe, ...)                          \
   SMECY_LBRACE /* <- '{' To have local variables
                 */                                                      \
-    mcapi_status_t SMECY_MCAPI_status;    /* Do it in this order compared
-      with the host to avoid dead-locks on opening: first wait from the
-      host a connection to receive data to the PE
-                                        */                              \
-    size_t P4A_received_size
+  mcapi_status_t SMECY_MCAPI_status;                                    \
+  /* The size of some received data
+   */                                                                   \
+  size_t P4A_received_size
 #endif
 
 
 #ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_accelerator_end(func, instance, pe, ...)        \
-            /* End of the accelerated part
+            /* End of the accelerated part.
+
+               Release the lock on this accelerator to allow another
+               thread to use it.
              */                                 \
+  omp_unset_lock(&SMECY_MCAPI_connection[domain][node].accelerator_in_use); \
   SMECY_RBRACE
 #else
 /* This is on the accelerator side */
