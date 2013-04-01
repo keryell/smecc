@@ -79,9 +79,18 @@
 #define SMECY_IMP_cleanup_send_arg(func, arg, type, value, pe, ...)
 
 #define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
+  SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s at address" \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr
 
-#define SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...)
+#define SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...) \
+  SMECY_PRINT_VERBOSE("Deal with post-sending vector "                  \
+                      "of %zd elements of %s at address"                \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)
 
 #define SMECY_IMP_update_arg_vector(func, arg, type, addr, size, pe, ...) \
   type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr

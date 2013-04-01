@@ -709,6 +709,10 @@ static void SMECY_IMP_initialize_then_finalize() {
 
 #ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
+  SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s at address" \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   /* Send the vector data to the PE
    */                                                                   \
   mcapi_pktchan_send(P4A_transmit, addr, size, &SMECY_MCAPI_status);    \
@@ -736,6 +740,12 @@ static void SMECY_IMP_initialize_then_finalize() {
                                    SMECY_CHAN_INFO(P4A_receive),        \
                                    (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
                                    P4A_received_size);                  \
+  SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s at address" \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
+                      #type,                                            \
+                      SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__),    \
+                      arg, #func, #pe, #__VA_ARGS__)                    \
   /* Store the address if the vector into the argument to be given
      to the function call */                                            \
   type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) =                 \
@@ -744,12 +754,24 @@ static void SMECY_IMP_initialize_then_finalize() {
 
 
 #ifdef SMECY_MCAPI_HOST
-#define SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...)
-/* Nothing to do for SMECY_cleanup_send_arg_vector */
+#define SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...) \
+  SMECY_PRINT_VERBOSE("Deal with post-sending vector "                  \
+                      "of %zd elements of %s at address"                \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
+                      #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
+ /* Nothing to do for SMECY_cleanup_send_arg_vector */
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_cleanup_send_arg_vector(func, arg, type, addr, size, pe, ...) \
-  /* Give back the memory buffer to the API for recycling
+  SMECY_PRINT_VERBOSE("Deal with post-sending vector "                  \
+                      "of %zd elements of %s at address"                \
+                      " %p from arg #%d of function \"%s\" on "         \
+                      "processor \"%s\" n° \"%s\"", (size_t) size,      \
+                      #type,                                            \
+                      SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__),       \
+                      arg, #func, #pe, #__VA_ARGS__)                    \
+   /* Give back the memory buffer to the API for recycling
    */                                                                   \
   mcapi_pktchan_release(SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__),     \
                         &SMECY_MCAPI_status);                           \
