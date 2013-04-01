@@ -111,6 +111,8 @@ enum {
   /* Allocate the reception ports just after the transmission ones: */
   SMECY_MCAPI_HOST_RX_STARTING_PORT =
     SMECY_MCAPI_PORT(TX,SMECY_CLUSTER_NB,0),
+  /* Maximum size of a message used as a strip-mining size: */
+  SMECY_MCAPI_STRIPMINE_SIZE = 20000,
 };
 
 
@@ -429,6 +431,72 @@ SMECY_MCAPI_send_gate_create(mcapi_port_t send_port,
                                    "returned size %zx", (intptr_t)handle,
                                    size);
   return send_gate;
+}
+
+
+/* Since MCAPI has some limitations on the packet size, implement
+   strip-mining versions of the communication libraries than call */
+/* Send size bytes starting at addr to the recipient: */
+void SMECY_MCAPI_send(mcapi_pktchan_send_hndl_t recipient,
+                      const void *addr,
+                      size_t size) {
+  intptr_t remaining_size = size;
+  for (const void * p = addr;
+       remaining_size > 0;
+       remaining_size -= SMECY_MCAPI_STRIPMINE_SIZE,
+         p += SMECY_MCAPI_STRIPMINE_SIZE) {
+    intptr_t packet_size = SMECY_MAX(remaining_size,
+                                     SMECY_MCAPI_STRIPMINE_SIZE);
+    mcapi_status_t status;
+    /* Send the data packet to the PE */
+    mcapi_pktchan_send(recipient, p, packet_size, &status);
+    /* Check the correct execution */
+    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status,
+                                     "mcapi_pktchan_send "
+                                     "to send gate %#tx %p of length %zx",
+                                     SMECY_CHAN_INFO(recipient),
+                                     addr, size);
+  }
+}
+
+/* Receive size bytes starting at the given addr from the sender.
+
+   addr must point to a previously allocated memory zone.
+
+   Note that, since mcapi_pktchan_recv() gives allocated memory for one
+   message, for short message, it may be more interesting not to use this
+   procedure that imply a redundant copy.
+ */
+void SMECY_MCAPI_receive(mcapi_pktchan_recv_hndl_t sender,
+                         void *addr,
+                         size_t size) {
+  intptr_t remaining_size = size;
+  for (void * p = addr;
+       remaining_size > 0;
+       remaining_size -= SMECY_MCAPI_STRIPMINE_SIZE,
+         p += SMECY_MCAPI_STRIPMINE_SIZE) {
+    /* Compute the size as set by SMECY_MCAPI_send: */
+    intptr_t predicted_size = SMECY_MAX(remaining_size,
+                                        SMECY_MCAPI_STRIPMINE_SIZE);
+    size_t received_size;
+    void * message;
+    mcapi_status_t status;
+    mcapi_pktchan_recv(sender, &message, &received_size, &status);
+    /* Check the correct execution */
+    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_recv "
+                                     "from receive gate %#tx %p of length %zx"
+                                     "(predicted size = %zx)",
+                                     SMECY_CHAN_INFO(sender),
+                                     message, received_size, predicted_size);
+    assert(received_size == predicted_size);
+    /* Store the received message into the destination */
+    memcpy(p, message, predicted_size);
+    /* Give back the memory buffer to the API for recycling */
+    mcapi_pktchan_release(message, &status);
+    /* Check the correct execution */
+    SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_release %p",
+                                     message);
+  }
 }
 
 

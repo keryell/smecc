@@ -86,6 +86,9 @@
 #define SMECY_CONCATENATE3(x,y,z) x##_##y##_##z
 #define SMECY_CONCATENATE4(x,y,z,t) x##_##y##_##z##_##t
 
+/* 2 macros to compute maximum or minimum: */
+#define SMECY_MAX(x,y) ((x) > (y) ? (x) : (y))
+#define SMECY_MIN(x,y) ((x) < (y) ? (x) : (y))
 
 /* Load the implementations */
 #ifdef SMECY_MCAPI
