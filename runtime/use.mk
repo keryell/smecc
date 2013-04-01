@@ -29,7 +29,7 @@ endif
 
 # Add some flags to previously ones, if any:
 SMECY_FLAGS+=$(SMECY_DEBUG) -I$(SMECY_INC)
-CFLAGS+=--std=c99 -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
+CFLAGS+=--std=c99 -fopenmp -g3 -gdwarf-4 $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
 
 # More flags to compile with MCAPI on the host side
 CFLAGS_MCAPI=-DSMECY_MCAPI -DSMECY_MCAPI_HOST
@@ -37,7 +37,7 @@ CFLAGS_MCAPI=-DSMECY_MCAPI -DSMECY_MCAPI_HOST
 CFLAGS_MCAPI_ACCEL=-DSMECY_MCAPI
 
 LDFLAGS+=-fopenmp
-CXXFLAGS+=--std=c++0x -fopenmp -g $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
+CXXFLAGS+=--std=c++0x -fopenmp -g3 -gdwarf-4 $(SMECY_FLAGS) $(MCA_INCLUDE) $(MORE_FLAGS)
 LDLIBS+=$(MCAPI_LINK) $(MRAPI_LINK)
 
 
@@ -97,7 +97,8 @@ clean::
 
 # Detailed targets
 
-# Produce a specialized MCAPI expansion for fabric side accel_smecy_... source files:
+# Produce a specialized MCAPI expansion for fabric side
+# accel_smecy_... source files:
 accel_%: CFLAGS += $(CFLAGS_MCAPI_ACCEL)
 # Produce a specialized MCAPI expansion for host side smecy_... source files:
 %_host %_host.E: CFLAGS += $(CFLAGS_MCAPI)
@@ -212,9 +213,18 @@ ifeq ($(TARGET),STHORM)
   debug_%_host:
 	# Think to do a "handle SIGUSR1 noprint nostop" in GDB
 	$(MAKE_FOR_STHORM) $(STHORM_$*_host) debug
+
+
+  # Produce a CPP output to help debugging
+  accel_%.E: accel_%.[cC]
+	# Keep comments in the output
+	$(CPP) -CC $(FABRIC_CFLAGS) -I$(P12MCAPI)/include $< > $@
+
 else
+
   run_%: %
 	./$<
+
 endif
 
 # Produce a CPP output to help debugging
