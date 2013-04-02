@@ -48,9 +48,15 @@ void mcapi_display_state (void* handle) {
 //#include "mcapi_time_helper.h"
 #endif
 
-#if defined(MCAPI_STHORM) && defined(SMECY_MCAPI_CHECK_TRACE)
+#if defined(MCAPI_STHORM)
 /* Use the STHORM tracing API... */
 #include "mcapi_trace_helper.h"
+/* To display strings only in tracing mode: */
+#ifdef SMECY_MCAPI_CHECK_TRACE
+#define MCAPI_TRACE_MODE_ONLY_C(trace) MCAPI_TRACE_C(trace)
+#else
+#define MCAPI_TRACE_MODE_ONLY_C(trace)
+#endif
 #else
 /* ...or not */
 #define MCAPI_TRACE(args, ...)
@@ -583,12 +589,12 @@ static void SMECY_IMP_initialize_then_finalize() {
   /* 6 arguments in V.2 */
   mcapi_initialize(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE,
   		   &node_attributes, SMECY_MCAPI_PARAM_INIT, &info, &status);
-  MCAPI_TRACE_C("Host initialization V.2 done");
+  MCAPI_TRACE_MODE_ONLY_C("Host initialization V.2 done");
 #else
   /* 5 arguments in V.1 */
   mcapi_initialize(SMECY_MCAPI_HOST_DOMAIN, SMECY_MCAPI_HOST_NODE,
 		   SMECY_MCAPI_PARAM_INIT, &info, &status);
-  MCAPI_TRACE_C("Host initialization V.1 done");
+  MCAPI_TRACE_MODE_ONLY_C("Host initialization V.1 done");
 #endif
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initializing MCAPI on domain"
                                    " %#tx and node %#tx",
@@ -1011,12 +1017,12 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   /* 6 arguments in V.2 */
   mcapi_initialize(smecy_cluster, smecy_pe,
   		   &node_attributes, NULL, &info, &status);
-  MCAPI_TRACE_C("Fabric initialization V.2 done");
+  MCAPI_TRACE_MODE_ONLY_C("Fabric initialization V.2 done");
 #else
   /* 5 arguments in V.1 */
   mcapi_initialize(smecy_cluster, smecy_pe,
 		   NULL, &info, &status);
-  MCAPI_TRACE_C("Fabric initialization V.1 done");
+  MCAPI_TRACE_MODE_ONLY_C("Fabric initialization V.1 done");
 #endif
   SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Initialization of smecy_cluster"
                                    " %d, smecy_pe %d",
@@ -1133,7 +1139,7 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
 #define SMECY_start_PEs_dispatch                                        \
   /* Get the MCAPI coordinates before registering to MCAPI */           \
   void SMECY_thread_entry(void *args) {                                 \
-    MCAPI_TRACE_C("Local PE thread started");                           \
+    MCAPI_TRACE_MODE_ONLY_C("Local PE thread started");                 \
     mcapi_status_t status;                                              \
     mcapi_domain_t domain_id = mcapi_domain_id_get(&status);            \
     SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "Get the domain id");      \
@@ -1145,7 +1151,7 @@ static void SMECY_init_mcapi_node(int smecy_cluster, int smecy_pe) {
   /* This is called by the STHORM MCAPI run-time on all the fabric
      clusters (= MCAPI domains) */                                      \
   void mcapi_domain_entry() {                                           \
-    MCAPI_TRACE_C("Local cluster started");                             \
+    MCAPI_TRACE_MODE_ONLY_C("Local cluster started");                   \
     /* Create all the threads on the nodes of the current cluster */    \
     for(int node_id = 0; node_id != SMECY_PE_NB; ++node_id)             \
       create_node(node_id, SMECY_thread_entry, NULL, NULL, NULL);       \
