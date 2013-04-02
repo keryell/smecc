@@ -174,7 +174,7 @@ ifeq ($(TARGET),STHORM)
   endif
 
   # To use the Makefile provided with STHORM MCAPI:
-  MAKE_FOR_STHORM=$(MAKE) -f $(P12MCAPI)/examples/rules.mk
+  MAKE_FOR_STHORM=$(MAKE) -f $(P12MCAPI)/examples/rules.mk $(MORE_P12MCAPI)
 
   # The STxP70 compiler has an option to select C99 with a '-' less
   # than with GCC:
