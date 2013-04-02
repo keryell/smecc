@@ -448,6 +448,7 @@ void SMECY_MCAPI_send(mcapi_pktchan_send_hndl_t recipient,
                       const void *addr,
                       size_t size) {
   intptr_t remaining_size = size;
+  int packet_number = 0;
   for (const void * p = addr;
        remaining_size > 0;
        remaining_size -= SMECY_MCAPI_STRIPMINE_SIZE,
@@ -459,11 +460,11 @@ void SMECY_MCAPI_send(mcapi_pktchan_send_hndl_t recipient,
     mcapi_pktchan_send(recipient, p, packet_size, &status);
     /* Check the correct execution */
     SMECY_MCAPI_CHECK_STATUS_MESSAGE(status,
-                                     "mcapi_pktchan_send "
-                                     "to send gate %#tx %p of length %#zx "
-                                     "(piece of length %#zx starting at %p)",
-                                     SMECY_CHAN_INFO(recipient),
-                                     addr, size, packet_size, p);
+                                     "mcapi_pktchan_send to send gate %#tx %p "
+                                     "of length %#zx (piece #%d of length "
+                                     "%#zx starting at %p)",
+                                     SMECY_CHAN_INFO(recipient), addr, size,
+                                     ++packet_number, packet_size, p);
   }
 }
 
@@ -479,6 +480,7 @@ void SMECY_MCAPI_receive(mcapi_pktchan_recv_hndl_t sender,
                          void *addr,
                          size_t size) {
   intptr_t remaining_size = size;
+  int packet_number = 0;
   for (void * p = addr;
        remaining_size > 0;
        remaining_size -= SMECY_MCAPI_STRIPMINE_SIZE,
@@ -492,10 +494,11 @@ void SMECY_MCAPI_receive(mcapi_pktchan_recv_hndl_t sender,
     mcapi_pktchan_recv(sender, &message, &received_size, &status);
     /* Check the correct execution */
     SMECY_MCAPI_CHECK_STATUS_MESSAGE(status, "mcapi_pktchan_recv from receive "
-                                     "gate %#tx %p of length %#zx (piece "
+                                     "gate %#tx %p of length %#zx (piece #%d "
                                      "starting at %p, predicted size = %#zx, "
                                      "received size %#zx to be store at %p)",
                                      SMECY_CHAN_INFO(sender), addr, size,
+                                     ++packet_number,
                                      message, predicted_size, received_size, p);
     assert(received_size == predicted_size);
     /* Store the received message into the destination */
