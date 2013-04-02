@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #define N 10
-#define M 20000
+#define M 2000
 
 void init(int* array, int size, int scale) {
   for (int i = 0; i < size; i++)

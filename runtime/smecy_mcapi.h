@@ -805,7 +805,7 @@ static void SMECY_IMP_initialize_then_finalize() {
                       #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   /* Send the vector data to the PE
    */                                                                   \
-  SMECY_MCAPI_send(P4A_transmit, addr, size)
+                      SMECY_MCAPI_send(P4A_transmit, addr, size*sizeof(type))
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
