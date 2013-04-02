@@ -609,7 +609,17 @@ static void SMECY_IMP_initialize_then_finalize() {
       omp_init_lock(&SMECY_MCAPI_connection[smecy_cluster][smecy_pe].accelerator_in_use);
   /* And the register the finalization for an execution at the end of the
      program execution */
-  atexit(SMECY_IMP_finalize);
+  /* Well, since the execution model is with PEs waiting for the host to
+     have some work, if the host call finalize, it will wait for the PEs
+     waiting for it... Dead lock! So, in a first version, do not call
+     finalize and just exit.
+
+     A nasty side effect with current STHORM MCAPI is this message:
+
+     terminate called after throwing an instance of 'SystemTrace::SystemTraceException'
+  what():  Attempt to close the output file has failed
+  */
+  // atexit(SMECY_IMP_finalize);
 }
 #endif
 
