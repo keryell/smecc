@@ -101,9 +101,9 @@
   SMECY_IMP_launch_##n_args(func, pe, __VA_ARGS__)
 
 #define SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
-  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
+  SMECY_PRINT_VERBOSE("Preparing to receive vector of %zd elements "    \
                       "of %s at address %p from arg #%d of "            \
-                      "function \"%s\" on processor \"%s\" n° \"%s\"", \
+                      "function \"%s\" on processor \"%s\" n° \"%s\"",  \
                       (size_t) size, #type, addr, arg,                  \
                       #func, #pe, #__VA_ARGS__)                         \
   type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) = addr

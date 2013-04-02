@@ -641,7 +641,7 @@ static void SMECY_IMP_initialize_then_finalize() {
   /* The handle to sending packets
    */                                                                   \
   mcapi_pktchan_send_hndl_t P4A_transmit;                               \
-  /* The handle to receiving packets
+  /* The handle to receive packets
    */                                                                   \
   mcapi_pktchan_recv_hndl_t P4A_receive;                                \
   /* Do some per accelerator locking to be thread safe on the caching
@@ -802,41 +802,24 @@ static void SMECY_IMP_initialize_then_finalize() {
                       #type, addr, arg, #func, #pe, #__VA_ARGS__)       \
   /* Send the vector data to the PE
    */                                                                   \
-  mcapi_pktchan_send(P4A_transmit, addr, size, &SMECY_MCAPI_status);    \
-  /* Check the correct execution
-   */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_send " \
-                                   "to send gate %#tx %p of length %#zx", \
-                                   SMECY_CHAN_INFO(P4A_transmit), addr, size);
+  SMECY_MCAPI_send(P4A_transmit, addr, size)
 #else
 /* This is on the accelerator side */
 #define SMECY_IMP_send_arg_vector(func, arg, type, addr, size, pe, ...) \
-  /* A pointer that will point to the received message
-   */                                                                   \
-  type* SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__);                  \
-  /* Receive the packet with the value
-   */                                                                   \
-  mcapi_pktchan_recv(P4A_receive,                                       \
-                     (void **)&SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__), \
-                     &P4A_received_size,                                \
-                     &SMECY_MCAPI_status);                              \
-  /* Check the correct execution
-   */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status, "mcapi_pktchan_recv " \
-                                   "from receive gate %#tx %p of length %#zx", \
-                                   SMECY_CHAN_INFO(P4A_receive),        \
-                                   (void **)&SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__), \
-                                   P4A_received_size);                  \
+  /* Allocate the memory argument given to the function to receive
+      the data from the execution */                                    \
+  type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__)[size];             \
   SMECY_PRINT_VERBOSE("Sending vector of %zd elements of %s at address" \
                       " %p from arg #%d of function \"%s\" on "         \
                       "processor \"%s\" n° \"%s\"", (size_t) size,      \
                       #type,                                            \
-                      SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__),    \
+                      SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__),    \
                       arg, #func, #pe, #__VA_ARGS__)                    \
-  /* Store the address if the vector into the argument to be given
-     to the function call */                                            \
-  type* SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__) =                 \
-    SMECY_IMP_VAR_MSG(func, arg, pe, __VA_ARGS__)
+  /* Receive the packet with the value
+   */                                                                   \
+  SMECY_MCAPI_receive(P4A_receive,                                      \
+                      SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__),    \
+                      sizeof(SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__)))
 #endif
 
 
@@ -856,17 +839,8 @@ static void SMECY_IMP_initialize_then_finalize() {
                       " %p from arg #%d of function \"%s\" on "         \
                       "processor \"%s\" n° \"%s\"", (size_t) size,      \
                       #type,                                            \
-                      SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__),       \
-                      arg, #func, #pe, #__VA_ARGS__)                    \
-   /* Give back the memory buffer to the API for recycling
-   */                                                                   \
-  mcapi_pktchan_release(SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__),     \
-                        &SMECY_MCAPI_status);                           \
-  /* Check the correct execution
-   */                                                                   \
-  SMECY_MCAPI_CHECK_STATUS_MESSAGE(SMECY_MCAPI_status,                  \
-                                   "mcapi_pktchan_release %p",          \
-                                   SMECY_IMP_VAR_MSG(func,arg,pe,__VA_ARGS__))
+                      SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__),    \
+                      arg, #func, #pe, #__VA_ARGS__)
 #endif
 
 
@@ -890,7 +864,7 @@ static void SMECY_IMP_initialize_then_finalize() {
 
 #ifdef SMECY_MCAPI_HOST
 #define SMECY_IMP_prepare_get_arg_vector(func, arg, type, addr, size, pe, ...) \
-  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "  \
+  SMECY_PRINT_VERBOSE("Preparing to receive vector of %zd elements "    \
                       "of %s at address %p from arg #%d of "            \
                       "function \"%s\" on processor \"%s\" n° \"%s\"",  \
                       (size_t) size, #type, addr, arg,                  \
@@ -904,7 +878,7 @@ static void SMECY_IMP_initialize_then_finalize() {
   type SMECY_IMP_VAR_ARG(func, arg, pe, __VA_ARGS__)[size];              \
   /* Display the address only now since it is defined by the previous
      allocation.  */                                                     \
-  SMECY_PRINT_VERBOSE("Preparing to receiving vector of %zd elements "   \
+  SMECY_PRINT_VERBOSE("Preparing to receive vector of %zd elements "     \
                       "of %s at address %p from arg #%d of "             \
                       "function \"%s\" on processor \"%s\" n° \"%s\"",   \
                       (size_t) size, #type,                              \

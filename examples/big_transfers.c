@@ -8,6 +8,21 @@ void init(int* array, int size, int scale) {
     array[i] = i*scale;
 }
 
+void plus1(int input[N][M], int output[N][M]) {
+  for (int i = 0; i < N; i++)
+    for (int j = 0; j < M; j++)
+      output[i][j] = input[i][j] + 1;
+}
+
+void display(int tab[N][M]) {
+  for (int i = 0; i < N; i++) {
+    printf("Line %d :", i);
+    for (int j = 0; j < M; j += M/10)
+      printf("tab[%d][%d] = %d ", i, j, tab[i][j]);
+    puts("");
+  }
+}
+
 int main() {
   int tab[N][M];
   /* The schedule(static, 1) enforces each iteration to be executed in a
@@ -22,11 +37,13 @@ int main() {
     init(&tab[i][0], M, i+1);
   }
 
-  for (int i = 0; i < N; i++) {
-    printf("Line %d :", i);
-    for (int j = 0; j < M; j += M/10)
-      printf("tab[%d][%d] = %d ", i, j, tab[i][j]);
-    puts("");
-  }
+  display(tab);
+
+  int output[N][M];
+#pragma smecy map(STHORM, 1, 2) arg(1,in) arg(2,out)
+  plus1(tab, output);
+
+  display(output);
+
   return 0;
 }
