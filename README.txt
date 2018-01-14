@@ -5,7 +5,7 @@ smecc is a compiler for a C-based internal representation with #pragma
 targeting various parallel embedded systems and accelerators.
 
 There is some documentation on the GitHub wiki at
-https://github.com/silkan/smecc/wiki
+https://github.com/keryell/smecc/wiki
 
 This is funded by the SMECY ARTEMIS European project http://smecy.eu
 
